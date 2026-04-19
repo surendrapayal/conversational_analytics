@@ -1,5 +1,7 @@
 import logging
+import json
 import sys
+from datetime import datetime, timezone
 from collections.abc import Generator
 from langchain_core.messages import HumanMessage, AIMessage, ToolMessage
 from conversational_analytics.graph import build_graph
@@ -27,9 +29,11 @@ def run_agent(request: AgentRequest) -> AgentResponse:
     )
 
 
-def _sse(event: str, data: str) -> str:
-    """Formats a single SSE event, encoding newlines to keep data on one line."""
-    return f"event: {event}\ndata: {data.replace(chr(10), '\\n')}\n\n"
+def _sse(event: str, payload: dict, session_id: str = "") -> str:
+    """Formats a single SSE event with a JSON payload."""
+    payload["session_id"] = session_id
+    payload["timestamp"] = datetime.now(timezone.utc).isoformat()
+    return f"event: {event}\ndata: {json.dumps(payload)}\n\n"
 
 
 def stream_agent(request: AgentRequest) -> Generator[str, None, None]:
@@ -61,31 +65,31 @@ def stream_agent(request: AgentRequest) -> Generator[str, None, None]:
                             for part in msg.content:
                                 if isinstance(part, dict) and part.get("type") == "thinking" and part.get("thinking"):
                                     logger.info("Yielding thinking event")
-                                    yield _sse("thinking", part['thinking'].strip())
+                                    yield _sse("thinking", {"reasoning": part["thinking"].strip()}, request.session_id)
 
                         # 2. emit each tool call the agent decided to make
                         for tc in msg.tool_calls:
                             logger.info(f"Yielding tool_call event: {tc['name']}")
-                            yield _sse("tool_call", f"{tc['name']} | args: {tc['args']}")
+                            yield _sse("tool_call", {"tool": tc["name"], "args": tc["args"]}, request.session_id)
 
                 elif node_name == "tools":
                     for msg in state_update.get("messages", []):
                         if isinstance(msg, ToolMessage):
                             # 3. emit the raw tool output
                             logger.info(f"Yielding tool_result event: {msg.name}")
-                            yield _sse("tool_result", f"[{msg.name}] {msg.content}")
+                            yield _sse("tool_result", {"tool": msg.name, "output": msg.content}, request.session_id)
 
                 elif node_name == "response_formatter":
                     final = state_update.get("final_response", "")
                     if final:
                         logger.info(f"Yielding response event with {len(final)} chars")
-                        yield _sse("response", final)
+                        yield _sse("response", {"text": final}, request.session_id)
 
         logger.info("Yielding done event")
-        yield _sse("done", "[DONE]")
+        yield _sse("done", {"status": "completed"}, request.session_id)
         logger.info(f"Stream completed successfully for user={request.user_id} session={request.session_id}")
         
     except Exception as e:
         logger.error(f"Error in stream_agent: {str(e)}", exc_info=True)
-        yield _sse("error", str(e))
-        yield _sse("done", "[DONE]")
+        yield _sse("error", {"message": str(e)}, request.session_id)
+        yield _sse("done", {"status": "failed"}, request.session_id)
