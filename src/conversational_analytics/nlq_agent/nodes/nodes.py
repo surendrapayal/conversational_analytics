@@ -47,7 +47,11 @@ def response_formatter_node(state: AgentState) -> dict:
     """Extracts the final text response from the last AI message."""
     for msg in reversed(state["messages"]):
         if isinstance(msg, AIMessage) and msg.content:
-            return {"final_response": _extract_text(msg.content)}
+            extracted = _extract_text(msg.content)
+            if extracted:
+                logger.info(f"Extracted final response: {len(extracted)} characters")
+                return {"final_response": extracted}
+    logger.warning("No final response found in messages")
     return {"final_response": "I could not generate a response."}
 
 
@@ -55,4 +59,17 @@ def _extract_text(content) -> str:
     """Handles both plain string and list-of-parts content (Gemini thinking models)."""
     if isinstance(content, str):
         return content
-    return " ".join(p["text"] for p in content if isinstance(p, dict) and p.get("type") == "text")
+    
+    if isinstance(content, list):
+        text_parts = []
+        for part in content:
+            if isinstance(part, dict):
+                # Include all text content, skip thinking/other parts
+                if part.get("type") == "text" and part.get("text"):
+                    text_parts.append(part["text"])
+        result = " ".join(text_parts)
+        logger.info(f"Extracted {len(text_parts)} text parts from list content")
+        return result
+    
+    # Fallback for other content types
+    return str(content) if content else ""

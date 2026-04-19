@@ -37,6 +37,7 @@ class Settings(BaseSettings):
     # App Server
     app_host: str = "0.0.0.0"
     app_port: int = 8000
+    log_level: str = "INFO"
 
     @property
     def db_uri(self) -> str:
