@@ -1,0 +1,155 @@
+Redis:-
+docker run -d --name my-redis -p 6379:6379 redis:latest
+
+PG Vector
+docker run -d `
+  --name my-postgres-db `
+  -e POSTGRES_USER=admin_user `
+  -e POSTGRES_PASSWORD=admin_password `
+  -e POSTGRES_DB=zenvyra `
+  -p 5433:5432 `
+  -v C:\MyData\personal-learning\postgres-data:/var/lib/postgresql `
+  -v C:\MyData\personal-learning\pgscript\init.sql:/docker-entrypoint-initdb.d/init.sql `
+  pgvector/pgvector:pg18
+
+
+
+
+
+
+
+docker run -d `
+  --name postgres-db `
+  -e POSTGRES_USER=admin_user `
+  -e POSTGRES_PASSWORD=admin_password `
+  -e POSTGRES_DB=zenvyra `
+  -p 5433:5432 `
+  -v C:\MyData\personal-learning\postgres-data:/var/lib/postgresql `
+  -v C:\MyData\personal-learning\pgscript\relational-init.sql:/docker-entrypoint-initdb.d/init.sql `
+  pgvector/pgvector:pg18
+
+docker exec -it 782a4085ff61 psql -U admin_user
+
+docker exec -it postgres-db psql -U admin_user
+
+782a4085ff61
+
+
+docker run -d `
+  --name postgres-db `
+  -e POSTGRES_USER=admin_user `
+  -e POSTGRES_PASSWORD=admin_password `
+  -e POSTGRES_DB=zenvyra `
+  -p 5433:5432 `
+  -v C:\MyData\personal-learning\postgres-data:/var/lib/postgresql `
+  -v C:\MyData\personal-learning\pgscript\relational-init.sql:/docker-entrypoint-initdb.d/init.sql `
+  postgres:18
+
+
+
+docker run -d `
+  --name pgvector-db `
+  -e POSTGRES_USER=admin_user `
+  -e POSTGRES_PASSWORD=admin_password `
+  -p 5432:5432 `
+  -v C:\MyData\personal-learning\pgdata:/var/lib/postgresql `
+  -v C:\MyData\personal-learning\pgscript\init.sql:/docker-entrypoint-initdb.d/init.sql `
+  pgvector/pgvector:pg18
+  
+
+
+
+
+
+docker run -d `
+  --name postgres-db `
+  -e POSTGRES_USER=admin_user `
+  -e POSTGRES_PASSWORD=admin_password `
+  -e POSTGRES_DB=zenvyra `
+  -p 5433:5432 `
+  -v C:\MyData\personal-learning\postgres-data:/var/lib/postgresql/data `
+  -v C:\MyData\personal-learning\pgscript\relational-init.sql:/docker-entrypoint-initdb.d/init.sql `
+  postgres:18
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+docker run -d `
+  --name pgvector-db `
+  -e POSTGRES_USER=admin_user `
+  -e POSTGRES_PASSWORD=admin_password `
+  -p 5432:5432 `
+  -v C:\MyData\personal-learning\pgdata:/var/lib/postgresql/data `
+  pgvector/pgvector:pg18
+
+
+
+
+
+
+
+docker run -d `
+  --name my-postgres-db `
+  -e POSTGRES_USER=admin_user `
+  -e POSTGRES_PASSWORD=admin_password `
+  -e POSTGRES_DB=zenvyra `
+  -p 5433:5432 `
+  -v C:\MyData\personal-learning\postgres-data:/var/lib/postgresql `
+  -v C:\MyData\personal-learning\pgscript\init.sql:/docker-entrypoint-initdb.d/init.sql `
+  pgvector/pgvector:pg18
+
+
+-- Enable pgvector extension
+CREATE EXTENSION IF NOT EXISTS vector;
+
+-- RELATIONAL TABLES
+CREATE TABLE IF NOT EXISTS conversations (
+    id SERIAL PRIMARY KEY,
+    title VARCHAR(255),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS messages (
+    id SERIAL PRIMARY KEY,
+    conversation_id INTEGER REFERENCES conversations(id) ON DELETE CASCADE,
+    role VARCHAR(50),
+    content TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS users (
+    id SERIAL PRIMARY KEY,
+    email VARCHAR(255) UNIQUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- VECTOR TABLE
+CREATE TABLE IF NOT EXISTS embeddings (
+    id SERIAL PRIMARY KEY,
+    message_id INTEGER REFERENCES messages(id) ON DELETE CASCADE,
+    embedding vector(1536),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- INDEXES
+CREATE INDEX ON messages(conversation_id);
+CREATE INDEX ON conversations(created_at);
+CREATE INDEX ON embeddings USING ivfflat (embedding vector_cosine_ops);
+
+docker exec -it my-postgres-db psql -U admin_user -d zenvyra

@@ -1,0 +1,43 @@
+-- Insert data into ingredients
+-- Generated at: 2026-04-19T14:26:33.578675
+
+INSERT INTO ingredients (name, unit) VALUES ('Flour', 'ml') RETURNING id;
+INSERT INTO ingredients (name, unit) VALUES ('Sugar', 'liter') RETURNING id;
+INSERT INTO ingredients (name, unit) VALUES ('Salt', 'oz') RETURNING id;
+INSERT INTO ingredients (name, unit) VALUES ('Pepper', 'liter') RETURNING id;
+INSERT INTO ingredients (name, unit) VALUES ('Olive Oil', 'pieces') RETURNING id;
+INSERT INTO ingredients (name, unit) VALUES ('Butter', 'grams') RETURNING id;
+INSERT INTO ingredients (name, unit) VALUES ('Eggs', 'ml') RETURNING id;
+INSERT INTO ingredients (name, unit) VALUES ('Chicken', 'pieces') RETURNING id;
+INSERT INTO ingredients (name, unit) VALUES ('Beef', 'grams') RETURNING id;
+INSERT INTO ingredients (name, unit) VALUES ('Salmon', 'pieces') RETURNING id;
+INSERT INTO ingredients (name, unit) VALUES ('Tomato', 'liter') RETURNING id;
+INSERT INTO ingredients (name, unit) VALUES ('Lettuce', 'ml') RETURNING id;
+INSERT INTO ingredients (name, unit) VALUES ('Cucumber', 'pieces') RETURNING id;
+INSERT INTO ingredients (name, unit) VALUES ('Onion', 'liter') RETURNING id;
+INSERT INTO ingredients (name, unit) VALUES ('Garlic', 'oz') RETURNING id;
+INSERT INTO ingredients (name, unit) VALUES ('Cheese', 'cups') RETURNING id;
+INSERT INTO ingredients (name, unit) VALUES ('Milk', 'liter') RETURNING id;
+INSERT INTO ingredients (name, unit) VALUES ('Pasta', 'liter') RETURNING id;
+INSERT INTO ingredients (name, unit) VALUES ('Rice', 'cups') RETURNING id;
+INSERT INTO ingredients (name, unit) VALUES ('Bread', 'liter') RETURNING id;
+INSERT INTO ingredients (name, unit) VALUES ('Potatoes', 'cups') RETURNING id;
+INSERT INTO ingredients (name, unit) VALUES ('Carrots', 'cups') RETURNING id;
+INSERT INTO ingredients (name, unit) VALUES ('Broccoli', 'ml') RETURNING id;
+INSERT INTO ingredients (name, unit) VALUES ('Spinach', 'cups') RETURNING id;
+INSERT INTO ingredients (name, unit) VALUES ('Mushrooms', 'grams') RETURNING id;
+INSERT INTO ingredients (name, unit) VALUES ('Bell Pepper', 'pieces') RETURNING id;
+INSERT INTO ingredients (name, unit) VALUES ('Lemon', 'cups') RETURNING id;
+INSERT INTO ingredients (name, unit) VALUES ('Lime', 'oz') RETURNING id;
+INSERT INTO ingredients (name, unit) VALUES ('Ginger', 'liter') RETURNING id;
+INSERT INTO ingredients (name, unit) VALUES ('Basil', 'cups') RETURNING id;
+INSERT INTO ingredients (name, unit) VALUES ('Oregano', 'ml') RETURNING id;
+INSERT INTO ingredients (name, unit) VALUES ('Thyme', 'kg') RETURNING id;
+INSERT INTO ingredients (name, unit) VALUES ('Cinnamon', 'oz') RETURNING id;
+INSERT INTO ingredients (name, unit) VALUES ('Vanilla', 'pieces') RETURNING id;
+INSERT INTO ingredients (name, unit) VALUES ('Chocolate', 'oz') RETURNING id;
+INSERT INTO ingredients (name, unit) VALUES ('Honey', 'grams') RETURNING id;
+INSERT INTO ingredients (name, unit) VALUES ('Vinegar', 'ml') RETURNING id;
+INSERT INTO ingredients (name, unit) VALUES ('Wine', 'liter') RETURNING id;
+INSERT INTO ingredients (name, unit) VALUES ('Beer', 'oz') RETURNING id;
+INSERT INTO ingredients (name, unit) VALUES ('Coffee', 'pieces') RETURNING id;

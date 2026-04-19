@@ -1,0 +1,1214 @@
+{
+  "database": "zenvyra",
+  "tables": [
+    {
+      "table_name": "customers",
+      "description": "Customer profiles and contact information",
+      "columns": [
+        {
+          "name": "id",
+          "type": "integer",
+          "nullable": "NO",
+          "default": "nextval('customers_id_seq'::regclass)",
+          "is_primary_key": true,
+          "description": "Unique identifier for customer"
+        },
+        {
+          "name": "name",
+          "type": "character varying",
+          "nullable": "NO",
+          "default": null,
+          "is_primary_key": false,
+          "description": "Customer full name"
+        },
+        {
+          "name": "phone",
+          "type": "character varying",
+          "nullable": "YES",
+          "default": null,
+          "is_primary_key": false,
+          "description": "Customer phone number"
+        },
+        {
+          "name": "email",
+          "type": "character varying",
+          "nullable": "YES",
+          "default": null,
+          "is_primary_key": false,
+          "description": "Customer email address (unique)"
+        },
+        {
+          "name": "address",
+          "type": "text",
+          "nullable": "YES",
+          "default": null,
+          "is_primary_key": false,
+          "description": "Customer address for delivery/correspondence"
+        }
+      ],
+      "foreign_keys": []
+    },
+    {
+      "table_name": "discounts",
+      "description": "Discount codes and promotional offers",
+      "columns": [
+        {
+          "name": "id",
+          "type": "integer",
+          "nullable": "NO",
+          "default": "nextval('discounts_id_seq'::regclass)",
+          "is_primary_key": true,
+          "description": "Unique identifier for discount"
+        },
+        {
+          "name": "code",
+          "type": "text",
+          "nullable": "YES",
+          "default": null,
+          "is_primary_key": false,
+          "description": "Discount code (unique)"
+        },
+        {
+          "name": "description",
+          "type": "text",
+          "nullable": "YES",
+          "default": null,
+          "is_primary_key": false,
+          "description": "Description of the discount/promotion"
+        },
+        {
+          "name": "type",
+          "type": "text",
+          "nullable": "NO",
+          "default": null,
+          "is_primary_key": false,
+          "description": "Discount type (percent for percentage, fixed for dollar amount)"
+        },
+        {
+          "name": "amount",
+          "type": "numeric",
+          "nullable": "NO",
+          "default": null,
+          "is_primary_key": false,
+          "description": "Discount amount (percentage value or dollar amount)"
+        },
+        {
+          "name": "start_date",
+          "type": "date",
+          "nullable": "YES",
+          "default": null,
+          "is_primary_key": false,
+          "description": "Start date when discount becomes valid"
+        },
+        {
+          "name": "end_date",
+          "type": "date",
+          "nullable": "YES",
+          "default": null,
+          "is_primary_key": false,
+          "description": "End date when discount expires"
+        }
+      ],
+      "foreign_keys": []
+    },
+    {
+      "table_name": "employee",
+      "description": "Staff members working at restaurant locations",
+      "columns": [
+        {
+          "name": "id",
+          "type": "integer",
+          "nullable": "NO",
+          "default": "nextval('employee_id_seq'::regclass)",
+          "is_primary_key": true,
+          "description": "Unique identifier for employee"
+        },
+        {
+          "name": "name",
+          "type": "character varying",
+          "nullable": "NO",
+          "default": null,
+          "is_primary_key": false,
+          "description": "Full name of employee"
+        },
+        {
+          "name": "role_id",
+          "type": "integer",
+          "nullable": "NO",
+          "default": null,
+          "is_primary_key": false,
+          "description": "Foreign key referencing roles table"
+        },
+        {
+          "name": "location_id",
+          "type": "integer",
+          "nullable": "NO",
+          "default": null,
+          "is_primary_key": false,
+          "description": "Foreign key referencing location where employee works"
+        },
+        {
+          "name": "email",
+          "type": "character varying",
+          "nullable": "YES",
+          "default": null,
+          "is_primary_key": false,
+          "description": "Email address (unique per employee)"
+        },
+        {
+          "name": "hire_date",
+          "type": "date",
+          "nullable": "NO",
+          "default": null,
+          "is_primary_key": false,
+          "description": "Date employee was hired"
+        }
+      ],
+      "foreign_keys": [
+        {
+          "column": "role_id",
+          "column_description": "Foreign key referencing roles table",
+          "references_table": "roles",
+          "references_table_description": "Employee roles/job titles (Chef, Waiter, Manager, etc.)",
+          "references_column": "id",
+          "references_column_description": "Unique identifier for role"
+        },
+        {
+          "column": "location_id",
+          "column_description": "Foreign key referencing location where employee works",
+          "references_table": "location",
+          "references_table_description": "Stores information about restaurant branches/locations",
+          "references_column": "id",
+          "references_column_description": "Unique identifier for location"
+        }
+      ]
+    },
+    {
+      "table_name": "ingredients",
+      "description": "Individual ingredients/raw materials used in recipes",
+      "columns": [
+        {
+          "name": "id",
+          "type": "integer",
+          "nullable": "NO",
+          "default": "nextval('ingredients_id_seq'::regclass)",
+          "is_primary_key": true,
+          "description": "Unique identifier for ingredient"
+        },
+        {
+          "name": "name",
+          "type": "text",
+          "nullable": "NO",
+          "default": null,
+          "is_primary_key": false,
+          "description": "Name of ingredient (flour, chicken, tomato, etc.)"
+        },
+        {
+          "name": "unit",
+          "type": "character varying",
+          "nullable": "NO",
+          "default": null,
+          "is_primary_key": false,
+          "description": "Unit of measurement (kg, liter, pieces, cups, grams)"
+        }
+      ],
+      "foreign_keys": []
+    },
+    {
+      "table_name": "inventory",
+      "description": "Current stock levels of ingredients at each location",
+      "columns": [
+        {
+          "name": "id",
+          "type": "integer",
+          "nullable": "NO",
+          "default": "nextval('inventory_id_seq'::regclass)",
+          "is_primary_key": true,
+          "description": "Unique identifier for inventory record"
+        },
+        {
+          "name": "location_id",
+          "type": "integer",
+          "nullable": "YES",
+          "default": null,
+          "is_primary_key": false,
+          "description": "Foreign key referencing location"
+        },
+        {
+          "name": "ingredient_id",
+          "type": "integer",
+          "nullable": "YES",
+          "default": null,
+          "is_primary_key": false,
+          "description": "Foreign key referencing ingredients"
+        },
+        {
+          "name": "quantity_on_hand",
+          "type": "numeric",
+          "nullable": "NO",
+          "default": "0",
+          "is_primary_key": false,
+          "description": "Current stock quantity available"
+        },
+        {
+          "name": "reorder_threshold",
+          "type": "numeric",
+          "nullable": "YES",
+          "default": "0",
+          "is_primary_key": false,
+          "description": "Minimum quantity before reordering is triggered"
+        }
+      ],
+      "foreign_keys": [
+        {
+          "column": "location_id",
+          "column_description": "Foreign key referencing location",
+          "references_table": "location",
+          "references_table_description": "Stores information about restaurant branches/locations",
+          "references_column": "id",
+          "references_column_description": "Unique identifier for location"
+        },
+        {
+          "column": "ingredient_id",
+          "column_description": "Foreign key referencing ingredients",
+          "references_table": "ingredients",
+          "references_table_description": "Individual ingredients/raw materials used in recipes",
+          "references_column": "id",
+          "references_column_description": "Unique identifier for ingredient"
+        }
+      ]
+    },
+    {
+      "table_name": "location",
+      "description": "Stores information about restaurant branches/locations",
+      "columns": [
+        {
+          "name": "id",
+          "type": "integer",
+          "nullable": "NO",
+          "default": "nextval('location_id_seq'::regclass)",
+          "is_primary_key": true,
+          "description": "Unique identifier for location"
+        },
+        {
+          "name": "name",
+          "type": "text",
+          "nullable": "NO",
+          "default": null,
+          "is_primary_key": false,
+          "description": "Name of the restaurant location/branch"
+        },
+        {
+          "name": "address",
+          "type": "text",
+          "nullable": "YES",
+          "default": null,
+          "is_primary_key": false,
+          "description": "Physical address of the location"
+        },
+        {
+          "name": "timezone",
+          "type": "text",
+          "nullable": "NO",
+          "default": "'UTC'::text",
+          "is_primary_key": false,
+          "description": "Timezone for the location (used for order timing)"
+        }
+      ],
+      "foreign_keys": []
+    },
+    {
+      "table_name": "loyalty_accounts",
+      "description": "Customer loyalty/rewards program accounts",
+      "columns": [
+        {
+          "name": "id",
+          "type": "integer",
+          "nullable": "NO",
+          "default": "nextval('loyalty_accounts_id_seq'::regclass)",
+          "is_primary_key": true,
+          "description": "Unique identifier for loyalty account"
+        },
+        {
+          "name": "customer_id",
+          "type": "integer",
+          "nullable": "YES",
+          "default": null,
+          "is_primary_key": false,
+          "description": "Foreign key referencing customers"
+        },
+        {
+          "name": "points_balance",
+          "type": "integer",
+          "nullable": "NO",
+          "default": "0",
+          "is_primary_key": false,
+          "description": "Current loyalty points balance"
+        }
+      ],
+      "foreign_keys": [
+        {
+          "column": "customer_id",
+          "column_description": "Foreign key referencing customers",
+          "references_table": "customers",
+          "references_table_description": "Customer profiles and contact information",
+          "references_column": "id",
+          "references_column_description": "Unique identifier for customer"
+        }
+      ]
+    },
+    {
+      "table_name": "loyalty_txn",
+      "description": "Transaction history for loyalty points (earned/redeemed)",
+      "columns": [
+        {
+          "name": "id",
+          "type": "integer",
+          "nullable": "NO",
+          "default": "nextval('loyalty_txn_id_seq'::regclass)",
+          "is_primary_key": true,
+          "description": "Unique identifier for loyalty transaction"
+        },
+        {
+          "name": "loyalty_id",
+          "type": "integer",
+          "nullable": "YES",
+          "default": null,
+          "is_primary_key": false,
+          "description": "Foreign key referencing loyalty_accounts"
+        },
+        {
+          "name": "points_change",
+          "type": "integer",
+          "nullable": "NO",
+          "default": null,
+          "is_primary_key": false,
+          "description": "Number of points earned (positive) or redeemed (negative)"
+        },
+        {
+          "name": "txn_type",
+          "type": "text",
+          "nullable": "YES",
+          "default": null,
+          "is_primary_key": false,
+          "description": "Transaction type (earn or redeem)"
+        },
+        {
+          "name": "txn_time",
+          "type": "timestamp without time zone",
+          "nullable": "NO",
+          "default": "now()",
+          "is_primary_key": false,
+          "description": "Timestamp when transaction occurred"
+        }
+      ],
+      "foreign_keys": [
+        {
+          "column": "loyalty_id",
+          "column_description": "Foreign key referencing loyalty_accounts",
+          "references_table": "loyalty_accounts",
+          "references_table_description": "Customer loyalty/rewards program accounts",
+          "references_column": "id",
+          "references_column_description": "Unique identifier for loyalty account"
+        }
+      ]
+    },
+    {
+      "table_name": "menu_categories",
+      "description": "Menu categories (Appetizers, Entrees, Desserts, Beverages, etc.)",
+      "columns": [
+        {
+          "name": "id",
+          "type": "integer",
+          "nullable": "NO",
+          "default": "nextval('menu_categories_id_seq'::regclass)",
+          "is_primary_key": true,
+          "description": "Unique identifier for category"
+        },
+        {
+          "name": "name",
+          "type": "text",
+          "nullable": "NO",
+          "default": null,
+          "is_primary_key": false,
+          "description": "Category name (must be unique)"
+        }
+      ],
+      "foreign_keys": []
+    },
+    {
+      "table_name": "menu_items",
+      "description": "Menu items/dishes available for ordering",
+      "columns": [
+        {
+          "name": "id",
+          "type": "integer",
+          "nullable": "NO",
+          "default": "nextval('menu_items_id_seq'::regclass)",
+          "is_primary_key": true,
+          "description": "Unique identifier for menu item"
+        },
+        {
+          "name": "category_id",
+          "type": "integer",
+          "nullable": "YES",
+          "default": null,
+          "is_primary_key": false,
+          "description": "Foreign key referencing menu_categories"
+        },
+        {
+          "name": "name",
+          "type": "character varying",
+          "nullable": "NO",
+          "default": null,
+          "is_primary_key": false,
+          "description": "Name of the dish"
+        },
+        {
+          "name": "description",
+          "type": "text",
+          "nullable": "YES",
+          "default": null,
+          "is_primary_key": false,
+          "description": "Description of the dish (ingredients, preparation notes)"
+        },
+        {
+          "name": "base_price",
+          "type": "numeric",
+          "nullable": "NO",
+          "default": null,
+          "is_primary_key": false,
+          "description": "Base price of the menu item"
+        },
+        {
+          "name": "is_active",
+          "type": "boolean",
+          "nullable": "NO",
+          "default": "true",
+          "is_primary_key": false,
+          "description": "Whether item is currently available (active/inactive)"
+        }
+      ],
+      "foreign_keys": [
+        {
+          "column": "category_id",
+          "column_description": "Foreign key referencing menu_categories",
+          "references_table": "menu_categories",
+          "references_table_description": "Menu categories (Appetizers, Entrees, Desserts, Beverages, etc.)",
+          "references_column": "id",
+          "references_column_description": "Unique identifier for category"
+        }
+      ]
+    },
+    {
+      "table_name": "order_discounts",
+      "description": "Links discounts applied to specific orders",
+      "columns": [
+        {
+          "name": "order_id",
+          "type": "integer",
+          "nullable": "NO",
+          "default": null,
+          "is_primary_key": true,
+          "description": "Foreign key referencing orders"
+        },
+        {
+          "name": "discount_id",
+          "type": "integer",
+          "nullable": "NO",
+          "default": null,
+          "is_primary_key": true,
+          "description": "Foreign key referencing discounts"
+        }
+      ],
+      "foreign_keys": [
+        {
+          "column": "order_id",
+          "column_description": "Foreign key referencing orders",
+          "references_table": "orders",
+          "references_table_description": "Customer orders placed at restaurant",
+          "references_column": "id",
+          "references_column_description": "Unique identifier for order"
+        },
+        {
+          "column": "discount_id",
+          "column_description": "Foreign key referencing discounts",
+          "references_table": "discounts",
+          "references_table_description": "Discount codes and promotional offers",
+          "references_column": "id",
+          "references_column_description": "Unique identifier for discount"
+        }
+      ]
+    },
+    {
+      "table_name": "order_items",
+      "description": "Individual menu items that make up an order",
+      "columns": [
+        {
+          "name": "id",
+          "type": "integer",
+          "nullable": "NO",
+          "default": "nextval('order_items_id_seq'::regclass)",
+          "is_primary_key": true,
+          "description": "Unique identifier for order item"
+        },
+        {
+          "name": "order_id",
+          "type": "integer",
+          "nullable": "NO",
+          "default": null,
+          "is_primary_key": false,
+          "description": "Foreign key referencing orders"
+        },
+        {
+          "name": "menu_item_id",
+          "type": "integer",
+          "nullable": "NO",
+          "default": null,
+          "is_primary_key": false,
+          "description": "Foreign key referencing menu_items"
+        },
+        {
+          "name": "quantity",
+          "type": "integer",
+          "nullable": "NO",
+          "default": null,
+          "is_primary_key": false,
+          "description": "Quantity of this menu item ordered"
+        },
+        {
+          "name": "unit_price",
+          "type": "numeric",
+          "nullable": "NO",
+          "default": null,
+          "is_primary_key": false,
+          "description": "Price per unit at time of order"
+        }
+      ],
+      "foreign_keys": [
+        {
+          "column": "order_id",
+          "column_description": "Foreign key referencing orders",
+          "references_table": "orders",
+          "references_table_description": "Customer orders placed at restaurant",
+          "references_column": "id",
+          "references_column_description": "Unique identifier for order"
+        },
+        {
+          "column": "menu_item_id",
+          "column_description": "Foreign key referencing menu_items",
+          "references_table": "menu_items",
+          "references_table_description": "Menu items/dishes available for ordering",
+          "references_column": "id",
+          "references_column_description": "Unique identifier for menu item"
+        }
+      ]
+    },
+    {
+      "table_name": "orders",
+      "description": "Customer orders placed at restaurant",
+      "columns": [
+        {
+          "name": "id",
+          "type": "integer",
+          "nullable": "NO",
+          "default": "nextval('orders_id_seq'::regclass)",
+          "is_primary_key": true,
+          "description": "Unique identifier for order"
+        },
+        {
+          "name": "location_id",
+          "type": "integer",
+          "nullable": "NO",
+          "default": null,
+          "is_primary_key": false,
+          "description": "Foreign key referencing location where order was placed"
+        },
+        {
+          "name": "customer_id",
+          "type": "integer",
+          "nullable": "YES",
+          "default": null,
+          "is_primary_key": false,
+          "description": "Foreign key referencing customer (NULL for walk-ins)"
+        },
+        {
+          "name": "employee_id",
+          "type": "integer",
+          "nullable": "YES",
+          "default": null,
+          "is_primary_key": false,
+          "description": "Foreign key referencing employee who took the order"
+        },
+        {
+          "name": "table_id",
+          "type": "integer",
+          "nullable": "YES",
+          "default": null,
+          "is_primary_key": false,
+          "description": "Foreign key referencing table where customer is seated"
+        },
+        {
+          "name": "order_time",
+          "type": "timestamp without time zone",
+          "nullable": "NO",
+          "default": "now()",
+          "is_primary_key": false,
+          "description": "Timestamp when order was placed"
+        },
+        {
+          "name": "total_amount",
+          "type": "numeric",
+          "nullable": "NO",
+          "default": null,
+          "is_primary_key": false,
+          "description": "Total order amount (before tax and tip)"
+        },
+        {
+          "name": "tax_amount",
+          "type": "numeric",
+          "nullable": "NO",
+          "default": "0",
+          "is_primary_key": false,
+          "description": "Tax amount for order"
+        },
+        {
+          "name": "tip_amount",
+          "type": "numeric",
+          "nullable": "NO",
+          "default": "0",
+          "is_primary_key": false,
+          "description": "Tip amount for order"
+        },
+        {
+          "name": "status",
+          "type": "text",
+          "nullable": "NO",
+          "default": "'open'::text",
+          "is_primary_key": false,
+          "description": "Order status (open, completed, cancelled)"
+        }
+      ],
+      "foreign_keys": [
+        {
+          "column": "location_id",
+          "column_description": "Foreign key referencing location where order was placed",
+          "references_table": "location",
+          "references_table_description": "Stores information about restaurant branches/locations",
+          "references_column": "id",
+          "references_column_description": "Unique identifier for location"
+        },
+        {
+          "column": "customer_id",
+          "column_description": "Foreign key referencing customer (NULL for walk-ins)",
+          "references_table": "customers",
+          "references_table_description": "Customer profiles and contact information",
+          "references_column": "id",
+          "references_column_description": "Unique identifier for customer"
+        },
+        {
+          "column": "employee_id",
+          "column_description": "Foreign key referencing employee who took the order",
+          "references_table": "employee",
+          "references_table_description": "Staff members working at restaurant locations",
+          "references_column": "id",
+          "references_column_description": "Unique identifier for employee"
+        },
+        {
+          "column": "table_id",
+          "column_description": "Foreign key referencing table where customer is seated",
+          "references_table": "tables",
+          "references_table_description": "Physical dining tables at restaurant locations",
+          "references_column": "id",
+          "references_column_description": "Unique identifier for table"
+        }
+      ]
+    },
+    {
+      "table_name": "payments",
+      "description": "Payment records for orders",
+      "columns": [
+        {
+          "name": "id",
+          "type": "integer",
+          "nullable": "NO",
+          "default": "nextval('payments_id_seq'::regclass)",
+          "is_primary_key": true,
+          "description": "Unique identifier for payment"
+        },
+        {
+          "name": "order_id",
+          "type": "integer",
+          "nullable": "YES",
+          "default": null,
+          "is_primary_key": false,
+          "description": "Foreign key referencing orders (one payment per order)"
+        },
+        {
+          "name": "payment_time",
+          "type": "timestamp without time zone",
+          "nullable": "NO",
+          "default": "now()",
+          "is_primary_key": false,
+          "description": "Timestamp when payment was processed"
+        },
+        {
+          "name": "amount",
+          "type": "numeric",
+          "nullable": "NO",
+          "default": null,
+          "is_primary_key": false,
+          "description": "Payment amount (total + tax + tip)"
+        },
+        {
+          "name": "method",
+          "type": "text",
+          "nullable": "NO",
+          "default": null,
+          "is_primary_key": false,
+          "description": "Payment method (cash, credit_card, debit_card, etc.)"
+        },
+        {
+          "name": "status",
+          "type": "text",
+          "nullable": "NO",
+          "default": "'paid'::text",
+          "is_primary_key": false,
+          "description": "Payment status (paid, pending, failed, refunded)"
+        }
+      ],
+      "foreign_keys": [
+        {
+          "column": "order_id",
+          "column_description": "Foreign key referencing orders (one payment per order)",
+          "references_table": "orders",
+          "references_table_description": "Customer orders placed at restaurant",
+          "references_column": "id",
+          "references_column_description": "Unique identifier for order"
+        }
+      ]
+    },
+    {
+      "table_name": "recipe_items",
+      "description": "Defines recipes by listing ingredients needed for each menu item",
+      "columns": [
+        {
+          "name": "menu_item_id",
+          "type": "integer",
+          "nullable": "NO",
+          "default": null,
+          "is_primary_key": true,
+          "description": "Foreign key referencing menu_items"
+        },
+        {
+          "name": "ingredient_id",
+          "type": "integer",
+          "nullable": "NO",
+          "default": null,
+          "is_primary_key": true,
+          "description": "Foreign key referencing ingredients"
+        },
+        {
+          "name": "qty_per_recipe",
+          "type": "numeric",
+          "nullable": "NO",
+          "default": null,
+          "is_primary_key": false,
+          "description": "Quantity of ingredient needed per recipe (in ingredient unit)"
+        }
+      ],
+      "foreign_keys": [
+        {
+          "column": "menu_item_id",
+          "column_description": "Foreign key referencing menu_items",
+          "references_table": "menu_items",
+          "references_table_description": "Menu items/dishes available for ordering",
+          "references_column": "id",
+          "references_column_description": "Unique identifier for menu item"
+        },
+        {
+          "column": "ingredient_id",
+          "column_description": "Foreign key referencing ingredients",
+          "references_table": "ingredients",
+          "references_table_description": "Individual ingredients/raw materials used in recipes",
+          "references_column": "id",
+          "references_column_description": "Unique identifier for ingredient"
+        }
+      ]
+    },
+    {
+      "table_name": "reservations",
+      "description": "Table reservations/bookings by customers",
+      "columns": [
+        {
+          "name": "id",
+          "type": "integer",
+          "nullable": "NO",
+          "default": "nextval('reservations_id_seq'::regclass)",
+          "is_primary_key": true,
+          "description": "Unique identifier for reservation"
+        },
+        {
+          "name": "table_id",
+          "type": "integer",
+          "nullable": "YES",
+          "default": null,
+          "is_primary_key": false,
+          "description": "Foreign key referencing tables"
+        },
+        {
+          "name": "customer_id",
+          "type": "integer",
+          "nullable": "YES",
+          "default": null,
+          "is_primary_key": false,
+          "description": "Foreign key referencing customers"
+        },
+        {
+          "name": "start_time",
+          "type": "timestamp without time zone",
+          "nullable": "NO",
+          "default": null,
+          "is_primary_key": false,
+          "description": "Reservation start time"
+        },
+        {
+          "name": "end_time",
+          "type": "timestamp without time zone",
+          "nullable": "NO",
+          "default": null,
+          "is_primary_key": false,
+          "description": "Reservation end time"
+        },
+        {
+          "name": "status",
+          "type": "text",
+          "nullable": "NO",
+          "default": "'booked'::text",
+          "is_primary_key": false,
+          "description": "Reservation status (booked, checked_in, no_show, cancelled)"
+        }
+      ],
+      "foreign_keys": [
+        {
+          "column": "table_id",
+          "column_description": "Foreign key referencing tables",
+          "references_table": "tables",
+          "references_table_description": "Physical dining tables at restaurant locations",
+          "references_column": "id",
+          "references_column_description": "Unique identifier for table"
+        },
+        {
+          "column": "customer_id",
+          "column_description": "Foreign key referencing customers",
+          "references_table": "customers",
+          "references_table_description": "Customer profiles and contact information",
+          "references_column": "id",
+          "references_column_description": "Unique identifier for customer"
+        }
+      ]
+    },
+    {
+      "table_name": "roles",
+      "description": "Employee roles/job titles (Chef, Waiter, Manager, etc.)",
+      "columns": [
+        {
+          "name": "id",
+          "type": "integer",
+          "nullable": "NO",
+          "default": "nextval('roles_id_seq'::regclass)",
+          "is_primary_key": true,
+          "description": "Unique identifier for role"
+        },
+        {
+          "name": "role_name",
+          "type": "character varying",
+          "nullable": "NO",
+          "default": null,
+          "is_primary_key": false,
+          "description": "Name of the job role (must be unique)"
+        }
+      ],
+      "foreign_keys": []
+    },
+    {
+      "table_name": "shifts",
+      "description": "Employee work shifts/schedules",
+      "columns": [
+        {
+          "name": "id",
+          "type": "integer",
+          "nullable": "NO",
+          "default": "nextval('shifts_id_seq'::regclass)",
+          "is_primary_key": true,
+          "description": "Unique identifier for shift"
+        },
+        {
+          "name": "employee_id",
+          "type": "integer",
+          "nullable": "YES",
+          "default": null,
+          "is_primary_key": false,
+          "description": "Foreign key referencing employee"
+        },
+        {
+          "name": "location_id",
+          "type": "integer",
+          "nullable": "YES",
+          "default": null,
+          "is_primary_key": false,
+          "description": "Foreign key referencing location"
+        },
+        {
+          "name": "shift_start",
+          "type": "timestamp without time zone",
+          "nullable": "NO",
+          "default": null,
+          "is_primary_key": false,
+          "description": "Start time of work shift"
+        },
+        {
+          "name": "shift_end",
+          "type": "timestamp without time zone",
+          "nullable": "NO",
+          "default": null,
+          "is_primary_key": false,
+          "description": "End time of work shift"
+        }
+      ],
+      "foreign_keys": [
+        {
+          "column": "employee_id",
+          "column_description": "Foreign key referencing employee",
+          "references_table": "employee",
+          "references_table_description": "Staff members working at restaurant locations",
+          "references_column": "id",
+          "references_column_description": "Unique identifier for employee"
+        },
+        {
+          "column": "location_id",
+          "column_description": "Foreign key referencing location",
+          "references_table": "location",
+          "references_table_description": "Stores information about restaurant branches/locations",
+          "references_column": "id",
+          "references_column_description": "Unique identifier for location"
+        }
+      ]
+    },
+    {
+      "table_name": "supplier",
+      "description": "Ingredient suppliers/vendors",
+      "columns": [
+        {
+          "name": "id",
+          "type": "integer",
+          "nullable": "NO",
+          "default": "nextval('supplier_id_seq'::regclass)",
+          "is_primary_key": true,
+          "description": "Unique identifier for supplier"
+        },
+        {
+          "name": "name",
+          "type": "text",
+          "nullable": "NO",
+          "default": null,
+          "is_primary_key": false,
+          "description": "Supplier company name"
+        }
+      ],
+      "foreign_keys": []
+    },
+    {
+      "table_name": "supplier_items",
+      "description": "Pricing of ingredients from different suppliers",
+      "columns": [
+        {
+          "name": "supplier_id",
+          "type": "integer",
+          "nullable": "NO",
+          "default": null,
+          "is_primary_key": true,
+          "description": "Foreign key referencing supplier"
+        },
+        {
+          "name": "ingredient_id",
+          "type": "integer",
+          "nullable": "NO",
+          "default": null,
+          "is_primary_key": true,
+          "description": "Foreign key referencing ingredients"
+        },
+        {
+          "name": "unit_cost",
+          "type": "numeric",
+          "nullable": "NO",
+          "default": null,
+          "is_primary_key": false,
+          "description": "Cost per unit of ingredient from this supplier"
+        }
+      ],
+      "foreign_keys": [
+        {
+          "column": "supplier_id",
+          "column_description": "Foreign key referencing supplier",
+          "references_table": "supplier",
+          "references_table_description": "Ingredient suppliers/vendors",
+          "references_column": "id",
+          "references_column_description": "Unique identifier for supplier"
+        },
+        {
+          "column": "ingredient_id",
+          "column_description": "Foreign key referencing ingredients",
+          "references_table": "ingredients",
+          "references_table_description": "Individual ingredients/raw materials used in recipes",
+          "references_column": "id",
+          "references_column_description": "Unique identifier for ingredient"
+        }
+      ]
+    },
+    {
+      "table_name": "tables",
+      "description": "Physical dining tables at restaurant locations",
+      "columns": [
+        {
+          "name": "id",
+          "type": "integer",
+          "nullable": "NO",
+          "default": "nextval('tables_id_seq'::regclass)",
+          "is_primary_key": true,
+          "description": "Unique identifier for table"
+        },
+        {
+          "name": "table_catalog",
+          "type": "name",
+          "nullable": "YES",
+          "default": null,
+          "is_primary_key": false,
+          "description": null
+        },
+        {
+          "name": "table_schema",
+          "type": "name",
+          "nullable": "YES",
+          "default": null,
+          "is_primary_key": false,
+          "description": null
+        },
+        {
+          "name": "location_id",
+          "type": "integer",
+          "nullable": "NO",
+          "default": null,
+          "is_primary_key": false,
+          "description": "Foreign key referencing location"
+        },
+        {
+          "name": "table_number",
+          "type": "integer",
+          "nullable": "NO",
+          "default": null,
+          "is_primary_key": false,
+          "description": "Table number within location"
+        },
+        {
+          "name": "table_name",
+          "type": "name",
+          "nullable": "YES",
+          "default": null,
+          "is_primary_key": false,
+          "description": null
+        },
+        {
+          "name": "capacity",
+          "type": "integer",
+          "nullable": "NO",
+          "default": null,
+          "is_primary_key": false,
+          "description": "Number of people the table can seat"
+        },
+        {
+          "name": "table_type",
+          "type": "character varying",
+          "nullable": "YES",
+          "default": null,
+          "is_primary_key": false,
+          "description": null
+        },
+        {
+          "name": "self_referencing_column_name",
+          "type": "name",
+          "nullable": "YES",
+          "default": null,
+          "is_primary_key": false,
+          "description": null
+        },
+        {
+          "name": "reference_generation",
+          "type": "character varying",
+          "nullable": "YES",
+          "default": null,
+          "is_primary_key": false,
+          "description": null
+        },
+        {
+          "name": "user_defined_type_catalog",
+          "type": "name",
+          "nullable": "YES",
+          "default": null,
+          "is_primary_key": false,
+          "description": null
+        },
+        {
+          "name": "user_defined_type_schema",
+          "type": "name",
+          "nullable": "YES",
+          "default": null,
+          "is_primary_key": false,
+          "description": null
+        },
+        {
+          "name": "user_defined_type_name",
+          "type": "name",
+          "nullable": "YES",
+          "default": null,
+          "is_primary_key": false,
+          "description": null
+        },
+        {
+          "name": "is_insertable_into",
+          "type": "character varying",
+          "nullable": "YES",
+          "default": null,
+          "is_primary_key": false,
+          "description": null
+        },
+        {
+          "name": "is_typed",
+          "type": "character varying",
+          "nullable": "YES",
+          "default": null,
+          "is_primary_key": false,
+          "description": null
+        },
+        {
+          "name": "commit_action",
+          "type": "character varying",
+          "nullable": "YES",
+          "default": null,
+          "is_primary_key": false,
+          "description": null
+        }
+      ],
+      "foreign_keys": [
+        {
+          "column": "location_id",
+          "column_description": "Foreign key referencing location",
+          "references_table": "location",
+          "references_table_description": "Stores information about restaurant branches/locations",
+          "references_column": "id",
+          "references_column_description": "Unique identifier for location"
+        }
+      ]
+    }
+  ]
+}
