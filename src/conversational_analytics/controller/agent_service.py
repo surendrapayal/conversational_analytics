@@ -52,9 +52,9 @@ def stream_agent(request: AgentRequest) -> Generator[str, None, None]:
         input_state = {"user_input": request.query, "messages": [HumanMessage(content=request.query)]}
 
         for chunk in _graph.stream(input_state, config=config, stream_mode="updates"):
-            logger.info(f"chunk received: {chunk}")
+            # logger.info(f"chunk received: {chunk}")
             for node_name, state_update in chunk.items():
-                logger.info(f"Processing node '{node_name}'")
+                # logger.info(f"Processing node '{node_name}'")
                 if node_name == "agent":
                     for msg in state_update.get("messages", []):
                         if not isinstance(msg, AIMessage):
@@ -64,28 +64,28 @@ def stream_agent(request: AgentRequest) -> Generator[str, None, None]:
                         if isinstance(msg.content, list):
                             for part in msg.content:
                                 if isinstance(part, dict) and part.get("type") == "thinking" and part.get("thinking"):
-                                    logger.info("Yielding thinking event")
+                                    # logger.info("Yielding thinking event")
                                     yield _sse("thinking", {"reasoning": part["thinking"].strip()}, request.session_id)
 
                         # 2. emit each tool call the agent decided to make
                         for tc in msg.tool_calls:
-                            logger.info(f"Yielding tool_call event: {tc['name']}")
+                            # logger.info(f"Yielding tool_call event: {tc['name']}")
                             yield _sse("tool_call", {"tool": tc["name"], "args": tc["args"]}, request.session_id)
 
                 elif node_name == "tools":
                     for msg in state_update.get("messages", []):
                         if isinstance(msg, ToolMessage):
                             # 3. emit the raw tool output
-                            logger.info(f"Yielding tool_result event: {msg.name}")
+                            # logger.info(f"Yielding tool_result event: {msg.name}")
                             yield _sse("tool_result", {"tool": msg.name, "output": msg.content}, request.session_id)
 
                 elif node_name == "response_formatter":
                     final = state_update.get("final_response", "")
                     if final:
-                        logger.info(f"Yielding response event with {len(final)} chars")
+                        # logger.info(f"Yielding response event with {len(final)} chars")
                         yield _sse("response", {"text": final}, request.session_id)
 
-        logger.info("Yielding done event")
+        # logger.info("Yielding done event")
         yield _sse("done", {"status": "completed"}, request.session_id)
         logger.info(f"Stream completed successfully for user={request.user_id} session={request.session_id}")
         

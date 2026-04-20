@@ -13,7 +13,7 @@ docker run -d `
   pgvector/pgvector:pg18
 
 
-
+docker exec -it my-postgres-db psql -U admin_user -d zenvyra
 
 
 
@@ -152,4 +152,3 @@ CREATE INDEX ON messages(conversation_id);
 CREATE INDEX ON conversations(created_at);
 CREATE INDEX ON embeddings USING ivfflat (embedding vector_cosine_ops);
 
-docker exec -it my-postgres-db psql -U admin_user -d zenvyra

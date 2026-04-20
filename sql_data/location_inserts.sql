@@ -1,11 +1,11 @@
 -- Insert data into location
--- Generated at: 2026-04-19T14:26:33.580193
+-- Generated at: 2026-04-20T10:07:35.616329
 
-INSERT INTO location (name, address, timezone) VALUES ('Downtown Diner', '682 Lamb Island Apt. 046, Lake Deniseberg, MO 49356', 'MST') RETURNING id;
-INSERT INTO location (name, address, timezone) VALUES ('Uptown Bistro', '3657 Anna Mountain Apt. 485, New Dorischester, AZ 65297', 'CST') RETURNING id;
-INSERT INTO location (name, address, timezone) VALUES ('Riverside Cafe', '5957 Michael Bypass Suite 235, South Johnburgh, NY 91228', 'EST') RETURNING id;
-INSERT INTO location (name, address, timezone) VALUES ('Mountain View Restaurant', '8789 Griffin Canyon, West Courtney, NJ 05976', 'CST') RETURNING id;
-INSERT INTO location (name, address, timezone) VALUES ('Lakeside Grill', '359 Jennifer Plains, Christianland, AS 40964', 'PST') RETURNING id;
-INSERT INTO location (name, address, timezone) VALUES ('Harbor Point Eatery', '559 Church Mountain, Port Claudiaview, VT 17202', 'CST') RETURNING id;
-INSERT INTO location (name, address, timezone) VALUES ('Sunset Plaza Restaurant', 'USS Shaffer, FPO AP 04301', 'MST') RETURNING id;
-INSERT INTO location (name, address, timezone) VALUES ('Garden District Cafe', '86333 Taylor Club Suite 413, Lake Michaelhaven, HI 51992', 'CST') RETURNING id;
+INSERT INTO location (name, address, timezone) VALUES ('Downtown Diner', '4892 Brian Spur Suite 803, Mistyland, TN 16373', 'CST') RETURNING id;
+INSERT INTO location (name, address, timezone) VALUES ('Uptown Bistro', 'USNV Carr, FPO AP 00799', 'PST') RETURNING id;
+INSERT INTO location (name, address, timezone) VALUES ('Riverside Cafe', '969 Williamson Underpass Suite 879, West Joshuastad, WY 01139', 'CST') RETURNING id;
+INSERT INTO location (name, address, timezone) VALUES ('Mountain View Restaurant', '616 Carly Lane Suite 524, North Erinview, NH 68283', 'EST') RETURNING id;
+INSERT INTO location (name, address, timezone) VALUES ('Lakeside Grill', '5297 Arnold Via Suite 704, Muellerbury, IL 51509', 'UTC') RETURNING id;
+INSERT INTO location (name, address, timezone) VALUES ('Harbor Point Eatery', '51177 Lorraine View Suite 256, Jeffreychester, OH 41433', 'UTC') RETURNING id;
+INSERT INTO location (name, address, timezone) VALUES ('Sunset Plaza Restaurant', '82778 Katherine Harbor Apt. 904, East Amy, NH 91628', 'CST') RETURNING id;
+INSERT INTO location (name, address, timezone) VALUES ('Garden District Cafe', '88523 Janet Cove Apt. 254, Hooverton, AZ 36482', 'PST') RETURNING id;
