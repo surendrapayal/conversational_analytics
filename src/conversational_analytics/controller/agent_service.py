@@ -16,7 +16,11 @@ _graph = build_graph()  # built once, checkpointer is attached
 def run_agent(request: AgentRequest) -> AgentResponse:
     config = {"configurable": {"thread_id": request.session_id}}
     result = _graph.invoke(
-        {"user_input": request.query, "messages": [HumanMessage(content=request.query)]},
+        {
+            "user_input": request.query,
+            "messages": [HumanMessage(content=request.query)],
+            "role": request.role,
+        },
         config=config,
     )
     logger.info(f"Agent completed for user={request.user_id} session={request.session_id}")
@@ -49,7 +53,11 @@ def stream_agent(request: AgentRequest) -> Generator[str, None, None]:
     try:
         logger.info(f"stream_agent started for user={request.user_id} session={request.session_id}")
         config = {"configurable": {"thread_id": request.session_id}}
-        input_state = {"user_input": request.query, "messages": [HumanMessage(content=request.query)]}
+        input_state = {
+            "user_input": request.query,
+            "messages": [HumanMessage(content=request.query)],
+            "role": request.role,
+        }
 
         for chunk in _graph.stream(input_state, config=config, stream_mode="updates"):
             # logger.info(f"chunk received: {chunk}")

@@ -8,25 +8,28 @@ from conversational_analytics.llm import get_llm
 
 logger = logging.getLogger(__name__)
 
-_tools = get_sql_tools()  # initialised once at module load
+_tools = get_sql_tools()  # default tools — no role
 
 
 def agent_node(state: AgentState) -> dict:
     """Calls the LLM with tools bound and appends the AI response to messages."""
     cfg = get_settings()
     tools_invoked = state.get("tools_invoked", [])
+    role = state.get("role")
+    tools = get_sql_tools(role)
+    system_msg = get_system_message(role)
 
     # guard: if max iterations reached, force the LLM to respond without tools
     if len(tools_invoked) >= cfg.agent_max_iterations:
         logger.warning(f"Max iterations ({cfg.agent_max_iterations}) reached — forcing final response")
         response: AIMessage = get_llm().invoke(
-            [get_system_message()]
+            [system_msg]
             + state["messages"]
             + [HumanMessage(content="You have used the maximum number of tool calls. Based on what you have found so far, provide your final answer now. Do not call any more tools.")]
         )
     else:
-        response: AIMessage = get_llm().bind_tools(_tools).invoke(
-            [get_system_message()] + state["messages"]
+        response: AIMessage = get_llm().bind_tools(tools).invoke(
+            [system_msg] + state["messages"]
         )
 
     thinking = response.additional_kwargs.get("thinking", "") if hasattr(response, "additional_kwargs") else ""
@@ -42,7 +45,9 @@ def agent_node(state: AgentState) -> dict:
 
 def tools_node(state: AgentState) -> dict:
     """Runs ToolNode and tracks which tools were invoked and their results."""
-    result = ToolNode(_tools).invoke(state)
+    role = state.get("role")
+    tools = get_sql_tools(role)
+    result = ToolNode(tools).invoke(state)
 
     tool_messages: list[ToolMessage] = [m for m in result.get("messages", []) if isinstance(m, ToolMessage)]
     tools_invoked = [m.name for m in tool_messages]

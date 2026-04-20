@@ -21,29 +21,9 @@ Rules:
 - Format numeric results clearly (currency with 2 decimal places)
 """
 
-
-def _resolve_visible_tables(cfg, all_db_tables: list[str]) -> list[str]:
-    """Applies include/ignore hierarchy to determine visible tables.
-
-    Hierarchy:
-      1. include_tables set → only those tables (whitelist)
-      2. ignore_tables set  → all tables except those (blacklist)
-      3. neither set        → all tables
-    """
-    include = cfg.db_include_tables_list
-    ignore = cfg.db_ignore_tables_list
-
-    if include:
-        visible = [t for t in all_db_tables if t in include]
-        logger.info(f"include_tables active: {visible}")
-        return visible
-
-    if ignore:
-        visible = [t for t in all_db_tables if t not in ignore]
-        logger.info(f"ignore_tables active, excluded: {ignore}")
-        return visible
-
-    return all_db_tables
+# Role context holds everything needed per role
+_role_cache: dict[str, dict] = {}  # {role: {db, tools, system_message}}
+_default_context: dict = {}         # used when no role is specified
 
 
 def _apply_column_restrictions(descriptions: dict[str, str], restrict_map: dict[str, list[str]]) -> dict[str, str]:
@@ -59,39 +39,36 @@ def _apply_column_restrictions(descriptions: dict[str, str], restrict_map: dict[
     return descriptions
 
 
-def _build_custom_table_info(visible_tables: list[str]) -> dict[str, str] | None:
-    """Reads live DB schema and builds custom_table_info only when column restrictions are set."""
-    cfg = get_settings()
-    restrict_map = cfg.db_restrict_columns_map
-
+def _build_custom_table_info(visible_tables: list[str], restrict_map: dict[str, list[str]]) -> dict[str, str] | None:
+    """Builds custom_table_info from live DB only when column restrictions are set."""
     if not restrict_map:
         return None
-
     descriptions = get_table_descriptions(visible_tables)
     if not descriptions:
         return None
-
-    descriptions = _apply_column_restrictions(descriptions, restrict_map)
-    logger.info(f"Built custom_table_info for {len(descriptions)} tables")
-    return descriptions
+    return _apply_column_restrictions(descriptions, restrict_map)
 
 
-def _init() -> tuple[SQLDatabase, list, SystemMessage]:
-    """Runs once at startup — resolves visible tables, builds DB, tools and system message."""
+def _build_context(include_tables: list[str] | None, ignore_tables: list[str] | None, restrict_map: dict[str, list[str]]) -> dict:
+    """Builds and returns a context dict {db, tools, system_message} for a given table filter."""
     cfg = get_settings()
-    include = cfg.db_include_tables_list or None
-    ignore = cfg.db_ignore_tables_list or None
 
-    # single DB connection to resolve all table names
     base_db = SQLDatabase.from_uri(cfg.db_uri)
     all_tables = list(base_db.get_usable_table_names())
-    visible_tables = _resolve_visible_tables(cfg, all_tables)
 
-    # build final DB with filters and optional custom_table_info
-    custom_table_info = _build_custom_table_info(visible_tables)
+    # resolve visible tables
+    if include_tables:
+        visible_tables = [t for t in all_tables if t in include_tables]
+    elif ignore_tables:
+        visible_tables = [t for t in all_tables if t not in ignore_tables]
+    else:
+        visible_tables = all_tables
+
+    # build DB with role-specific restrict map
+    custom_table_info = _build_custom_table_info(visible_tables, restrict_map)
     db_kwargs = {
-        "ignore_tables": ignore,
-        "include_tables": include,
+        "include_tables": include_tables or None,
+        "ignore_tables": ignore_tables or None,
         "sample_rows_in_table_info": cfg.db_sample_rows_in_table_info,
         "view_support": cfg.db_view_support,
     }
@@ -99,29 +76,54 @@ def _init() -> tuple[SQLDatabase, list, SystemMessage]:
         db_kwargs["custom_table_info"] = custom_table_info
 
     db = SQLDatabase.from_uri(cfg.db_uri, **db_kwargs)
-
-    # build tools
     tools = SQLDatabaseToolkit(db=db, llm=get_llm()).get_tools()
-
-    # build system message with only visible tables
-    tables_str = ", ".join(sorted(visible_tables))
-    system_message = SystemMessage(content=SYSTEM_PROMPT_TEMPLATE.format(tables=tables_str))
-
-    logger.info(f"SQL tools initialised — visible tables: {tables_str}")
-    return db, tools, system_message
+    system_message = SystemMessage(
+        content=SYSTEM_PROMPT_TEMPLATE.format(tables=", ".join(sorted(visible_tables)))
+    )
+    return {"db": db, "tools": tools, "system_message": system_message}
 
 
-# ── module-level singletons initialised once at startup ───────────────
-_db, _sql_tools, _system_message = _init()
+def _init():
+    """Runs once at startup — builds context for each role and the default context."""
+    cfg = get_settings()
+
+    # build default context using global DB_RESTRICT_COLUMNS
+    global _default_context
+    _default_context = _build_context(
+        include_tables=cfg.db_include_tables_list or None,
+        ignore_tables=cfg.db_ignore_tables_list or None,
+        restrict_map=cfg.db_restrict_columns_map,
+    )
+    logger.info("Default SQL context initialised")
+
+    # build one context per role using role-specific restrict columns
+    for role, tables in cfg.role_tables_map.items():
+        restrict_map = cfg.get_restrict_columns_for_role(role)
+        _role_cache[role] = _build_context(include_tables=tables, ignore_tables=None, restrict_map=restrict_map)
+        logger.info(f"Role '{role}' SQL context initialised — tables: {', '.join(sorted(tables))}, restricted columns: {restrict_map}")
 
 
-def get_db() -> SQLDatabase:
-    return _db
+# ── initialise everything at module load ─────────────────────────────
+_init()
 
 
-def get_sql_tools() -> list:
-    return _sql_tools
+def _get_context(role: str | None) -> dict:
+    """Returns the cached context for the given role, or default if role is None/unknown."""
+    if role:
+        role = role.lower()
+        if role not in _role_cache:
+            raise ValueError(f"Unknown role '{role}'. Defined roles: {list(_role_cache.keys())}")
+        return _role_cache[role]
+    return _default_context
 
 
-def get_system_message() -> SystemMessage:
-    return _system_message
+def get_db(role: str | None = None) -> SQLDatabase:
+    return _get_context(role)["db"]
+
+
+def get_sql_tools(role: str | None = None) -> list:
+    return _get_context(role)["tools"]
+
+
+def get_system_message(role: str | None = None) -> SystemMessage:
+    return _get_context(role)["system_message"]

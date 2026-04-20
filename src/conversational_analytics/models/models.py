@@ -8,12 +8,13 @@ from typing_extensions import TypedDict
 
 class AgentState(TypedDict):
     user_input: str
-    messages: Annotated[list, add_messages]  # "messages" key required by ToolNode
+    messages: Annotated[list, add_messages]
     intermediate_steps: list[str]
     tool_results: list[str]
     final_response: str
     thinking: str
     tools_invoked: list[str]
+    role: str | None
 
 
 # ── Request / Response ────────────────────────────────────────────────
@@ -22,6 +23,7 @@ class AgentRequest(BaseModel):
     user_id: str
     session_id: str
     query: str
+    role: str | None = None
 
 
 class AgentMetadata(BaseModel):

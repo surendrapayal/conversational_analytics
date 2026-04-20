@@ -19,10 +19,11 @@ class QueryRequest(BaseModel):
 def query(
     body: QueryRequest,
     session_id: str = Header(..., description="Session ID for conversation memory"),
+    role: str | None = Header(None, description="User role: admin | general_manager | location_manager | staff"),
 ):
     """Accepts a natural language query and returns a SQL-backed response."""
     try:
-        request = AgentRequest(user_id=body.user_id, session_id=session_id, query=body.query)
+        request = AgentRequest(user_id=body.user_id, session_id=session_id, query=body.query, role=role)
         return run_agent(request)
     except Exception as e:
         logger.error(f"Agent error for session={session_id}: {e}")
@@ -33,17 +34,18 @@ def query(
 def stream(
     body: QueryRequest,
     session_id: str = Header(..., description="Session ID for conversation memory"),
+    role: str | None = Header(None, description="User role: admin | general_manager | location_manager | staff"),
 ):
     """Streams agent execution as Server-Sent Events (SSE).
     Events: thinking | tool_call | tool_result | response | done
     """
     try:
-        logger.info(f"Stream request received: user={body.user_id}, session={session_id}")
-        request = AgentRequest(user_id=body.user_id, session_id=session_id, query=body.query)
+        logger.info(f"Stream request received: user={body.user_id}, session={session_id}, role={role}")
+        request = AgentRequest(user_id=body.user_id, session_id=session_id, query=body.query, role=role)
         return StreamingResponse(
             stream_agent(request),
             media_type="text/event-stream",
-            headers={"X-Accel-Buffering": "no"}  # Disable proxy buffering
+            headers={"X-Accel-Buffering": "no"}
         )
     except Exception as e:
         logger.error(f"Stream error for session={session_id}: {e}", exc_info=True)
