@@ -81,11 +81,15 @@ class Settings(BaseSettings):
     @property
     def role_tables_map(self) -> dict[str, list[str]]:
         """Dynamically discovers all ROLE_<NAME>=tables entries from env vars.
-        Excludes ROLE_<NAME>_RESTRICT_COLUMNS entries.
+        Excludes ROLE_<NAME>_RESTRICT_COLUMNS and ROLE_<NAME>_ROW_FILTERS entries.
         """
         result: dict[str, list[str]] = {}
         for key, value in os.environ.items():
-            if not key.startswith("ROLE_") or key.endswith("_RESTRICT_COLUMNS") or not value.strip():
+            if not key.startswith("ROLE_"):
+                continue
+            if key.endswith("_RESTRICT_COLUMNS") or key.endswith("_ROW_FILTERS"):
+                continue
+            if not value.strip():
                 continue
             role = key[len("ROLE_"):].lower()
             result[role] = [t.strip() for t in value.split(",") if t.strip()]
@@ -96,12 +100,9 @@ class Settings(BaseSettings):
         return self.role_tables_map.get(role.lower())
 
     def get_restrict_columns_for_role(self, role: str) -> dict[str, list[str]]:
-        """Returns column restriction map for a role, falls back to global DB_RESTRICT_COLUMNS.
-        Looks for ROLE_<NAME>_RESTRICT_COLUMNS in env vars dynamically.
-        """
+        """Returns column restriction map for a role, falls back to global DB_RESTRICT_COLUMNS."""
         env_key = f"ROLE_{role.upper()}_RESTRICT_COLUMNS"
         raw = os.environ.get(env_key, "").strip() or self.db_restrict_columns
-
         result: dict[str, list[str]] = {}
         for entry in raw.split(","):
             entry = entry.strip()
@@ -109,6 +110,31 @@ class Settings(BaseSettings):
                 continue
             table, col = entry.split(".", 1)
             result.setdefault(table.strip(), []).append(col.strip())
+        return result
+
+    def get_row_filters_for_role(self, role: str) -> dict[str, str]:
+        """Returns {table: where_clause} from ROLE_<NAME>_ROW_FILTERS=table:condition,...
+
+        Format in .env:
+          ROLE_LOCATION_MANAGER_ROW_FILTERS=orders:location_id=1,shifts:location_id=1
+
+        The condition after ':' is used directly as a SQL WHERE clause.
+        Use '|' as separator if a condition contains a comma:
+          ROLE_LOCATION_MANAGER_ROW_FILTERS=orders:location_id=1|shifts:location_id=1
+        """
+        env_key = f"ROLE_{role.upper()}_ROW_FILTERS"
+        raw = os.environ.get(env_key, "").strip()
+        if not raw:
+            return {}
+        result: dict[str, str] = {}
+        # support both comma and pipe as entry separator
+        separator = "|" if "|" in raw else ","
+        for entry in raw.split(separator):
+            entry = entry.strip()
+            if ":" not in entry:
+                continue
+            table, condition = entry.split(":", 1)
+            result[table.strip()] = condition.strip()
         return result
 
     # ── Validators ────────────────────────────────────────────────────

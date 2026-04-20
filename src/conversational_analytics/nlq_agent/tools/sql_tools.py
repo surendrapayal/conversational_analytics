@@ -5,6 +5,7 @@ from langchain_community.agent_toolkits import SQLDatabaseToolkit
 from langchain_core.messages import SystemMessage
 from conversational_analytics.config import get_settings
 from conversational_analytics.db.schema_documenter import get_table_descriptions
+from conversational_analytics.db.row_access import create_row_filter_views
 from conversational_analytics.llm import get_llm
 
 logger = logging.getLogger(__name__)
@@ -49,7 +50,8 @@ def _build_custom_table_info(visible_tables: list[str], restrict_map: dict[str, 
     return _apply_column_restrictions(descriptions, restrict_map)
 
 
-def _build_context(include_tables: list[str] | None, ignore_tables: list[str] | None, restrict_map: dict[str, list[str]]) -> dict:
+def _build_context(include_tables: list[str] | None, ignore_tables: list[str] | None,
+                   restrict_map: dict[str, list[str]], row_filters: dict[str, str] | None = None) -> dict:
     """Builds and returns a context dict {db, tools, system_message} for a given table filter."""
     cfg = get_settings()
 
@@ -64,13 +66,24 @@ def _build_context(include_tables: list[str] | None, ignore_tables: list[str] | 
     else:
         visible_tables = all_tables
 
+    # apply row-level filters — create views and swap table names with view names
+    if row_filters:
+        role_name = "role"  # placeholder, overridden in _init
+        view_map = create_row_filter_views(role_name, row_filters)
+        # replace filtered tables with their views in visible_tables
+        visible_tables = [view_map.get(t, t) for t in visible_tables]
+        include_tables = visible_tables  # point DB to views
+
+    # enable view_support if any views are in visible_tables
+    view_support = cfg.db_view_support or bool(row_filters)
+
     # build DB with role-specific restrict map
     custom_table_info = _build_custom_table_info(visible_tables, restrict_map)
     db_kwargs = {
         "include_tables": include_tables or None,
         "ignore_tables": ignore_tables or None,
         "sample_rows_in_table_info": cfg.db_sample_rows_in_table_info,
-        "view_support": cfg.db_view_support,
+        "view_support": view_support,
     }
     if custom_table_info:
         db_kwargs["custom_table_info"] = custom_table_info
@@ -87,20 +100,44 @@ def _init():
     """Runs once at startup — builds context for each role and the default context."""
     cfg = get_settings()
 
-    # build default context using global DB_RESTRICT_COLUMNS
+    # build default context using global DB_RESTRICT_COLUMNS, no row filters
     global _default_context
     _default_context = _build_context(
         include_tables=cfg.db_include_tables_list or None,
         ignore_tables=cfg.db_ignore_tables_list or None,
         restrict_map=cfg.db_restrict_columns_map,
+        row_filters=None,
     )
     logger.info("Default SQL context initialised")
 
-    # build one context per role using role-specific restrict columns
+    # build one context per role
     for role, tables in cfg.role_tables_map.items():
         restrict_map = cfg.get_restrict_columns_for_role(role)
-        _role_cache[role] = _build_context(include_tables=tables, ignore_tables=None, restrict_map=restrict_map)
-        logger.info(f"Role '{role}' SQL context initialised — tables: {', '.join(sorted(tables))}, restricted columns: {restrict_map}")
+        row_filters = cfg.get_row_filters_for_role(role) or None
+
+        # patch _build_context to use correct role name for view creation
+        if row_filters:
+            view_map = create_row_filter_views(role, row_filters)
+            # replace filtered tables with view names in include list
+            resolved = [view_map.get(t, t) for t in tables]
+            _role_cache[role] = _build_context(
+                include_tables=resolved,
+                ignore_tables=None,
+                restrict_map=restrict_map,
+                row_filters=None,  # views already created, no need to recreate
+            )
+        else:
+            _role_cache[role] = _build_context(
+                include_tables=tables,
+                ignore_tables=None,
+                restrict_map=restrict_map,
+                row_filters=None,
+            )
+        logger.info(
+            f"Role '{role}' initialised — tables: {', '.join(sorted(tables))}"
+            + (f", row filters: {row_filters}" if row_filters else "")
+            + (f", restricted columns: {restrict_map}" if restrict_map else "")
+        )
 
 
 # ── initialise everything at module load ─────────────────────────────
