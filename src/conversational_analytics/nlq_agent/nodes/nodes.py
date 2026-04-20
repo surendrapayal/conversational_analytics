@@ -1,8 +1,9 @@
 import logging
-from langchain_core.messages import AIMessage, ToolMessage
+from langchain_core.messages import AIMessage, ToolMessage, HumanMessage
 from langgraph.prebuilt import ToolNode
 from conversational_analytics.models import AgentState
 from conversational_analytics.nlq_agent.tools import get_sql_tools, get_system_message
+from conversational_analytics.config import get_settings
 from conversational_analytics.llm import get_llm
 
 logger = logging.getLogger(__name__)
@@ -12,9 +13,22 @@ _tools = get_sql_tools()  # initialised once at module load
 
 def agent_node(state: AgentState) -> dict:
     """Calls the LLM with tools bound and appends the AI response to messages."""
-    response: AIMessage = get_llm().bind_tools(_tools).invoke(
-        [get_system_message()] + state["messages"]
-    )
+    cfg = get_settings()
+    tools_invoked = state.get("tools_invoked", [])
+
+    # guard: if max iterations reached, force the LLM to respond without tools
+    if len(tools_invoked) >= cfg.agent_max_iterations:
+        logger.warning(f"Max iterations ({cfg.agent_max_iterations}) reached — forcing final response")
+        response: AIMessage = get_llm().invoke(
+            [get_system_message()]
+            + state["messages"]
+            + [HumanMessage(content="You have used the maximum number of tool calls. Based on what you have found so far, provide your final answer now. Do not call any more tools.")]
+        )
+    else:
+        response: AIMessage = get_llm().bind_tools(_tools).invoke(
+            [get_system_message()] + state["messages"]
+        )
+
     thinking = response.additional_kwargs.get("thinking", "") if hasattr(response, "additional_kwargs") else ""
     step = f"Agent responded: {response.content[:100]}..." if response.content else "Agent invoked tools"
     logger.info(step)

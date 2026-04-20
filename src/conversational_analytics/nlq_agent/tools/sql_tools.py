@@ -9,18 +9,15 @@ from conversational_analytics.llm import get_llm
 
 logger = logging.getLogger(__name__)
 
-SYSTEM_PROMPT = """You are an expert SQL analyst for a restaurant management system.
-You have access to a PostgreSQL database with the following tables:
-customers, orders, order_items, menu_items, menu_categories, payments,
-reservations, employee, shifts, inventory, ingredients, loyalty_accounts,
-loyalty_txn, discounts, order_discounts, location, tables, roles,
-recipe_items, supplier, supplier_items.
+SYSTEM_PROMPT_TEMPLATE = """You are an expert SQL analyst for a restaurant management system.
+You have access to a PostgreSQL database with ONLY the following tables: {tables}
 
 Rules:
-- Always use sql_db_list_tables and sql_db_schema before writing queries
+- ONLY query the tables listed above. Do NOT attempt to access any other tables.
+- Use sql_db_list_tables to confirm available tables, then sql_db_schema before writing queries
 - Write efficient, read-only SELECT queries only
 - Never modify data (no INSERT, UPDATE, DELETE, DROP)
-- If unsure, ask for clarification
+- If the data needed to answer the question is not available in the listed tables or columns, say so clearly and stop — do NOT retry or look elsewhere
 - Format numeric results clearly (currency with 2 decimal places)
 """
 
@@ -111,4 +108,10 @@ def get_sql_tools() -> list:
 
 
 def get_system_message() -> SystemMessage:
-    return SystemMessage(content=SYSTEM_PROMPT)
+    """Returns a dynamic system message listing only the tables visible to the agent."""
+    cfg = get_settings()
+    temp_db = SQLDatabase.from_uri(cfg.db_uri)
+    all_tables = temp_db.get_usable_table_names()
+    visible_tables = _resolve_visible_tables(cfg, list(all_tables))
+    tables_str = ", ".join(sorted(visible_tables))
+    return SystemMessage(content=SYSTEM_PROMPT_TEMPLATE.format(tables=tables_str))
