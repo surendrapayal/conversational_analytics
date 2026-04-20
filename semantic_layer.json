@@ -1,0 +1,368 @@
+{
+  "database": "zenvyra",
+  "description": "Zenvyra Restaurant Management System — semantic layer for conversational analytics",
+
+  "domains": {
+
+    "sales": {
+      "description": "Revenue, orders and sales performance",
+      "metrics": {
+        "total_revenue": {
+          "description": "Total revenue from all completed orders (excludes cancelled/open)",
+          "sql": "SELECT SUM(total_amount) FROM orders WHERE status = 'completed'",
+          "unit": "USD"
+        },
+        "total_revenue_with_tax": {
+          "description": "Total revenue including tax from completed orders",
+          "sql": "SELECT SUM(total_amount + tax_amount) FROM orders WHERE status = 'completed'",
+          "unit": "USD"
+        },
+        "total_tips": {
+          "description": "Total tips collected from completed orders",
+          "sql": "SELECT SUM(tip_amount) FROM orders WHERE status = 'completed'",
+          "unit": "USD"
+        },
+        "average_order_value": {
+          "description": "Average revenue per completed order",
+          "sql": "SELECT AVG(total_amount) FROM orders WHERE status = 'completed'",
+          "unit": "USD"
+        },
+        "total_orders": {
+          "description": "Total number of orders placed (all statuses)",
+          "sql": "SELECT COUNT(*) FROM orders"
+        },
+        "completed_orders": {
+          "description": "Number of successfully completed orders",
+          "sql": "SELECT COUNT(*) FROM orders WHERE status = 'completed'"
+        },
+        "cancelled_orders": {
+          "description": "Number of cancelled orders",
+          "sql": "SELECT COUNT(*) FROM orders WHERE status = 'cancelled'"
+        },
+        "cancellation_rate": {
+          "description": "Percentage of orders that were cancelled",
+          "sql": "SELECT ROUND(100.0 * COUNT(*) FILTER (WHERE status = 'cancelled') / COUNT(*), 2) FROM orders",
+          "unit": "percent"
+        },
+        "revenue_by_location": {
+          "description": "Total revenue broken down by restaurant location",
+          "sql": "SELECT l.name AS location, SUM(o.total_amount) AS revenue FROM orders o JOIN location l ON o.location_id = l.id WHERE o.status = 'completed' GROUP BY l.name ORDER BY revenue DESC"
+        },
+        "revenue_by_day": {
+          "description": "Daily revenue trend for completed orders",
+          "sql": "SELECT DATE(order_time) AS date, SUM(total_amount) AS revenue FROM orders WHERE status = 'completed' GROUP BY DATE(order_time) ORDER BY date"
+        },
+        "revenue_by_month": {
+          "description": "Monthly revenue trend for completed orders",
+          "sql": "SELECT DATE_TRUNC('month', order_time) AS month, SUM(total_amount) AS revenue FROM orders WHERE status = 'completed' GROUP BY 1 ORDER BY 1"
+        }
+      }
+    },
+
+    "menu": {
+      "description": "Menu items, categories and pricing performance",
+      "metrics": {
+        "total_menu_items": {
+          "description": "Total number of menu items",
+          "sql": "SELECT COUNT(*) FROM menu_items"
+        },
+        "active_menu_items": {
+          "description": "Number of currently available menu items",
+          "sql": "SELECT COUNT(*) FROM menu_items WHERE is_active = true"
+        },
+        "top_selling_items": {
+          "description": "Top 10 best-selling menu items by total quantity ordered",
+          "sql": "SELECT mi.name, SUM(oi.quantity) AS total_sold FROM order_items oi JOIN menu_items mi ON oi.menu_item_id = mi.id GROUP BY mi.name ORDER BY total_sold DESC LIMIT 10"
+        },
+        "revenue_by_menu_item": {
+          "description": "Revenue generated per menu item from completed orders",
+          "sql": "SELECT mi.name, SUM(oi.quantity * oi.unit_price) AS revenue FROM order_items oi JOIN menu_items mi ON oi.menu_item_id = mi.id JOIN orders o ON oi.order_id = o.id WHERE o.status = 'completed' GROUP BY mi.name ORDER BY revenue DESC"
+        },
+        "revenue_by_category": {
+          "description": "Revenue broken down by menu category",
+          "sql": "SELECT mc.name AS category, SUM(oi.quantity * oi.unit_price) AS revenue FROM order_items oi JOIN menu_items mi ON oi.menu_item_id = mi.id JOIN menu_categories mc ON mi.category_id = mc.id JOIN orders o ON oi.order_id = o.id WHERE o.status = 'completed' GROUP BY mc.name ORDER BY revenue DESC"
+        },
+        "average_item_price": {
+          "description": "Average base price across all active menu items",
+          "sql": "SELECT AVG(base_price) FROM menu_items WHERE is_active = true",
+          "unit": "USD"
+        },
+        "items_never_ordered": {
+          "description": "Active menu items that have never been ordered",
+          "sql": "SELECT mi.name FROM menu_items mi WHERE mi.is_active = true AND mi.id NOT IN (SELECT DISTINCT menu_item_id FROM order_items)"
+        }
+      }
+    },
+
+    "customers": {
+      "description": "Customer base, retention and loyalty",
+      "metrics": {
+        "total_customers": {
+          "description": "Total number of registered customers",
+          "sql": "SELECT COUNT(*) FROM customers"
+        },
+        "customers_with_orders": {
+          "description": "Number of customers who have placed at least one order",
+          "sql": "SELECT COUNT(DISTINCT customer_id) FROM orders WHERE customer_id IS NOT NULL"
+        },
+        "walkin_orders": {
+          "description": "Number of orders placed by walk-in customers (no account)",
+          "sql": "SELECT COUNT(*) FROM orders WHERE customer_id IS NULL"
+        },
+        "top_customers_by_spend": {
+          "description": "Top 10 customers by total spend on completed orders",
+          "sql": "SELECT c.name, SUM(o.total_amount) AS total_spend FROM orders o JOIN customers c ON o.customer_id = c.id WHERE o.status = 'completed' GROUP BY c.name ORDER BY total_spend DESC LIMIT 10"
+        },
+        "customer_order_frequency": {
+          "description": "Average number of orders per customer",
+          "sql": "SELECT AVG(order_count) FROM (SELECT customer_id, COUNT(*) AS order_count FROM orders WHERE customer_id IS NOT NULL GROUP BY customer_id) sub"
+        },
+        "new_customers_by_month": {
+          "description": "Number of new customers registered per month (approximated by first order date)",
+          "sql": "SELECT DATE_TRUNC('month', MIN(order_time)) AS month, COUNT(DISTINCT customer_id) AS new_customers FROM orders WHERE customer_id IS NOT NULL GROUP BY 1 ORDER BY 1"
+        }
+      }
+    },
+
+    "loyalty": {
+      "description": "Loyalty program points and engagement",
+      "metrics": {
+        "total_loyalty_members": {
+          "description": "Total number of customers enrolled in the loyalty program",
+          "sql": "SELECT COUNT(*) FROM loyalty_accounts"
+        },
+        "total_points_outstanding": {
+          "description": "Total loyalty points currently held by all customers",
+          "sql": "SELECT SUM(points_balance) FROM loyalty_accounts"
+        },
+        "average_points_per_member": {
+          "description": "Average loyalty points balance per enrolled customer",
+          "sql": "SELECT AVG(points_balance) FROM loyalty_accounts"
+        },
+        "total_points_earned": {
+          "description": "Total loyalty points ever earned across all customers",
+          "sql": "SELECT SUM(points_change) FROM loyalty_txn WHERE txn_type = 'earn'"
+        },
+        "total_points_redeemed": {
+          "description": "Total loyalty points ever redeemed across all customers",
+          "sql": "SELECT ABS(SUM(points_change)) FROM loyalty_txn WHERE txn_type = 'redeem'"
+        },
+        "redemption_rate": {
+          "description": "Percentage of earned points that have been redeemed",
+          "sql": "SELECT ROUND(100.0 * ABS(SUM(CASE WHEN txn_type = 'redeem' THEN points_change ELSE 0 END)) / NULLIF(SUM(CASE WHEN txn_type = 'earn' THEN points_change ELSE 0 END), 0), 2) FROM loyalty_txn",
+          "unit": "percent"
+        },
+        "top_loyalty_members": {
+          "description": "Top 10 customers by current loyalty points balance",
+          "sql": "SELECT c.name, la.points_balance FROM loyalty_accounts la JOIN customers c ON la.customer_id = c.id ORDER BY la.points_balance DESC LIMIT 10"
+        }
+      }
+    },
+
+    "payments": {
+      "description": "Payment methods, success rates and financial reconciliation",
+      "metrics": {
+        "revenue_by_payment_method": {
+          "description": "Total revenue broken down by payment method",
+          "sql": "SELECT method, SUM(amount) AS total FROM payments WHERE status = 'paid' GROUP BY method ORDER BY total DESC"
+        },
+        "payment_success_rate": {
+          "description": "Percentage of payments that were successfully processed",
+          "sql": "SELECT ROUND(100.0 * COUNT(*) FILTER (WHERE status = 'paid') / COUNT(*), 2) FROM payments",
+          "unit": "percent"
+        },
+        "failed_payments": {
+          "description": "Number of failed payment attempts",
+          "sql": "SELECT COUNT(*) FROM payments WHERE status = 'failed'"
+        },
+        "refunded_payments": {
+          "description": "Total amount refunded to customers",
+          "sql": "SELECT COUNT(*) AS count, SUM(amount) AS total_refunded FROM payments WHERE status = 'refunded'",
+          "unit": "USD"
+        },
+        "average_payment_amount": {
+          "description": "Average payment amount per successful transaction",
+          "sql": "SELECT AVG(amount) FROM payments WHERE status = 'paid'",
+          "unit": "USD"
+        }
+      }
+    },
+
+    "discounts": {
+      "description": "Discount usage, impact and promotional effectiveness",
+      "metrics": {
+        "total_discounts_applied": {
+          "description": "Total number of times discounts were applied to orders",
+          "sql": "SELECT COUNT(*) FROM order_discounts"
+        },
+        "most_used_discounts": {
+          "description": "Top 10 most frequently used discount codes",
+          "sql": "SELECT d.code, d.description, COUNT(od.order_id) AS usage_count FROM order_discounts od JOIN discounts d ON od.discount_id = d.id GROUP BY d.code, d.description ORDER BY usage_count DESC LIMIT 10"
+        },
+        "active_discounts": {
+          "description": "Discount codes currently valid (within start and end date)",
+          "sql": "SELECT code, description, type, amount FROM discounts WHERE (start_date IS NULL OR start_date <= CURRENT_DATE) AND (end_date IS NULL OR end_date >= CURRENT_DATE)"
+        },
+        "expired_discounts": {
+          "description": "Discount codes that have expired",
+          "sql": "SELECT code, description, end_date FROM discounts WHERE end_date < CURRENT_DATE"
+        }
+      }
+    },
+
+    "inventory": {
+      "description": "Stock levels, reorder alerts and ingredient usage",
+      "metrics": {
+        "low_stock_items": {
+          "description": "Ingredients at or below reorder threshold — need restocking",
+          "sql": "SELECT l.name AS location, i.name AS ingredient, inv.quantity_on_hand, inv.reorder_threshold FROM inventory inv JOIN ingredients i ON inv.ingredient_id = i.id JOIN location l ON inv.location_id = l.id WHERE inv.quantity_on_hand <= inv.reorder_threshold ORDER BY l.name, i.name"
+        },
+        "out_of_stock_items": {
+          "description": "Ingredients with zero stock",
+          "sql": "SELECT l.name AS location, i.name AS ingredient FROM inventory inv JOIN ingredients i ON inv.ingredient_id = i.id JOIN location l ON inv.location_id = l.id WHERE inv.quantity_on_hand = 0"
+        },
+        "inventory_by_location": {
+          "description": "Full inventory stock levels per location",
+          "sql": "SELECT l.name AS location, i.name AS ingredient, inv.quantity_on_hand, i.unit FROM inventory inv JOIN ingredients i ON inv.ingredient_id = i.id JOIN location l ON inv.location_id = l.id ORDER BY l.name, i.name"
+        },
+        "ingredient_cost_by_supplier": {
+          "description": "Cost per ingredient from each supplier — useful for procurement decisions",
+          "sql": "SELECT s.name AS supplier, i.name AS ingredient, si.unit_cost, i.unit FROM supplier_items si JOIN supplier s ON si.supplier_id = s.id JOIN ingredients i ON si.ingredient_id = i.id ORDER BY i.name, si.unit_cost"
+        },
+        "cheapest_supplier_per_ingredient": {
+          "description": "Lowest cost supplier for each ingredient",
+          "sql": "SELECT i.name AS ingredient, s.name AS supplier, si.unit_cost FROM supplier_items si JOIN supplier s ON si.supplier_id = s.id JOIN ingredients i ON si.ingredient_id = i.id WHERE si.unit_cost = (SELECT MIN(unit_cost) FROM supplier_items WHERE ingredient_id = si.ingredient_id) ORDER BY i.name"
+        }
+      }
+    },
+
+    "workforce": {
+      "description": "Employee headcount, shifts and scheduling",
+      "metrics": {
+        "total_employees": {
+          "description": "Total number of employees across all locations",
+          "sql": "SELECT COUNT(*) FROM employee"
+        },
+        "employees_by_location": {
+          "description": "Number of employees per restaurant location",
+          "sql": "SELECT l.name AS location, COUNT(e.id) AS employee_count FROM employee e JOIN location l ON e.location_id = l.id GROUP BY l.name ORDER BY employee_count DESC"
+        },
+        "employees_by_role": {
+          "description": "Number of employees per job role",
+          "sql": "SELECT r.role_name, COUNT(e.id) AS count FROM employee e JOIN roles r ON e.role_id = r.id GROUP BY r.role_name ORDER BY count DESC"
+        },
+        "total_shifts": {
+          "description": "Total number of shifts scheduled",
+          "sql": "SELECT COUNT(*) FROM shifts"
+        },
+        "average_shift_duration_hours": {
+          "description": "Average duration of a work shift in hours",
+          "sql": "SELECT ROUND(AVG(EXTRACT(EPOCH FROM (shift_end - shift_start)) / 3600), 2) FROM shifts",
+          "unit": "hours"
+        },
+        "shifts_by_location": {
+          "description": "Number of shifts per location",
+          "sql": "SELECT l.name AS location, COUNT(s.id) AS shift_count FROM shifts s JOIN location l ON s.location_id = l.id GROUP BY l.name ORDER BY shift_count DESC"
+        },
+        "recently_hired_employees": {
+          "description": "Employees hired in the last 90 days",
+          "sql": "SELECT e.name, r.role_name, l.name AS location, e.hire_date FROM employee e JOIN roles r ON e.role_id = r.id JOIN location l ON e.location_id = l.id WHERE e.hire_date >= CURRENT_DATE - INTERVAL '90 days' ORDER BY e.hire_date DESC"
+        }
+      }
+    },
+
+    "reservations": {
+      "description": "Table bookings, occupancy and no-show rates",
+      "metrics": {
+        "total_reservations": {
+          "description": "Total number of reservations made",
+          "sql": "SELECT COUNT(*) FROM reservations"
+        },
+        "reservations_by_status": {
+          "description": "Breakdown of reservations by status (booked, checked_in, no_show, cancelled)",
+          "sql": "SELECT status, COUNT(*) AS count FROM reservations GROUP BY status ORDER BY count DESC"
+        },
+        "no_show_rate": {
+          "description": "Percentage of reservations that resulted in a no-show",
+          "sql": "SELECT ROUND(100.0 * COUNT(*) FILTER (WHERE status = 'no_show') / COUNT(*), 2) FROM reservations",
+          "unit": "percent"
+        },
+        "table_utilisation": {
+          "description": "Number of reservations per table — identifies most and least used tables",
+          "sql": "SELECT t.table_number, l.name AS location, COUNT(r.id) AS reservation_count FROM reservations r JOIN tables t ON r.table_id = t.id JOIN location l ON t.location_id = l.id GROUP BY t.table_number, l.name ORDER BY reservation_count DESC"
+        },
+        "upcoming_reservations": {
+          "description": "All reservations scheduled from today onwards",
+          "sql": "SELECT c.name AS customer, t.table_number, l.name AS location, r.start_time, r.end_time, r.status FROM reservations r JOIN customers c ON r.customer_id = c.id JOIN tables t ON r.table_id = t.id JOIN location l ON t.location_id = l.id WHERE r.start_time >= NOW() ORDER BY r.start_time"
+        }
+      }
+    },
+
+    "locations": {
+      "description": "Restaurant branch performance comparison",
+      "metrics": {
+        "total_locations": {
+          "description": "Total number of restaurant branches",
+          "sql": "SELECT COUNT(*) FROM location"
+        },
+        "orders_by_location": {
+          "description": "Total orders placed at each location",
+          "sql": "SELECT l.name AS location, COUNT(o.id) AS order_count FROM orders o JOIN location l ON o.location_id = l.id GROUP BY l.name ORDER BY order_count DESC"
+        },
+        "revenue_per_location": {
+          "description": "Completed order revenue per location",
+          "sql": "SELECT l.name AS location, SUM(o.total_amount) AS revenue FROM orders o JOIN location l ON o.location_id = l.id WHERE o.status = 'completed' GROUP BY l.name ORDER BY revenue DESC"
+        },
+        "tables_by_location": {
+          "description": "Number of dining tables per location",
+          "sql": "SELECT l.name AS location, COUNT(t.id) AS table_count FROM tables t JOIN location l ON t.location_id = l.id GROUP BY l.name ORDER BY table_count DESC"
+        },
+        "total_seating_capacity": {
+          "description": "Total seating capacity per location",
+          "sql": "SELECT l.name AS location, SUM(t.capacity) AS total_seats FROM tables t JOIN location l ON t.location_id = l.id GROUP BY l.name ORDER BY total_seats DESC"
+        }
+      }
+    }
+  },
+
+  "relationships": [
+    {"from": "orders", "to": "customers", "join": "orders.customer_id = customers.id", "type": "many-to-one"},
+    {"from": "orders", "to": "location", "join": "orders.location_id = location.id", "type": "many-to-one"},
+    {"from": "orders", "to": "employee", "join": "orders.employee_id = employee.id", "type": "many-to-one"},
+    {"from": "orders", "to": "tables", "join": "orders.table_id = tables.id", "type": "many-to-one"},
+    {"from": "order_items", "to": "orders", "join": "order_items.order_id = orders.id", "type": "many-to-one"},
+    {"from": "order_items", "to": "menu_items", "join": "order_items.menu_item_id = menu_items.id", "type": "many-to-one"},
+    {"from": "menu_items", "to": "menu_categories", "join": "menu_items.category_id = menu_categories.id", "type": "many-to-one"},
+    {"from": "payments", "to": "orders", "join": "payments.order_id = orders.id", "type": "one-to-one"},
+    {"from": "order_discounts", "to": "orders", "join": "order_discounts.order_id = orders.id", "type": "many-to-one"},
+    {"from": "order_discounts", "to": "discounts", "join": "order_discounts.discount_id = discounts.id", "type": "many-to-one"},
+    {"from": "loyalty_accounts", "to": "customers", "join": "loyalty_accounts.customer_id = customers.id", "type": "one-to-one"},
+    {"from": "loyalty_txn", "to": "loyalty_accounts", "join": "loyalty_txn.loyalty_id = loyalty_accounts.id", "type": "many-to-one"},
+    {"from": "inventory", "to": "location", "join": "inventory.location_id = location.id", "type": "many-to-one"},
+    {"from": "inventory", "to": "ingredients", "join": "inventory.ingredient_id = ingredients.id", "type": "many-to-one"},
+    {"from": "recipe_items", "to": "menu_items", "join": "recipe_items.menu_item_id = menu_items.id", "type": "many-to-one"},
+    {"from": "recipe_items", "to": "ingredients", "join": "recipe_items.ingredient_id = ingredients.id", "type": "many-to-one"},
+    {"from": "supplier_items", "to": "supplier", "join": "supplier_items.supplier_id = supplier.id", "type": "many-to-one"},
+    {"from": "supplier_items", "to": "ingredients", "join": "supplier_items.ingredient_id = ingredients.id", "type": "many-to-one"},
+    {"from": "employee", "to": "roles", "join": "employee.role_id = roles.id", "type": "many-to-one"},
+    {"from": "employee", "to": "location", "join": "employee.location_id = location.id", "type": "many-to-one"},
+    {"from": "shifts", "to": "employee", "join": "shifts.employee_id = employee.id", "type": "many-to-one"},
+    {"from": "shifts", "to": "location", "join": "shifts.location_id = location.id", "type": "many-to-one"},
+    {"from": "reservations", "to": "tables", "join": "reservations.table_id = tables.id", "type": "many-to-one"},
+    {"from": "reservations", "to": "customers", "join": "reservations.customer_id = customers.id", "type": "many-to-one"},
+    {"from": "tables", "to": "location", "join": "tables.location_id = location.id", "type": "many-to-one"}
+  ],
+
+  "business_rules": [
+    "Completed orders: status = 'completed' — use this filter for all revenue calculations",
+    "Active menu items: is_active = true — only these are available for ordering",
+    "Walk-in customers: orders.customer_id IS NULL — these have no customer profile",
+    "Loyalty points earned: loyalty_txn.txn_type = 'earn' and points_change > 0",
+    "Loyalty points redeemed: loyalty_txn.txn_type = 'redeem' and points_change < 0",
+    "Payment amount includes total_amount + tax_amount + tip_amount",
+    "Low stock: inventory.quantity_on_hand <= inventory.reorder_threshold",
+    "Active discounts: start_date <= CURRENT_DATE AND end_date >= CURRENT_DATE",
+    "Percentage discounts: discounts.type = 'percent'",
+    "Fixed amount discounts: discounts.type = 'fixed'"
+  ]
+}
