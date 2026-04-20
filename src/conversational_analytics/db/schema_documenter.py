@@ -208,6 +208,30 @@ class SchemaDocumenter:
         self.connection.close()
 
 
+def get_table_descriptions(visible_tables: list[str] | None = None) -> dict[str, str]:
+    """Reads live DB schema and returns NLQ-friendly descriptions per table.
+
+    Args:
+        visible_tables: if provided, only return descriptions for these tables.
+    """
+    from conversational_analytics.config import get_settings
+    cfg = get_settings()
+    documenter = SchemaDocumenter(
+        db_host=cfg.db_host,
+        db_port=cfg.db_port,
+        db_name=cfg.db_name,
+        db_user=cfg.db_user,
+        db_password=cfg.db_password,
+    )
+    try:
+        all_descriptions = documenter.generate_natural_language_descriptions()
+        if visible_tables is not None:
+            return {t: d for t, d in all_descriptions.items() if t in visible_tables}
+        return all_descriptions
+    finally:
+        documenter.close()
+
+
 # Usage example
 if __name__ == "__main__":
     documenter = SchemaDocumenter(
