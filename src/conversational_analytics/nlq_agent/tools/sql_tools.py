@@ -67,7 +67,6 @@ def _build_custom_table_info(visible_tables: list[str]) -> dict[str, str] | None
     if not restrict_map:
         return None
 
-    # fetch NLQ-friendly descriptions from live DB for visible tables only
     descriptions = get_table_descriptions(visible_tables)
     if not descriptions:
         return None
@@ -77,18 +76,19 @@ def _build_custom_table_info(visible_tables: list[str]) -> dict[str, str] | None
     return descriptions
 
 
-def get_db() -> SQLDatabase:
+def _init() -> tuple[SQLDatabase, list, SystemMessage]:
+    """Runs once at startup — resolves visible tables, builds DB, tools and system message."""
     cfg = get_settings()
     include = cfg.db_include_tables_list or None
     ignore = cfg.db_ignore_tables_list or None
 
-    # build a temporary DB connection to get all table names for hierarchy resolution
-    temp_db = SQLDatabase.from_uri(cfg.db_uri)
-    all_tables = temp_db.get_usable_table_names()
+    # single DB connection to resolve all table names
+    base_db = SQLDatabase.from_uri(cfg.db_uri)
+    all_tables = list(base_db.get_usable_table_names())
+    visible_tables = _resolve_visible_tables(cfg, all_tables)
 
-    visible_tables = _resolve_visible_tables(cfg, list(all_tables))
+    # build final DB with filters and optional custom_table_info
     custom_table_info = _build_custom_table_info(visible_tables)
-
     db_kwargs = {
         "ignore_tables": ignore,
         "include_tables": include,
@@ -98,20 +98,30 @@ def get_db() -> SQLDatabase:
     if custom_table_info:
         db_kwargs["custom_table_info"] = custom_table_info
 
-    return SQLDatabase.from_uri(cfg.db_uri, **db_kwargs)
+    db = SQLDatabase.from_uri(cfg.db_uri, **db_kwargs)
+
+    # build tools
+    tools = SQLDatabaseToolkit(db=db, llm=get_llm()).get_tools()
+
+    # build system message with only visible tables
+    tables_str = ", ".join(sorted(visible_tables))
+    system_message = SystemMessage(content=SYSTEM_PROMPT_TEMPLATE.format(tables=tables_str))
+
+    logger.info(f"SQL tools initialised — visible tables: {tables_str}")
+    return db, tools, system_message
+
+
+# ── module-level singletons initialised once at startup ───────────────
+_db, _sql_tools, _system_message = _init()
+
+
+def get_db() -> SQLDatabase:
+    return _db
 
 
 def get_sql_tools() -> list:
-    """Returns SQL toolkit tools bound to the database."""
-    toolkit = SQLDatabaseToolkit(db=get_db(), llm=get_llm())
-    return toolkit.get_tools()
+    return _sql_tools
 
 
 def get_system_message() -> SystemMessage:
-    """Returns a dynamic system message listing only the tables visible to the agent."""
-    cfg = get_settings()
-    temp_db = SQLDatabase.from_uri(cfg.db_uri)
-    all_tables = temp_db.get_usable_table_names()
-    visible_tables = _resolve_visible_tables(cfg, list(all_tables))
-    tables_str = ", ".join(sorted(visible_tables))
-    return SystemMessage(content=SYSTEM_PROMPT_TEMPLATE.format(tables=tables_str))
+    return _system_message
