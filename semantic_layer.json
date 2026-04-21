@@ -364,5 +364,112 @@
     "Active discounts: start_date <= CURRENT_DATE AND end_date >= CURRENT_DATE",
     "Percentage discounts: discounts.type = 'percent'",
     "Fixed amount discounts: discounts.type = 'fixed'"
-  ]
+  ],
+
+  "roles": {
+
+    "admin": {
+      "description": "Full system access — all domains, all data, no restrictions",
+      "domains": ["customers", "orders", "order_items", "menu_items", "menu_categories", "payments", "reservations", "employee", "shifts", "inventory", "ingredients", "loyalty_accounts", "loyalty_txn", "discounts", "order_discounts", "location", "tables", "roles", "recipe_items", "supplier", "supplier_items"],
+      "restricted_columns": [],
+      "row_filters": {},
+      "business_rules": [
+        "Full access to all tables including supplier pricing and recipe costs",
+        "Can view all customer PII including email, phone, address",
+        "Can view all locations data without restriction"
+      ]
+    },
+
+    "general_manager": {
+      "description": "Cross-location management — all domains except supplier procurement, PII restricted",
+      "domains": ["customers", "orders", "order_items", "menu_items", "menu_categories", "payments", "reservations", "employee", "shifts", "inventory", "ingredients", "loyalty_accounts", "loyalty_txn", "discounts", "order_discounts", "location", "tables", "roles"],
+      "restricted_columns": ["customers.email", "customers.phone", "customers.address", "employee.email"],
+      "row_filters": {},
+      "business_rules": [
+        "Cannot access supplier pricing or recipe ingredient costs — supplier and supplier_items tables are not available",
+        "Customer and employee PII (email, phone, address) is hidden — use name only",
+        "Can compare performance across all locations",
+        "Revenue means total completed order revenue across all locations",
+        "Inventory metrics available: low_stock_items, out_of_stock_items, inventory_by_location only"
+      ]
+    },
+
+    "location_manager": {
+      "description": "Single location management — location-scoped data only",
+      "domains": ["sales", "menu", "inventory", "workforce", "reservations", "payments"],
+      "restricted_columns": ["employee.email"],
+      "row_filters": {
+        "orders": "location_id = <assigned_location_id>",
+        "shifts": "location_id = <assigned_location_id>",
+        "inventory": "location_id = <assigned_location_id>",
+        "employee": "location_id = <assigned_location_id>"
+      },
+      "business_rules": [
+        "ALL queries are automatically filtered to the manager's assigned location",
+        "Revenue means revenue for this location only — never cross-location totals",
+        "Staff means employees assigned to this location only",
+        "Inventory means stock at this location only",
+        "Cannot access loyalty program, discount management or supplier data"
+      ]
+    },
+
+    "chef": {
+      "description": "Kitchen operations — menu, recipes and inventory only",
+      "domains": ["menu_items", "menu_categories", "recipe_items", "ingredients", "inventory"],
+      "restricted_columns": [],
+      "row_filters": {},
+      "business_rules": [
+        "Can only access menu items, recipe ingredients and inventory stock levels",
+        "Cannot access any financial data, revenue, payments or customer information",
+        "Cannot access staff schedules, shifts or employee data",
+        "Active menu items means is_active = true",
+        "Low stock means quantity_on_hand <= reorder_threshold"
+      ]
+    },
+
+    "waiter": {
+      "description": "Floor operations — orders, tables, reservations and menu only",
+      "domains": ["sales", "menu", "reservations"],
+      "restricted_columns": ["customers.email", "customers.phone", "customers.address"],
+      "row_filters": {},
+      "business_rules": [
+        "Can view current orders, table status and today's reservations",
+        "Cannot access financial totals, revenue, payment amounts or tips — do NOT query total_amount, tax_amount, tip_amount",
+        "Cannot access inventory, staff data or loyalty program details",
+        "Customer contact details (email, phone, address) are hidden",
+        "Active menu items means is_active = true — only show available dishes"
+      ]
+    },
+
+    "cashier": {
+      "description": "Payment processing — orders, payments and discounts only",
+      "domains": ["sales", "payments", "discounts"],
+      "restricted_columns": [],
+      "row_filters": {},
+      "business_rules": [
+        "Can view orders and order items to process payments",
+        "Can apply discount codes to orders",
+        "Payment amount = total_amount + tax_amount + tip_amount",
+        "Active discounts: start_date <= CURRENT_DATE AND end_date >= CURRENT_DATE",
+        "Cannot access customer profiles, loyalty accounts or inventory",
+        "Cannot access staff data, shifts or location management",
+        "Failed payments: status = 'failed', Refunded: status = 'refunded'"
+      ]
+    },
+
+    "analyst": {
+      "description": "Read-only analytics — all aggregated data, no PII, no supplier costs",
+      "domains": ["sales", "menu", "customers", "loyalty", "payments", "discounts", "inventory", "workforce", "reservations", "locations"],
+      "restricted_columns": ["customers.email", "customers.phone", "customers.address", "employee.email"],
+      "row_filters": {},
+      "business_rules": [
+        "Read-only access — never suggest INSERT, UPDATE, DELETE or DROP",
+        "All customer and employee PII is hidden — use aggregated data only",
+        "Cannot access supplier pricing or recipe costs",
+        "Revenue always means completed orders: status = 'completed'",
+        "Always use aggregations (SUM, AVG, COUNT) — never return raw customer records",
+        "Trend analysis: use DATE_TRUNC for monthly/weekly grouping"
+      ]
+    }
+  }
 }

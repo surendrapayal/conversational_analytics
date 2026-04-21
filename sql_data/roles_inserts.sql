@@ -1,5 +1,5 @@
 -- Insert data into roles
--- Generated at: 2026-04-20T10:07:35.622209
+-- Generated at: 2026-04-21T14:16:56.353755
 
 INSERT INTO roles (role_name) VALUES ('Chef') RETURNING id;
 INSERT INTO roles (role_name) VALUES ('Waiter') RETURNING id;

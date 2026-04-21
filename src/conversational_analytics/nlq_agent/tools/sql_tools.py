@@ -5,6 +5,7 @@ from langchain_community.agent_toolkits import SQLDatabaseToolkit
 from langchain_core.messages import SystemMessage
 from conversational_analytics.config import get_settings
 from conversational_analytics.db.schema_documenter import get_table_descriptions
+from conversational_analytics.semantic import build_system_prompt_suffix
 from conversational_analytics.llm import get_llm
 
 logger = logging.getLogger(__name__)
@@ -19,7 +20,7 @@ Rules:
 - Never modify data (no INSERT, UPDATE, DELETE, DROP)
 - If the data needed to answer the question is not available in the listed tables or columns, say so clearly and stop — do NOT retry or look elsewhere
 - Format numeric results clearly (currency with 2 decimal places)
-"""
+{semantic_section}"""
 
 # Role context holds everything needed per role
 _role_cache: dict[str, dict] = {}  # {role: {db, tools, system_message}}
@@ -49,7 +50,29 @@ def _build_custom_table_info(visible_tables: list[str], restrict_map: dict[str, 
     return _apply_column_restrictions(descriptions, restrict_map)
 
 
-def _build_context(include_tables: list[str] | None, ignore_tables: list[str] | None, restrict_map: dict[str, list[str]]) -> dict:
+def _build_system_message(visible_tables: list[str], role: str | None) -> SystemMessage:
+    """Builds system message with semantic layer injected if available.
+
+    Backward compatible:
+    - No semantic_layer.json → only base prompt used
+    - semantic_layer.json exists but no roles section → global rules injected
+    - Role found in semantic layer → global rules + role rules + domain metrics injected
+    - Role not found in semantic layer → global rules only
+    """
+    semantic_suffix = build_system_prompt_suffix(role, visible_tables)
+
+    # inject semantic section with a separator if content exists, else empty string
+    semantic_section = f"\n\n{semantic_suffix}" if semantic_suffix else ""
+
+    content = SYSTEM_PROMPT_TEMPLATE.format(
+        tables=", ".join(sorted(visible_tables)),
+        semantic_section=semantic_section,
+    )
+    return SystemMessage(content=content)
+
+
+def _build_context(include_tables: list[str] | None, ignore_tables: list[str] | None,
+                   restrict_map: dict[str, list[str]], role: str | None = None) -> dict:
     """Builds and returns a context dict {db, tools, system_message} for a given table filter."""
     cfg = get_settings()
 
@@ -77,9 +100,8 @@ def _build_context(include_tables: list[str] | None, ignore_tables: list[str] | 
 
     db = SQLDatabase.from_uri(cfg.db_uri, **db_kwargs)
     tools = SQLDatabaseToolkit(db=db, llm=get_llm()).get_tools()
-    system_message = SystemMessage(
-        content=SYSTEM_PROMPT_TEMPLATE.format(tables=", ".join(sorted(visible_tables)))
-    )
+    system_message = _build_system_message(visible_tables, role)
+
     return {"db": db, "tools": tools, "system_message": system_message}
 
 
@@ -93,14 +115,20 @@ def _init():
         include_tables=cfg.db_include_tables_list or None,
         ignore_tables=cfg.db_ignore_tables_list or None,
         restrict_map=cfg.db_restrict_columns_map,
+        role=None,
     )
     logger.info("Default SQL context initialised")
 
     # build one context per role using role-specific restrict columns
     for role, tables in cfg.role_tables_map.items():
         restrict_map = cfg.get_restrict_columns_for_role(role)
-        _role_cache[role] = _build_context(include_tables=tables, ignore_tables=None, restrict_map=restrict_map)
-        logger.info(f"Role '{role}' SQL context initialised — tables: {', '.join(sorted(tables))}, restricted columns: {restrict_map}")
+        _role_cache[role] = _build_context(
+            include_tables=tables,
+            ignore_tables=None,
+            restrict_map=restrict_map,
+            role=role,
+        )
+        logger.info(f"Role '{role}' SQL context initialised — tables: {', '.join(sorted(tables))}")
 
 
 # ── initialise everything at module load ─────────────────────────────

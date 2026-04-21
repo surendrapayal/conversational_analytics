@@ -1,5 +1,5 @@
 -- Insert data into supplier
--- Generated at: 2026-04-20T10:07:35.623022
+-- Generated at: 2026-04-21T14:16:56.354711
 
 INSERT INTO supplier (name) VALUES ('Fresh Farms Co.') RETURNING id;
 INSERT INTO supplier (name) VALUES ('Global Ingredients Ltd.') RETURNING id;

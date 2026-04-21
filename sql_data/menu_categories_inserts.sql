@@ -1,5 +1,5 @@
 -- Insert data into menu_categories
--- Generated at: 2026-04-20T10:07:35.617869
+-- Generated at: 2026-04-21T14:16:56.348729
 
 INSERT INTO menu_categories (name) VALUES ('Appetizers') RETURNING id;
 INSERT INTO menu_categories (name) VALUES ('Soups & Salads') RETURNING id;

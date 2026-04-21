@@ -50,6 +50,8 @@ class Settings(BaseSettings):
     app_port: int = 8000
     log_level: str = "INFO"
     agent_max_iterations: int = 10
+    # Path to semantic layer JSON (relative to project root or absolute). Empty = disabled.
+    semantic_layer_path: str = ""
 
     # ── Database properties ───────────────────────────────────────────
 
@@ -81,11 +83,15 @@ class Settings(BaseSettings):
     @property
     def role_tables_map(self) -> dict[str, list[str]]:
         """Dynamically discovers all ROLE_<NAME>=tables entries from env vars.
-        Excludes ROLE_<NAME>_RESTRICT_COLUMNS entries.
+        Excludes ROLE_<NAME>_RESTRICT_COLUMNS and ROLE_<NAME>_ROW_FILTERS entries.
         """
         result: dict[str, list[str]] = {}
         for key, value in os.environ.items():
-            if not key.startswith("ROLE_") or key.endswith("_RESTRICT_COLUMNS") or not value.strip():
+            if not key.startswith("ROLE_"):
+                continue
+            if key.endswith("_RESTRICT_COLUMNS") or key.endswith("_ROW_FILTERS"):
+                continue
+            if not value.strip():
                 continue
             role = key[len("ROLE_"):].lower()
             result[role] = [t.strip() for t in value.split(",") if t.strip()]
