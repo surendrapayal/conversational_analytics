@@ -5,7 +5,7 @@ from langchain_community.agent_toolkits import SQLDatabaseToolkit
 from langchain_core.messages import SystemMessage
 from conversational_analytics.config import get_settings
 from conversational_analytics.db.schema_documenter import get_table_descriptions
-from conversational_analytics.semantic import build_system_prompt_suffix, get_visualization_rules
+from conversational_analytics.semantic import build_system_prompt_suffix
 from conversational_analytics.llm import get_llm
 
 logger = logging.getLogger(__name__)
@@ -18,8 +18,19 @@ Rules:
 - Use sql_db_list_tables to confirm available tables, then sql_db_schema before writing queries
 - Write efficient, read-only SELECT queries only
 - Never modify data (no INSERT, UPDATE, DELETE, DROP)
-- If the data needed to answer the question is not available in the listed tables or columns, say so clearly and stop — do NOT retry or look elsewhere
+- If the data needed to answer the question is not available in the listed tables or columns, say so clearly and stop - do NOT retry or look elsewhere
 - Format numeric results clearly (currency with 2 decimal places)
+
+VISUALIZATION RULES:
+- When query results contain 2+ rows with at least one numeric column, generate a Vega-Lite chart after your text response
+- Return the spec as JSON inside a markdown code block tagged 'vega'
+- Return the spec object directly - do NOT wrap it in a 'vega_spec' key
+- Always include: {{"$schema": "https://vega.github.io/schema/vega-lite/v5.json", "width": 700, "height": 400, "title": "..."}}
+- For currency y-axis: use "axis": {{"format": "$,.2f"}} inside the y encoding - NOT "format" at the top level of y
+- Tooltip format "$,.2f" is correct inside tooltip field definitions
+- Always sort bar charts descending for ranking queries (Top N)
+- Chart type selection: bar=ranking/comparing categories, line=trends over time, arc=part-to-whole (2-6 categories), point=correlation between two metrics, boxplot=statistical spread across groups
+- Do NOT generate a chart for single scalar values (e.g. a total count)
 {semantic_section}"""
 
 # Role context holds everything needed per role
@@ -53,32 +64,10 @@ def _build_custom_table_info(visible_tables: list[str], restrict_map: dict[str, 
 def _build_system_message(visible_tables: list[str], role: str | None) -> SystemMessage:
     """Builds system message with semantic layer injected if available."""
     semantic_suffix = build_system_prompt_suffix(role, visible_tables)
-
-    # inject visualization rules if present
-    viz_rules = get_visualization_rules()
-    viz_section = ""
-    if viz_rules:
-        instructions = "\n".join(f"  - {r}" for r in viz_rules.get("instructions", []))
-        chart_types = "\n".join(f"  - {k}: {v}" for k, v in viz_rules.get("chart_selection", {}).items())
-        schema = viz_rules.get('schema', 'https://vega.github.io/schema/vega-lite/v5.json')
-        viz_section = (
-            f"\n\nVISUALIZATION RULES:"
-            f"\nWhen query results contain 2+ rows with numeric data, generate a Vega-Lite chart spec."
-            f"\nReturn it in a markdown code block tagged 'vega' after your text response."
-            f"\nAlways start the spec with: {{\"$schema\": \"{{schema}}\", \"width\": {{viz_rules.get('default_width', 700)}}, \"height\": {{viz_rules.get('default_height', 400)}}, ...)}}"
-            f"\nFor currency y-axis use: \"y\": {{\"field\": \"...\", \"type\": \"quantitative\", \"axis\": {{\"format\": \"$,.2f\"}}}}"
-            f"\nNOT: \"y\": {{\"field\": \"...\", \"format\": \"$,.2f\"}} (format at top level of encoding is invalid)"
-            f"\nInstructions:\n{instructions}"
-            f"\nChart type selection:\n{chart_types}"
-        )
-
-    semantic_section = ""
-    if semantic_suffix:
-        semantic_section = f"\n\n{semantic_suffix}"
-
+    semantic_section = f"\n\n{semantic_suffix}" if semantic_suffix else ""
     content = SYSTEM_PROMPT_TEMPLATE.format(
         tables=", ".join(sorted(visible_tables)),
-        semantic_section=semantic_section + viz_section,
+        semantic_section=semantic_section,
     )
     return SystemMessage(content=content)
 
