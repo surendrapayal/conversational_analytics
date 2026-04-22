@@ -13,6 +13,7 @@ router = APIRouter(prefix="/api/v1", tags=["NLQ Agent"])
 class QueryRequest(BaseModel):
     user_id: str
     query: str
+    stream_mode: str = "standard"  # standard | verbose
 
 
 @router.post("/chat", response_model=AgentResponse)
@@ -43,7 +44,7 @@ def stream(
         logger.info(f"Stream request received: user={body.user_id}, session={session_id}, role={role}")
         request = AgentRequest(user_id=body.user_id, session_id=session_id, query=body.query, role=role)
         return StreamingResponse(
-            stream_agent(request),
+            stream_agent(request, stream_mode=body.stream_mode),
             media_type="text/event-stream",
             headers={"X-Accel-Buffering": "no"}
         )

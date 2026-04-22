@@ -40,15 +40,21 @@ def _sse(event: str, payload: dict, session_id: str = "") -> str:
     return f"event: {event}\ndata: {json.dumps(payload)}\n\n"
 
 
-def stream_agent(request: AgentRequest) -> Generator[str, None, None]:
+# Maps internal SQL tool names to business-friendly step descriptions
+_TOOL_STEP_LABELS = {
+    "sql_db_list_tables": "Identifying available data sources",
+    "sql_db_schema": "Analysing data structure",
+    "sql_db_query_checker": "Validating query",
+    "sql_db_query": "Retrieving data",
+}
+
+
+def stream_agent(request: AgentRequest, stream_mode: str = "standard") -> Generator[str, None, None]:
     """Streams agent execution as Server-Sent Events.
 
-    Events emitted:
-      thinking   — Gemini internal reasoning text
-      tool_call  — tool name + args the agent decided to invoke
-      tool_result — raw output returned by the tool
-      response   — final formatted answer
-      done       — stream complete
+    stream_mode:
+      standard — business-friendly output (default): step progress + final response only
+      verbose  — full internal details: thinking, tool names, args, raw DB output
     """
     try:
         logger.info(f"stream_agent started for user={request.user_id} session={request.session_id}")
@@ -68,23 +74,25 @@ def stream_agent(request: AgentRequest) -> Generator[str, None, None]:
                         if not isinstance(msg, AIMessage):
                             continue
 
-                        # 1. emit Gemini thinking/reasoning text from content parts
-                        if isinstance(msg.content, list):
+                        # thinking — verbose only
+                        if stream_mode == "verbose" and isinstance(msg.content, list):
                             for part in msg.content:
                                 if isinstance(part, dict) and part.get("type") == "thinking" and part.get("thinking"):
-                                    # logger.info("Yielding thinking event")
                                     yield _sse("thinking", {"reasoning": part["thinking"].strip()}, request.session_id)
 
-                        # 2. emit each tool call the agent decided to make
                         for tc in msg.tool_calls:
-                            # logger.info(f"Yielding tool_call event: {tc['name']}")
-                            yield _sse("tool_call", {"tool": tc["name"], "args": tc["args"]}, request.session_id)
+                            if stream_mode == "verbose":
+                                # verbose: expose tool name and raw args
+                                yield _sse("tool_call", {"tool": tc["name"], "args": tc["args"]}, request.session_id)
+                            else:
+                                # standard: map to friendly step label
+                                label = _TOOL_STEP_LABELS.get(tc["name"], "Processing")
+                                yield _sse("step", {"message": label}, request.session_id)
 
                 elif node_name == "tools":
                     for msg in state_update.get("messages", []):
-                        if isinstance(msg, ToolMessage):
-                            # 3. emit the raw tool output
-                            # logger.info(f"Yielding tool_result event: {msg.name}")
+                        if isinstance(msg, ToolMessage) and stream_mode == "verbose":
+                            # tool_result — verbose only, never expose raw DB output in standard mode
                             yield _sse("tool_result", {"tool": msg.name, "output": msg.content}, request.session_id)
 
                 elif node_name == "response_formatter":
