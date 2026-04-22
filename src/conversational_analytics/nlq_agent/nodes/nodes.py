@@ -1,4 +1,6 @@
+import json
 import logging
+import re
 from langchain_core.messages import AIMessage, ToolMessage, HumanMessage
 from langgraph.prebuilt import ToolNode
 from conversational_analytics.models import AgentState
@@ -63,32 +65,56 @@ def tools_node(state: AgentState) -> dict:
 
 
 def response_formatter_node(state: AgentState) -> dict:
-    """Extracts the final text response from the last AI message."""
+    """Extracts the final text response and optional Vega spec from the last AI message."""
     for msg in reversed(state["messages"]):
-        if isinstance(msg, AIMessage) and msg.content:
-            extracted = _extract_text(msg.content)
-            if extracted:
-                logger.info(f"Extracted final response: {len(extracted)} characters")
-                return {"final_response": extracted}
+        if not isinstance(msg, AIMessage) or not msg.content:
+            continue
+        extracted = _extract_text(msg.content)
+        # also check raw content for vega block in case text extraction missed it
+        raw = extracted or (msg.content if isinstance(msg.content, str) else "")
+        text, vega_spec = _extract_vega_spec(extracted)
+        if text or vega_spec:
+            logger.info(f"Extracted final response: {len(text)} chars, vega_spec: {vega_spec is not None}")
+            return {"final_response": text, "vega_spec": vega_spec}
     logger.warning("No final response found in messages")
-    return {"final_response": "I could not generate a response."}
+    return {"final_response": "I could not generate a response.", "vega_spec": None}
+
+
+def _extract_vega_spec(text: str) -> tuple[str, dict | None]:
+    """Extracts a vega code block from the response text.
+
+    Looks for ```vega ... ``` block, parses it as JSON,
+    unwraps nested {vega_spec: {...}} if present,
+    returns (text_without_vega_block, vega_spec_dict).
+    """
+    pattern = r"```vega\s*([\s\S]*?)```"
+    match = re.search(pattern, text)
+    if not match:
+        return text, None
+    try:
+        parsed = json.loads(match.group(1).strip())
+        # unwrap if LLM returned {"vega_spec": {...}} instead of the spec directly
+        if isinstance(parsed, dict) and "vega_spec" in parsed and len(parsed) == 1:
+            parsed = parsed["vega_spec"]
+        # validate it looks like a Vega-Lite spec
+        if not isinstance(parsed, dict) or "mark" not in parsed:
+            logger.warning("Parsed vega block does not look like a valid Vega-Lite spec")
+            return text, None
+        clean_text = re.sub(pattern, "", text).strip()
+        return clean_text, parsed
+    except json.JSONDecodeError:
+        logger.warning("Found vega block but failed to parse as JSON")
+        return text, None
 
 
 def _extract_text(content) -> str:
     """Handles both plain string and list-of-parts content (Gemini thinking models)."""
     if isinstance(content, str):
         return content
-    
     if isinstance(content, list):
         text_parts = []
         for part in content:
-            if isinstance(part, dict):
-                # Include all text content, skip thinking/other parts
-                if part.get("type") == "text" and part.get("text"):
-                    text_parts.append(part["text"])
-        result = " ".join(text_parts)
-        logger.info(f"Extracted {len(text_parts)} text parts from list content")
-        return result
-    
-    # Fallback for other content types
+            if isinstance(part, dict) and part.get("type") == "text" and part.get("text"):
+                text_parts.append(part["text"])
+        return " ".join(text_parts)
     return str(content) if content else ""

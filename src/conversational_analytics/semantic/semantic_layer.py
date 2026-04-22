@@ -62,6 +62,11 @@ def get_role_config(role: str | None) -> dict:
     return data.get("roles", {}).get(role.lower(), {})
 
 
+def get_visualization_rules() -> dict:
+    """Returns visualization rules from semantic layer. Empty dict if not defined."""
+    return _load().get("visualization_rules", {})
+
+
 def get_global_business_rules() -> list[str]:
     """Returns global business rules from semantic layer. Empty list if not defined."""
     return _load().get("business_rules", [])

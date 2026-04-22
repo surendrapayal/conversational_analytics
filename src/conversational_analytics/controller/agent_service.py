@@ -26,6 +26,7 @@ def run_agent(request: AgentRequest) -> AgentResponse:
     logger.info(f"Agent completed for user={request.user_id} session={request.session_id}")
     return AgentResponse(
         response_text=result["final_response"],
+        vega_spec=result.get("vega_spec"),
         metadata=AgentMetadata(
             tools_invoked=result.get("tools_invoked", []),
             thinking=result.get("thinking") or None,
@@ -97,9 +98,9 @@ def stream_agent(request: AgentRequest, stream_mode: str = "standard") -> Genera
 
                 elif node_name == "response_formatter":
                     final = state_update.get("final_response", "")
+                    vega = state_update.get("vega_spec")
                     if final:
-                        # logger.info(f"Yielding response event with {len(final)} chars")
-                        yield _sse("response", {"text": final}, request.session_id)
+                        yield _sse("response", {"text": final, "vega_spec": vega}, request.session_id)
 
         # logger.info("Yielding done event")
         yield _sse("done", {"status": "completed"}, request.session_id)

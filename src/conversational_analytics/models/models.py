@@ -12,6 +12,7 @@ class AgentState(TypedDict):
     intermediate_steps: list[str]
     tool_results: list[str]
     final_response: str
+    vega_spec: dict | None
     thinking: str
     tools_invoked: list[str]
     role: str | None
@@ -33,4 +34,5 @@ class AgentMetadata(BaseModel):
 
 class AgentResponse(BaseModel):
     response_text: str
+    vega_spec: dict | None = None
     metadata: AgentMetadata = Field(default_factory=AgentMetadata)

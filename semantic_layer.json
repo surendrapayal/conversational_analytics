@@ -1,6 +1,6 @@
 {
   "database": "zenvyra",
-  "description": "Zenvyra Restaurant Management System — semantic layer for conversational analytics",
+  "description": "Zenvyra Restaurant Management System - semantic layer for conversational analytics",
 
   "domains": {
 
@@ -214,7 +214,7 @@
       "description": "Stock levels, reorder alerts and ingredient usage",
       "metrics": {
         "low_stock_items": {
-          "description": "Ingredients at or below reorder threshold — need restocking",
+          "description": "Ingredients at or below reorder threshold - need restocking",
           "sql": "SELECT l.name AS location, i.name AS ingredient, inv.quantity_on_hand, inv.reorder_threshold FROM inventory inv JOIN ingredients i ON inv.ingredient_id = i.id JOIN location l ON inv.location_id = l.id WHERE inv.quantity_on_hand <= inv.reorder_threshold ORDER BY l.name, i.name"
         },
         "out_of_stock_items": {
@@ -226,7 +226,7 @@
           "sql": "SELECT l.name AS location, i.name AS ingredient, inv.quantity_on_hand, i.unit FROM inventory inv JOIN ingredients i ON inv.ingredient_id = i.id JOIN location l ON inv.location_id = l.id ORDER BY l.name, i.name"
         },
         "ingredient_cost_by_supplier": {
-          "description": "Cost per ingredient from each supplier — useful for procurement decisions",
+          "description": "Cost per ingredient from each supplier - useful for procurement decisions",
           "sql": "SELECT s.name AS supplier, i.name AS ingredient, si.unit_cost, i.unit FROM supplier_items si JOIN supplier s ON si.supplier_id = s.id JOIN ingredients i ON si.ingredient_id = i.id ORDER BY i.name, si.unit_cost"
         },
         "cheapest_supplier_per_ingredient": {
@@ -288,7 +288,7 @@
           "unit": "percent"
         },
         "table_utilisation": {
-          "description": "Number of reservations per table — identifies most and least used tables",
+          "description": "Number of reservations per table - identifies most and least used tables",
           "sql": "SELECT t.table_number, l.name AS location, COUNT(r.id) AS reservation_count FROM reservations r JOIN tables t ON r.table_id = t.id JOIN location l ON t.location_id = l.id GROUP BY t.table_number, l.name ORDER BY reservation_count DESC"
         },
         "upcoming_reservations": {
@@ -353,10 +353,36 @@
     {"from": "tables", "to": "location", "join": "tables.location_id = location.id", "type": "many-to-one"}
   ],
 
+  "visualization_rules": {
+    "schema": "https://vega.github.io/schema/vega-lite/v5.json",
+    "default_width": 700,
+    "default_height": 400,
+    "instructions": [
+      "Always include $schema at the top level: 'https://vega.github.io/schema/vega-lite/v5.json'",
+      "Always include a descriptive title derived from the user query",
+      "Always include tooltips showing exact values on hover - tooltip format '$,.2f' is correct inside tooltip field definitions",
+      "Always sort bar charts in descending order for ranking queries (Top N)",
+      "For currency y-axis: place format inside axis object e.g. 'axis': {'format': '$,.2f'} NOT at the top level of the y encoding",
+      "For percentage y-axis: place format inside axis object e.g. 'axis': {'format': '.1%'}",
+      "Return the Vega-Lite spec as JSON inside a markdown code block tagged vega - return the spec object directly, do NOT wrap it in a 'vega_spec' key",
+      "Only generate a chart when the result has 2+ rows and at least one numeric column",
+      "Do NOT generate a chart for single scalar values (e.g. a total count)"
+    ],
+    "chart_selection": {
+      "bar": "Ranking or comparing categories - e.g. top N items, revenue by location",
+      "line": "Trends over time with a date/timestamp dimension - e.g. daily revenue, monthly orders",
+      "area": "Cumulative volume over time - e.g. running total, stacked time series",
+      "arc": "Part-to-whole with 2-6 categories - e.g. payment method split, market share",
+      "point": "Correlation between two numeric metrics - e.g. price vs quantity",
+      "bar_binned": "Distribution of a numeric field - e.g. order size frequency, histogram",
+      "boxplot": "Statistical spread and outliers across groups - e.g. order value by location"
+    }
+  },
+
   "business_rules": [
-    "Completed orders: status = 'completed' — use this filter for all revenue calculations",
-    "Active menu items: is_active = true — only these are available for ordering",
-    "Walk-in customers: orders.customer_id IS NULL — these have no customer profile",
+    "Completed orders: status = 'completed' - use this filter for all revenue calculations",
+    "Active menu items: is_active = true - only these are available for ordering",
+    "Walk-in customers: orders.customer_id IS NULL - these have no customer profile",
     "Loyalty points earned: loyalty_txn.txn_type = 'earn' and points_change > 0",
     "Loyalty points redeemed: loyalty_txn.txn_type = 'redeem' and points_change < 0",
     "Payment amount includes total_amount + tax_amount + tip_amount",
@@ -369,8 +395,8 @@
   "roles": {
 
     "admin": {
-      "description": "Full system access — all domains, all data, no restrictions",
-      "domains": ["customers", "orders", "order_items", "menu_items", "menu_categories", "payments", "reservations", "employee", "shifts", "inventory", "ingredients", "loyalty_accounts", "loyalty_txn", "discounts", "order_discounts", "location", "tables", "roles", "recipe_items", "supplier", "supplier_items"],
+      "description": "Full system access - all domains, all data, no restrictions",
+      "domains": ["sales", "menu", "customers", "loyalty", "payments", "discounts", "inventory", "workforce", "reservations", "locations"],
       "restricted_columns": [],
       "row_filters": {},
       "business_rules": [
@@ -381,13 +407,13 @@
     },
 
     "general_manager": {
-      "description": "Cross-location management — all domains except supplier procurement, PII restricted",
-      "domains": ["customers", "orders", "order_items", "menu_items", "menu_categories", "payments", "reservations", "employee", "shifts", "inventory", "ingredients", "loyalty_accounts", "loyalty_txn", "discounts", "order_discounts", "location", "tables", "roles"],
+      "description": "Cross-location management - all domains except supplier procurement, PII restricted",
+      "domains": ["sales", "menu", "customers", "loyalty", "payments", "discounts", "inventory", "workforce", "reservations", "locations"],
       "restricted_columns": ["customers.email", "customers.phone", "customers.address", "employee.email"],
       "row_filters": {},
       "business_rules": [
-        "Cannot access supplier pricing or recipe ingredient costs — supplier and supplier_items tables are not available",
-        "Customer and employee PII (email, phone, address) is hidden — use name only",
+        "Cannot access supplier pricing or recipe ingredient costs - supplier and supplier_items tables are not available",
+        "Customer and employee PII (email, phone, address) is hidden - use name only",
         "Can compare performance across all locations",
         "Revenue means total completed order revenue across all locations",
         "Inventory metrics available: low_stock_items, out_of_stock_items, inventory_by_location only"
@@ -395,7 +421,7 @@
     },
 
     "location_manager": {
-      "description": "Single location management — location-scoped data only",
+      "description": "Single location management - location-scoped data only",
       "domains": ["sales", "menu", "inventory", "workforce", "reservations", "payments"],
       "restricted_columns": ["employee.email"],
       "row_filters": {
@@ -406,7 +432,7 @@
       },
       "business_rules": [
         "ALL queries are automatically filtered to the manager's assigned location",
-        "Revenue means revenue for this location only — never cross-location totals",
+        "Revenue means revenue for this location only - never cross-location totals",
         "Staff means employees assigned to this location only",
         "Inventory means stock at this location only",
         "Cannot access loyalty program, discount management or supplier data"
@@ -414,8 +440,8 @@
     },
 
     "chef": {
-      "description": "Kitchen operations — menu, recipes and inventory only",
-      "domains": ["menu_items", "menu_categories", "recipe_items", "ingredients", "inventory"],
+      "description": "Kitchen operations - menu, recipes and inventory only",
+      "domains": ["menu", "inventory"],
       "restricted_columns": [],
       "row_filters": {},
       "business_rules": [
@@ -428,21 +454,21 @@
     },
 
     "waiter": {
-      "description": "Floor operations — orders, tables, reservations and menu only",
+      "description": "Floor operations - orders, tables, reservations and menu only",
       "domains": ["sales", "menu", "reservations"],
       "restricted_columns": ["customers.email", "customers.phone", "customers.address"],
       "row_filters": {},
       "business_rules": [
         "Can view current orders, table status and today's reservations",
-        "Cannot access financial totals, revenue, payment amounts or tips — do NOT query total_amount, tax_amount, tip_amount",
+        "Cannot access financial totals, revenue, payment amounts or tips - do NOT query total_amount, tax_amount, tip_amount",
         "Cannot access inventory, staff data or loyalty program details",
         "Customer contact details (email, phone, address) are hidden",
-        "Active menu items means is_active = true — only show available dishes"
+        "Active menu items means is_active = true - only show available dishes"
       ]
     },
 
     "cashier": {
-      "description": "Payment processing — orders, payments and discounts only",
+      "description": "Payment processing - orders, payments and discounts only",
       "domains": ["sales", "payments", "discounts"],
       "restricted_columns": [],
       "row_filters": {},
@@ -458,16 +484,16 @@
     },
 
     "analyst": {
-      "description": "Read-only analytics — all aggregated data, no PII, no supplier costs",
+      "description": "Read-only analytics - all aggregated data, no PII, no supplier costs",
       "domains": ["sales", "menu", "customers", "loyalty", "payments", "discounts", "inventory", "workforce", "reservations", "locations"],
       "restricted_columns": ["customers.email", "customers.phone", "customers.address", "employee.email"],
       "row_filters": {},
       "business_rules": [
-        "Read-only access — never suggest INSERT, UPDATE, DELETE or DROP",
-        "All customer and employee PII is hidden — use aggregated data only",
+        "Read-only access - never suggest INSERT, UPDATE, DELETE or DROP",
+        "All customer and employee PII is hidden - use aggregated data only",
         "Cannot access supplier pricing or recipe costs",
         "Revenue always means completed orders: status = 'completed'",
-        "Always use aggregations (SUM, AVG, COUNT) — never return raw customer records",
+        "Always use aggregations (SUM, AVG, COUNT) - never return raw customer records",
         "Trend analysis: use DATE_TRUNC for monthly/weekly grouping"
       ]
     }
