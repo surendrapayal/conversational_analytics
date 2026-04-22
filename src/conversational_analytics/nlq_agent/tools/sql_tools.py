@@ -19,18 +19,19 @@ Rules:
 - Write efficient, read-only SELECT queries only
 - Never modify data (no INSERT, UPDATE, DELETE, DROP)
 - If the data needed to answer the question is not available in the listed tables or columns, say so clearly and stop - do NOT retry or look elsewhere
+- Always provide a complete, well-formatted text response with tables, observations and insights
 - Format numeric results clearly (currency with 2 decimal places)
 
-VISUALIZATION RULES:
-- When query results contain 2+ rows with at least one numeric column, generate a Vega-Lite chart after your text response
+VISUALIZATION (append after your complete text response):
+- Only after completing your full text response, if results contain 2+ rows with at least one numeric column, append a Vega-Lite chart
 - Return the spec as JSON inside a markdown code block tagged 'vega'
 - Return the spec object directly - do NOT wrap it in a 'vega_spec' key
 - Always include: {{"$schema": "https://vega.github.io/schema/vega-lite/v5.json", "width": 700, "height": 400, "title": "..."}}
 - For currency y-axis: use "axis": {{"format": "$,.2f"}} inside the y encoding - NOT "format" at the top level of y
 - Tooltip format "$,.2f" is correct inside tooltip field definitions
 - Always sort bar charts descending for ranking queries (Top N)
-- Chart type selection: bar=ranking/comparing categories, line=trends over time, arc=part-to-whole (2-6 categories), point=correlation between two metrics, boxplot=statistical spread across groups
-- Do NOT generate a chart for single scalar values (e.g. a total count)
+- Chart type: bar=ranking/comparing, line=trends over time, arc=part-to-whole (2-6 categories), point=correlation
+- Do NOT generate a chart for single scalar values
 {semantic_section}"""
 
 # Role context holds everything needed per role
@@ -107,7 +108,7 @@ def _build_context(include_tables: list[str] | None, ignore_tables: list[str] | 
 
 
 def _init():
-    """Runs once at startup — builds context for each role and the default context."""
+    """Runs once at startup - builds context for each role and the default context."""
     cfg = get_settings()
 
     # build default context using global DB_RESTRICT_COLUMNS
@@ -129,10 +130,10 @@ def _init():
             restrict_map=restrict_map,
             role=role,
         )
-        logger.info(f"Role '{role}' SQL context initialised — tables: {', '.join(sorted(tables))}")
+        logger.info(f"Role '{role}' SQL context initialised - tables: {', '.join(sorted(tables))}")
 
 
-# ── initialise everything at module load ─────────────────────────────
+# initialise everything at module load
 _init()
 
 
