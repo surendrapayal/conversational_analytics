@@ -1,0 +1,35 @@
+-- Daily inserts into order_discounts (2026-04-22T14:52:06.967906)
+
+INSERT INTO order_discounts (order_id, discount_id) VALUES (3001, 202);
+INSERT INTO order_discounts (order_id, discount_id) VALUES (3001, 201);
+INSERT INTO order_discounts (order_id, discount_id) VALUES (3002, 201);
+INSERT INTO order_discounts (order_id, discount_id) VALUES (3004, 201);
+INSERT INTO order_discounts (order_id, discount_id) VALUES (3008, 200);
+INSERT INTO order_discounts (order_id, discount_id) VALUES (3009, 201);
+INSERT INTO order_discounts (order_id, discount_id) VALUES (3011, 200);
+INSERT INTO order_discounts (order_id, discount_id) VALUES (3016, 200);
+INSERT INTO order_discounts (order_id, discount_id) VALUES (3016, 202);
+INSERT INTO order_discounts (order_id, discount_id) VALUES (3018, 202);
+INSERT INTO order_discounts (order_id, discount_id) VALUES (3018, 200);
+INSERT INTO order_discounts (order_id, discount_id) VALUES (3020, 200);
+INSERT INTO order_discounts (order_id, discount_id) VALUES (3020, 201);
+INSERT INTO order_discounts (order_id, discount_id) VALUES (3021, 200);
+INSERT INTO order_discounts (order_id, discount_id) VALUES (3024, 201);
+INSERT INTO order_discounts (order_id, discount_id) VALUES (3025, 202);
+INSERT INTO order_discounts (order_id, discount_id) VALUES (3025, 200);
+INSERT INTO order_discounts (order_id, discount_id) VALUES (3028, 201);
+INSERT INTO order_discounts (order_id, discount_id) VALUES (3028, 200);
+INSERT INTO order_discounts (order_id, discount_id) VALUES (3031, 202);
+INSERT INTO order_discounts (order_id, discount_id) VALUES (3031, 201);
+INSERT INTO order_discounts (order_id, discount_id) VALUES (3033, 200);
+INSERT INTO order_discounts (order_id, discount_id) VALUES (3035, 201);
+INSERT INTO order_discounts (order_id, discount_id) VALUES (3035, 200);
+INSERT INTO order_discounts (order_id, discount_id) VALUES (3045, 200);
+INSERT INTO order_discounts (order_id, discount_id) VALUES (3046, 201);
+INSERT INTO order_discounts (order_id, discount_id) VALUES (3047, 202);
+INSERT INTO order_discounts (order_id, discount_id) VALUES (3047, 200);
+INSERT INTO order_discounts (order_id, discount_id) VALUES (3048, 202);
+INSERT INTO order_discounts (order_id, discount_id) VALUES (3048, 200);
+INSERT INTO order_discounts (order_id, discount_id) VALUES (3049, 201);
+INSERT INTO order_discounts (order_id, discount_id) VALUES (3050, 200);
+INSERT INTO order_discounts (order_id, discount_id) VALUES (3050, 202);
