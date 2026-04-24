@@ -19,10 +19,12 @@ CREATE SCHEMA IF NOT EXISTS memory;
 -- ── 1. Query audit log ────────────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS memory.query_log (
     id              BIGSERIAL   PRIMARY KEY,
+    conversation_id UUID        NOT NULL,
     session_id      TEXT        NOT NULL,
     user_id         TEXT        NOT NULL,
     role            TEXT,
     user_query      TEXT        NOT NULL,
+    prompt          TEXT,
     sql_generated   TEXT,
     tools_invoked   TEXT[],
     agent_response  TEXT,
@@ -37,6 +39,8 @@ CREATE TABLE IF NOT EXISTS memory.query_log (
 ALTER TABLE memory.query_log ADD COLUMN IF NOT EXISTS agent_response TEXT;
 ALTER TABLE memory.query_log ADD COLUMN IF NOT EXISTS vega_spec JSONB;
 ALTER TABLE memory.query_log ADD COLUMN IF NOT EXISTS token_usage JSONB;
+ALTER TABLE memory.query_log ADD COLUMN IF NOT EXISTS conversation_id UUID;
+ALTER TABLE memory.query_log ADD COLUMN IF NOT EXISTS prompt TEXT;
 
 CREATE INDEX IF NOT EXISTS idx_query_log_user_id
     ON memory.query_log(user_id, created_at DESC);
@@ -82,13 +86,17 @@ SELECT
 FROM public.store
 WHERE prefix LIKE 'user_memory.%';
 
-CREATE OR REPLACE VIEW memory.session_summaries AS
+-- Drop and recreate conversation_summaries view (renamed from session_summaries)
+DROP VIEW IF EXISTS memory.session_summaries;
+DROP VIEW IF EXISTS memory.conversation_summaries;
+CREATE VIEW memory.conversation_summaries AS
 SELECT
-    split_part(prefix, '.', 2)  AS user_id,
-    key                          AS session_id,
-    value->>'summary'            AS summary,
-    value->>'role'               AS role,
+    split_part(prefix, '.', 2)      AS user_id,
+    key                              AS conversation_id,
+    value->>'session_id'             AS session_id,
+    value->>'summary'                AS summary,
+    value->>'role'                   AS role,
     created_at,
     updated_at
 FROM public.store
-WHERE prefix LIKE 'session_summaries.%';
+WHERE prefix LIKE 'conversation_summaries.%';

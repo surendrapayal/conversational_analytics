@@ -53,44 +53,44 @@ def setup_schema() -> None:
         conn.close()
 
 
-def save_session_summary(
+def save_conversation_summary(
     user_id: str,
     session_id: str,
+    conversation_id: str,
     user_query: str,
     response_text: str,
     role: str | None,
 ) -> None:
-    """Writes a distilled session summary to the long-term store.
+    """Writes a distilled conversation summary to the long-term store.
 
-    Stored under namespace ('session_summaries', user_id) keyed by session_id.
-    This is what gets recalled in future sessions to give the LLM cross-session context.
-
-    Example stored value:
-        {
-            'summary': 'User asked about top 3 menu items. Answer: Spring Rolls (230)...',
-            'session_id': 'session_001',
-            'role': 'admin',
-        }
+    Stored under namespace ('conversation_summaries', user_id) keyed by conversation_id.
+    Each conversation gets its own entry — multiple conversations per session are preserved.
     """
     store = get_long_term_store()
-    # Truncate response to keep summary concise — first 300 chars is enough for context
     summary = f"Q: {user_query[:150]} | A: {response_text[:300]}"
     try:
         store.put(
-            ("session_summaries", user_id),
-            session_id,
-            {"summary": summary, "session_id": session_id, "role": role},
+            ("conversation_summaries", user_id),
+            conversation_id,
+            {
+                "summary": summary,
+                "session_id": session_id,
+                "conversation_id": conversation_id,
+                "role": role,
+            },
         )
-        logger.info(f"Saved session summary for user={user_id} session={session_id}")
+        logger.info(f"Saved conversation summary for user={user_id} session={session_id} conversation={conversation_id}")
     except Exception as e:
-        logger.warning(f"Could not save session summary: {e}")
+        logger.warning(f"Could not save conversation summary: {e}")
 
 
 def log_query(
     session_id: str,
     user_id: str,
+    conversation_id: str,
     role: str | None,
     user_query: str,
+    prompt: str | None,
     sql_generated: str | None,
     tools_invoked: list[str],
     agent_response: str | None = None,
@@ -107,13 +107,13 @@ def log_query(
         with conn.cursor() as cur:
             cur.execute("""
                 INSERT INTO memory.query_log
-                    (session_id, user_id, role, user_query, sql_generated,
-                     tools_invoked, agent_response, vega_spec, token_usage,
-                     has_vega, execution_ms)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                    (conversation_id, session_id, user_id, role, user_query, prompt,
+                     sql_generated, tools_invoked, agent_response, vega_spec,
+                     token_usage, has_vega, execution_ms)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             """, (
-                session_id, user_id, role, user_query, sql_generated,
-                tools_invoked, agent_response,
+                conversation_id, session_id, user_id, role, user_query, prompt,
+                sql_generated, tools_invoked, agent_response,
                 _json.dumps(vega_spec) if vega_spec else None,
                 _json.dumps(token_usage) if token_usage else None,
                 has_vega, execution_ms,

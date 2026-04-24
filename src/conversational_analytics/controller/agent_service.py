@@ -6,7 +6,7 @@ from collections.abc import Generator
 from langchain_core.messages import HumanMessage, AIMessage, ToolMessage
 from conversational_analytics.graph import build_graph
 from conversational_analytics.models import AgentRequest, AgentResponse, AgentMetadata
-from conversational_analytics.memory import log_query, save_session_summary
+from conversational_analytics.memory import log_query, save_conversation_summary
 
 logger = logging.getLogger(__name__)
 logger.propagate = True  # Ensure logs propagate to root logger
@@ -22,8 +22,10 @@ def run_agent(request: AgentRequest) -> AgentResponse:
         {
             "user_input": request.query,
             "user_id": request.user_id,
+            "conversation_id": request.conversation_id,
             "messages": [HumanMessage(content=request.query)],
             "role": request.role,
+            "prompt": None,
         },
         config=config,
     )
@@ -34,17 +36,19 @@ def run_agent(request: AgentRequest) -> AgentResponse:
     vega_spec = result.get("vega_spec")
     tools_invoked = result.get("tools_invoked", [])
     token_usage = result.get("token_usage")
+    prompt = result.get("prompt")
     sql_generated = next(
         (t for t in reversed(result.get("tool_results", [])) if "SELECT" in t.upper()), None
     )
 
-    # persist query audit to long-term memory
     try:
         log_query(
+            conversation_id=request.conversation_id,
             session_id=request.session_id,
             user_id=request.user_id,
             role=request.role,
             user_query=request.query,
+            prompt=prompt,
             sql_generated=sql_generated,
             tools_invoked=tools_invoked,
             agent_response=response_text,
@@ -53,10 +57,10 @@ def run_agent(request: AgentRequest) -> AgentResponse:
             has_vega=vega_spec is not None,
             execution_ms=execution_ms,
         )
-        # save distilled session summary for cross-session recall
-        save_session_summary(
+        save_conversation_summary(
             user_id=request.user_id,
             session_id=request.session_id,
+            conversation_id=request.conversation_id,
             user_query=request.query,
             response_text=response_text,
             role=request.role,
@@ -68,8 +72,10 @@ def run_agent(request: AgentRequest) -> AgentResponse:
         response_text=response_text,
         vega_spec=vega_spec,
         metadata=AgentMetadata(
+            conversation_id=request.conversation_id,
             tools_invoked=tools_invoked,
             thinking=result.get("thinking") or None,
+            token_usage=token_usage,
         ),
     )
 
@@ -104,8 +110,10 @@ def stream_agent(request: AgentRequest, stream_mode: str = "standard") -> Genera
         input_state = {
             "user_input": request.query,
             "user_id": request.user_id,
+            "conversation_id": request.conversation_id,
             "messages": [HumanMessage(content=request.query)],
             "role": request.role,
+            "prompt": None,
         }
 
         # track state for audit log
@@ -114,14 +122,16 @@ def stream_agent(request: AgentRequest, stream_mode: str = "standard") -> Genera
         _final_response: str = ""
         _vega_spec: dict | None = None
         _token_usage: dict | None = None
+        _prompt: str | None = None
         _has_vega: bool = False
 
         for chunk in _graph.stream(input_state, config=config, stream_mode="updates"):
             for node_name, state_update in chunk.items():
                 if node_name == "agent":
-                    # capture latest accumulated token_usage from agent node
                     if state_update.get("token_usage"):
                         _token_usage = state_update["token_usage"]
+                    if state_update.get("prompt") and _prompt is None:
+                        _prompt = state_update["prompt"]  # capture only on first call
                     for msg in state_update.get("messages", []):
                         if not isinstance(msg, AIMessage):
                             continue
@@ -162,10 +172,12 @@ def stream_agent(request: AgentRequest, stream_mode: str = "standard") -> Genera
                 (t for t in reversed(_tool_results) if "SELECT" in t.upper()), None
             )
             log_query(
+                conversation_id=request.conversation_id,
                 session_id=request.session_id,
                 user_id=request.user_id,
                 role=request.role,
                 user_query=request.query,
+                prompt=_prompt,
                 sql_generated=sql_generated,
                 tools_invoked=_tools_invoked,
                 agent_response=_final_response,
@@ -174,10 +186,10 @@ def stream_agent(request: AgentRequest, stream_mode: str = "standard") -> Genera
                 has_vega=_has_vega,
                 execution_ms=int((time.time() - start) * 1000),
             )
-            # save distilled session summary for cross-session recall
-            save_session_summary(
+            save_conversation_summary(
                 user_id=request.user_id,
                 session_id=request.session_id,
+                conversation_id=request.conversation_id,
                 user_query=request.query,
                 response_text=_final_response,
                 role=request.role,

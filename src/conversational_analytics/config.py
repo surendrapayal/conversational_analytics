@@ -55,6 +55,7 @@ class Settings(BaseSettings):
     log_level: str = "INFO"
     agent_max_iterations: int = 10
     semantic_layer_path: str = ""
+    log_prompt: bool = False  # set True to store full system prompt in query_log
 
     # ── Analytics DB properties ───────────────────────────────────────
 

@@ -38,7 +38,7 @@ def agent_node(state: AgentState, store: BaseStore) -> dict:
     memory_context = ""
     if user_id and store and not tools_invoked:
         try:
-            past_sessions = store.search(("session_summaries", user_id), limit=3)
+            past_sessions = store.search(("conversation_summaries", user_id), limit=3)
             if past_sessions:
                 summaries = "\n".join(
                     f"- {m.value.get('summary', '')}"
@@ -54,6 +54,9 @@ def agent_node(state: AgentState, store: BaseStore) -> dict:
     enriched_system = SystemMessage(
         content=system_msg.content + memory_context
     ) if memory_context else system_msg
+
+    # capture prompt for audit log if LOG_PROMPT=true
+    prompt_text = enriched_system.content if cfg.log_prompt else None
 
     # guard: if max iterations reached, force the LLM to respond without tools
     if len(tools_invoked) >= cfg.agent_max_iterations:
@@ -93,6 +96,7 @@ def agent_node(state: AgentState, store: BaseStore) -> dict:
         "intermediate_steps": state.get("intermediate_steps", []) + [step],
         "thinking": thinking,
         "token_usage": current_usage,
+        "prompt": prompt_text,
     }
 
 
