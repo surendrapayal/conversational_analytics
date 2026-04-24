@@ -84,6 +84,49 @@ def save_conversation_summary(
         logger.warning(f"Could not save conversation summary: {e}")
 
 
+def log_agent_step(
+    conversation_id: str,
+    session_id: str,
+    user_id: str,
+    step_number: int,
+    step_type: str,
+    tool_name: str | None = None,
+    input: str | None = None,
+    output: str | None = None,
+    token_usage: dict | None = None,
+    duration_ms: int | None = None,
+) -> None:
+    """Logs a single ReAct agent step to memory.agent_steps.
+
+    step_type values:
+      llm_call    — LLM was invoked (thinking + tool decision or final response)
+      tool_call   — a tool was called with args
+      tool_result — a tool returned a result
+    """
+    import json as _json
+    pool = _get_audit_pool()
+    conn = pool.getconn()
+    try:
+        with conn.cursor() as cur:
+            cur.execute("""
+                INSERT INTO memory.agent_steps
+                    (conversation_id, session_id, user_id, step_number, step_type,
+                     tool_name, input, output, token_usage, duration_ms)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            """, (
+                conversation_id, session_id, user_id, step_number, step_type,
+                tool_name, input, output,
+                _json.dumps(token_usage) if token_usage else None,
+                duration_ms,
+            ))
+        conn.commit()
+    except Exception:
+        conn.rollback()
+        raise
+    finally:
+        pool.putconn(conn)
+
+
 def log_query(
     session_id: str,
     user_id: str,

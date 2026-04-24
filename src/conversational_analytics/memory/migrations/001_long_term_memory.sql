@@ -48,6 +48,28 @@ CREATE INDEX IF NOT EXISTS idx_query_log_user_id
 CREATE INDEX IF NOT EXISTS idx_query_log_session_id
     ON memory.query_log(session_id, created_at DESC);
 
+-- ── 2. Agent steps log ────────────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS memory.agent_steps (
+    id              BIGSERIAL   PRIMARY KEY,
+    conversation_id UUID        NOT NULL,
+    session_id      TEXT        NOT NULL,
+    user_id         TEXT        NOT NULL,
+    step_number     INT         NOT NULL,   -- sequential step within the conversation
+    step_type       TEXT        NOT NULL,   -- llm_call | tool_call | tool_result
+    tool_name       TEXT,                   -- e.g. sql_db_query (null for llm_call)
+    input           TEXT,                   -- tool args or LLM prompt summary
+    output          TEXT,                   -- tool result or LLM response summary
+    token_usage     JSONB,                  -- per-step token usage (llm_call only)
+    duration_ms     INT,                    -- time taken for this step
+    created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_agent_steps_conversation_id
+    ON memory.agent_steps(conversation_id, step_number ASC);
+
+CREATE INDEX IF NOT EXISTS idx_agent_steps_session_id
+    ON memory.agent_steps(session_id, created_at DESC);
+
 -- ── 2. Views over public.store ────────────────────────────────────────────────
 -- LangGraph stores data as: prefix = 'namespace.user_id', key, value (JSONB)
 
