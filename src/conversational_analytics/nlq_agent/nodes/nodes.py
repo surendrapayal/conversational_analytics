@@ -16,7 +16,14 @@ _tools = get_sql_tools()  # default tools - no role
 
 
 def agent_node(state: AgentState, store: BaseStore) -> dict:
-    """Calls the LLM with tools bound. Reads long-term memory from store."""
+    """Calls the LLM with tools bound.
+
+    Memory usage:
+    - SHORT-TERM (Redis): state["messages"] already contains the full current
+      session history — loaded automatically by the checkpointer. No action needed.
+    - LONG-TERM (PostgreSQL store): on the FIRST call of a session only, recall
+      past session summaries for this user and inject into the system prompt.
+    """
     cfg = get_settings()
     tools_invoked = state.get("tools_invoked", [])
     role = state.get("role")
@@ -24,18 +31,23 @@ def agent_node(state: AgentState, store: BaseStore) -> dict:
     tools = get_sql_tools(role)
     system_msg = get_system_message(role)
 
-    # ── recall long-term memory (only on first agent call, not on ReAct loops) ──
+    # ── Long-term recall: past session summaries ──────────────────────
+    # Only on the FIRST agent call (tools_invoked is empty).
+    # state["messages"] already has the current session via Redis — we only
+    # need to add context from PREVIOUS sessions stored in PostgreSQL.
     memory_context = ""
-    if user_id and store and not tools_invoked:  # tools_invoked is empty only on first call
+    if user_id and store and not tools_invoked:
         try:
-            memories = store.search(("conversation_history", user_id), limit=5)
-            if memories:
-                history = "\n".join(
-                    f"- Q: {m.value.get('query', '')} | A: {m.value.get('response', '')[:100]}..."
-                    for m in memories
+            past_sessions = store.search(("session_summaries", user_id), limit=3)
+            if past_sessions:
+                summaries = "\n".join(
+                    f"- {m.value.get('summary', '')}"
+                    for m in past_sessions
+                    if m.value.get("summary")
                 )
-                memory_context = f"\n\nRecent conversation history:\n{history}"
-                logger.info(f"Recalled {len(memories)} past turns for user={user_id}")
+                if summaries:
+                    memory_context = f"\n\nContext from past sessions:\n{summaries}"
+                    logger.info(f"Recalled {len(past_sessions)} past session summaries for user={user_id}")
         except Exception as e:
             logger.debug(f"Could not retrieve long-term memory: {e}")
 
@@ -60,15 +72,38 @@ def agent_node(state: AgentState, store: BaseStore) -> dict:
     step = f"Agent responded: {response.content[:100]}..." if response.content else "Agent invoked tools"
     logger.info(step)
 
+    # ── accumulate token usage across all LLM calls in this session ──
+    current_usage = state.get("token_usage") or {
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "total_tokens": 0,
+        "reasoning_tokens": 0,
+        "cache_read_tokens": 0,
+    }
+    if response.usage_metadata:
+        um = response.usage_metadata
+        current_usage["input_tokens"] += um.get("input_tokens", 0)
+        current_usage["output_tokens"] += um.get("output_tokens", 0)
+        current_usage["total_tokens"] += um.get("total_tokens", 0)
+        current_usage["reasoning_tokens"] += um.get("output_token_details", {}).get("reasoning", 0)
+        current_usage["cache_read_tokens"] += um.get("input_token_details", {}).get("cache_read", 0)
+
     return {
         "messages": [response],
         "intermediate_steps": state.get("intermediate_steps", []) + [step],
         "thinking": thinking,
+        "token_usage": current_usage,
     }
 
 
 def tools_node(state: AgentState) -> dict:
-    """Runs ToolNode and tracks which tools were invoked and their results."""
+    """Runs ToolNode and tracks which tools were invoked and their results.
+
+    Memory usage:
+    - SHORT-TERM (Redis): tool messages are appended to state["messages"]
+      and saved automatically by the checkpointer after this node.
+    - LONG-TERM: nothing written here.
+    """
     role = state.get("role")
     tools = get_sql_tools(role)
     result = ToolNode(tools).invoke(state)
@@ -86,8 +121,15 @@ def tools_node(state: AgentState) -> dict:
     }
 
 
-def response_formatter_node(state: AgentState, store: BaseStore) -> dict:
-    """Extracts the final text response and optional Vega spec. Writes to long-term store."""
+def response_formatter_node(state: AgentState) -> dict:
+    """Extracts the final text response and optional Vega spec.
+
+    Memory usage:
+    - SHORT-TERM (Redis): the final AIMessage is already in state["messages"]
+      and saved automatically by the checkpointer. No action needed here.
+    - LONG-TERM: NOT written here. Session summary is written by agent_service
+      AFTER the graph completes — so we have the full response available.
+    """
     for msg in reversed(state["messages"]):
         if not isinstance(msg, AIMessage) or not msg.content:
             continue
@@ -95,26 +137,6 @@ def response_formatter_node(state: AgentState, store: BaseStore) -> dict:
         text, vega_spec = _extract_vega_spec(extracted)
         if text or vega_spec:
             logger.info(f"Extracted final response: {len(text)} chars, vega_spec: {vega_spec is not None}")
-
-            # ── write Q&A turn to long-term store (once, after final response) ──
-            user_id = state.get("user_id") or ""
-            if user_id and store:
-                try:
-                    store.put(
-                        ("conversation_history", user_id),
-                        f"turn_{int(time.time())}",
-                        {
-                            "query": state.get("user_input", ""),
-                            "response": text[:500],
-                            "tools_invoked": state.get("tools_invoked", []),
-                            "has_vega": vega_spec is not None,
-                            "role": state.get("role"),
-                        },
-                    )
-                    logger.info(f"Saved conversation turn to long-term store for user={user_id}")
-                except Exception as e:
-                    logger.debug(f"Could not write to long-term memory: {e}")
-
             return {"final_response": text, "vega_spec": vega_spec}
 
     logger.warning("No final response found in messages")

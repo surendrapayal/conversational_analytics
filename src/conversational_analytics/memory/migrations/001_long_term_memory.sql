@@ -25,10 +25,18 @@ CREATE TABLE IF NOT EXISTS memory.query_log (
     user_query      TEXT        NOT NULL,
     sql_generated   TEXT,
     tools_invoked   TEXT[],
+    agent_response  TEXT,
+    vega_spec       JSONB,
+    token_usage     JSONB,
     has_vega        BOOLEAN     NOT NULL DEFAULT FALSE,
     execution_ms    INT,
     created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+-- Add new columns if table already exists (idempotent)
+ALTER TABLE memory.query_log ADD COLUMN IF NOT EXISTS agent_response TEXT;
+ALTER TABLE memory.query_log ADD COLUMN IF NOT EXISTS vega_spec JSONB;
+ALTER TABLE memory.query_log ADD COLUMN IF NOT EXISTS token_usage JSONB;
 
 CREATE INDEX IF NOT EXISTS idx_query_log_user_id
     ON memory.query_log(user_id, created_at DESC);
@@ -73,3 +81,14 @@ SELECT
     updated_at
 FROM public.store
 WHERE prefix LIKE 'user_memory.%';
+
+CREATE OR REPLACE VIEW memory.session_summaries AS
+SELECT
+    split_part(prefix, '.', 2)  AS user_id,
+    key                          AS session_id,
+    value->>'summary'            AS summary,
+    value->>'role'               AS role,
+    created_at,
+    updated_at
+FROM public.store
+WHERE prefix LIKE 'session_summaries.%';

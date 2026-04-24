@@ -17,6 +17,7 @@ class AgentState(TypedDict):
     thinking: str
     tools_invoked: list[str]
     role: str | None
+    token_usage: dict | None  # accumulated token usage across all LLM calls
 
 
 # ── Request / Response ────────────────────────────────────────────────

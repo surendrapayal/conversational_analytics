@@ -6,7 +6,7 @@ from collections.abc import Generator
 from langchain_core.messages import HumanMessage, AIMessage, ToolMessage
 from conversational_analytics.graph import build_graph
 from conversational_analytics.models import AgentRequest, AgentResponse, AgentMetadata
-from conversational_analytics.memory import log_query
+from conversational_analytics.memory import log_query, save_session_summary
 
 logger = logging.getLogger(__name__)
 logger.propagate = True  # Ensure logs propagate to root logger
@@ -33,6 +33,7 @@ def run_agent(request: AgentRequest) -> AgentResponse:
     response_text = result["final_response"]
     vega_spec = result.get("vega_spec")
     tools_invoked = result.get("tools_invoked", [])
+    token_usage = result.get("token_usage")
     sql_generated = next(
         (t for t in reversed(result.get("tool_results", [])) if "SELECT" in t.upper()), None
     )
@@ -46,8 +47,19 @@ def run_agent(request: AgentRequest) -> AgentResponse:
             user_query=request.query,
             sql_generated=sql_generated,
             tools_invoked=tools_invoked,
+            agent_response=response_text,
+            vega_spec=vega_spec,
+            token_usage=token_usage,
             has_vega=vega_spec is not None,
             execution_ms=execution_ms,
+        )
+        # save distilled session summary for cross-session recall
+        save_session_summary(
+            user_id=request.user_id,
+            session_id=request.session_id,
+            user_query=request.query,
+            response_text=response_text,
+            role=request.role,
         )
     except Exception as e:
         logger.warning(f"Failed to log query to long-term memory: {e}")
@@ -100,11 +112,16 @@ def stream_agent(request: AgentRequest, stream_mode: str = "standard") -> Genera
         _tools_invoked: list[str] = []
         _tool_results: list[str] = []
         _final_response: str = ""
+        _vega_spec: dict | None = None
+        _token_usage: dict | None = None
         _has_vega: bool = False
 
         for chunk in _graph.stream(input_state, config=config, stream_mode="updates"):
             for node_name, state_update in chunk.items():
                 if node_name == "agent":
+                    # capture latest accumulated token_usage from agent node
+                    if state_update.get("token_usage"):
+                        _token_usage = state_update["token_usage"]
                     for msg in state_update.get("messages", []):
                         if not isinstance(msg, AIMessage):
                             continue
@@ -132,13 +149,14 @@ def stream_agent(request: AgentRequest, stream_mode: str = "standard") -> Genera
                     vega = state_update.get("vega_spec")
                     if final:
                         _final_response = final
+                        _vega_spec = vega
                         _has_vega = vega is not None
                         yield _sse("response", {"text": final, "vega_spec": vega}, request.session_id)
 
         yield _sse("done", {"status": "completed"}, request.session_id)
         logger.info(f"Stream completed for user={request.user_id} session={request.session_id}")
 
-        # persist audit log after stream completes
+        # persist audit log and session summary after stream completes
         try:
             sql_generated = next(
                 (t for t in reversed(_tool_results) if "SELECT" in t.upper()), None
@@ -150,8 +168,19 @@ def stream_agent(request: AgentRequest, stream_mode: str = "standard") -> Genera
                 user_query=request.query,
                 sql_generated=sql_generated,
                 tools_invoked=_tools_invoked,
+                agent_response=_final_response,
+                vega_spec=_vega_spec,
+                token_usage=_token_usage,
                 has_vega=_has_vega,
                 execution_ms=int((time.time() - start) * 1000),
+            )
+            # save distilled session summary for cross-session recall
+            save_session_summary(
+                user_id=request.user_id,
+                session_id=request.session_id,
+                user_query=request.query,
+                response_text=_final_response,
+                role=request.role,
             )
         except Exception as e:
             logger.warning(f"Failed to log query audit: {e}")

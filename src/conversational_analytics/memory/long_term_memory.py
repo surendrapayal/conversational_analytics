@@ -53,6 +53,39 @@ def setup_schema() -> None:
         conn.close()
 
 
+def save_session_summary(
+    user_id: str,
+    session_id: str,
+    user_query: str,
+    response_text: str,
+    role: str | None,
+) -> None:
+    """Writes a distilled session summary to the long-term store.
+
+    Stored under namespace ('session_summaries', user_id) keyed by session_id.
+    This is what gets recalled in future sessions to give the LLM cross-session context.
+
+    Example stored value:
+        {
+            'summary': 'User asked about top 3 menu items. Answer: Spring Rolls (230)...',
+            'session_id': 'session_001',
+            'role': 'admin',
+        }
+    """
+    store = get_long_term_store()
+    # Truncate response to keep summary concise — first 300 chars is enough for context
+    summary = f"Q: {user_query[:150]} | A: {response_text[:300]}"
+    try:
+        store.put(
+            ("session_summaries", user_id),
+            session_id,
+            {"summary": summary, "session_id": session_id, "role": role},
+        )
+        logger.info(f"Saved session summary for user={user_id} session={session_id}")
+    except Exception as e:
+        logger.warning(f"Could not save session summary: {e}")
+
+
 def log_query(
     session_id: str,
     user_id: str,
@@ -60,10 +93,14 @@ def log_query(
     user_query: str,
     sql_generated: str | None,
     tools_invoked: list[str],
+    agent_response: str | None = None,
+    vega_spec: dict | None = None,
+    token_usage: dict | None = None,
     has_vega: bool = False,
     execution_ms: int | None = None,
 ) -> None:
     """Writes a query audit record to memory.query_log using the connection pool."""
+    import json as _json
     pool = _get_audit_pool()
     conn = pool.getconn()
     try:
@@ -71,10 +108,16 @@ def log_query(
             cur.execute("""
                 INSERT INTO memory.query_log
                     (session_id, user_id, role, user_query, sql_generated,
-                     tools_invoked, has_vega, execution_ms)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
-            """, (session_id, user_id, role, user_query, sql_generated,
-                  tools_invoked, has_vega, execution_ms))
+                     tools_invoked, agent_response, vega_spec, token_usage,
+                     has_vega, execution_ms)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            """, (
+                session_id, user_id, role, user_query, sql_generated,
+                tools_invoked, agent_response,
+                _json.dumps(vega_spec) if vega_spec else None,
+                _json.dumps(token_usage) if token_usage else None,
+                has_vega, execution_ms,
+            ))
         conn.commit()
     except Exception:
         conn.rollback()
