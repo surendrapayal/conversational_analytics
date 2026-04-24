@@ -3,7 +3,7 @@ from langchain_core.messages import AIMessage
 from langgraph.graph import StateGraph, END
 from conversational_analytics.models import AgentState
 from conversational_analytics.nlq_agent.nodes.nodes import agent_node, tools_node, response_formatter_node
-from conversational_analytics.memory import get_checkpointer
+from conversational_analytics.memory import get_checkpointer, get_long_term_store
 
 
 def _should_continue(state: AgentState) -> Literal["tools", "response_formatter"]:
@@ -26,5 +26,7 @@ def build_graph() -> StateGraph:
     graph.add_edge("tools", "agent")          # ReAct loop: tool result → agent
     graph.add_edge("response_formatter", END)
 
-    # RedisSaver checkpointer — persists full graph state after every node
-    return graph.compile(checkpointer=get_checkpointer())
+    return graph.compile(
+        checkpointer=get_checkpointer(),    # Redis — short-term, per-session state
+        store=get_long_term_store(),        # PostgreSQL — long-term, cross-session memory
+    )

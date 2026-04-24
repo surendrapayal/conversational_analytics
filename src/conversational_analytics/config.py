@@ -3,7 +3,7 @@ import os
 from pydantic import model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from functools import lru_cache
-from dotenv import load_dotenv, find_dotenv
+from dotenv import load_dotenv
 
 ENV_FILE = Path(__file__).resolve().parents[2] / ".env"
 load_dotenv(ENV_FILE, override=True)
@@ -16,7 +16,7 @@ class Settings(BaseSettings):
         extra="ignore",
     )
 
-    # LLM
+    # ── LLM ──────────────────────────────────────────────────────────
     google_cloud_project: str
     llm_model: str = "gemini-2.0-flash"
     llm_region: str = "us-east1"
@@ -26,7 +26,7 @@ class Settings(BaseSettings):
     thinking_level: str = "medium"
     include_thoughts: bool = True
 
-    # Database
+    # ── Analytics Database ────────────────────────────────────────────
     db_host: str = "localhost"
     db_port: int = 5433
     db_name: str = "zenvyra"
@@ -38,22 +38,25 @@ class Settings(BaseSettings):
     db_view_support: bool = False
     db_restrict_columns: str = ""
 
-    # Role Based Access — dynamic, no hardcoded role fields
-    # Any ROLE_<NAME>=tables and ROLE_<NAME>_RESTRICT_COLUMNS=cols in .env is picked up automatically
+    # ── Long-Term Memory Database (separate from analytics DB) ────────
+    memory_db_host: str = "localhost"
+    memory_db_port: int = 5433
+    memory_db_name: str = "zenvyra"
+    memory_db_user: str = "admin_user"
+    memory_db_password: str = "admin_password"
 
-    # Redis
+    # ── Redis (short-term memory) ─────────────────────────────────────
     redis_url: str = "redis://localhost:6379"
     redis_session_ttl: int = 3600
 
-    # App Server
+    # ── App Server ────────────────────────────────────────────────────
     app_host: str = "0.0.0.0"
     app_port: int = 8000
     log_level: str = "INFO"
     agent_max_iterations: int = 10
-    # Path to semantic layer JSON (relative to project root or absolute). Empty = disabled.
     semantic_layer_path: str = ""
 
-    # ── Database properties ───────────────────────────────────────────
+    # ── Analytics DB properties ───────────────────────────────────────
 
     @property
     def db_uri(self) -> str:
@@ -78,13 +81,27 @@ class Settings(BaseSettings):
     def db_include_tables_list(self) -> list[str]:
         return [t.strip() for t in self.db_include_tables.split(",") if t.strip()]
 
+    # ── Memory DB properties ──────────────────────────────────────────
+
+    @property
+    def memory_db_uri(self) -> str:
+        return f"postgresql://{self.memory_db_user}:{self.memory_db_password}@{self.memory_db_host}:{self.memory_db_port}/{self.memory_db_name}"
+
+    @property
+    def memory_db_dsn(self) -> dict:
+        return {
+            "host": self.memory_db_host,
+            "port": self.memory_db_port,
+            "dbname": self.memory_db_name,
+            "user": self.memory_db_user,
+            "password": self.memory_db_password,
+        }
+
     # ── Role properties ───────────────────────────────────────────────
 
     @property
     def role_tables_map(self) -> dict[str, list[str]]:
-        """Dynamically discovers all ROLE_<NAME>=tables entries from env vars.
-        Excludes ROLE_<NAME>_RESTRICT_COLUMNS and ROLE_<NAME>_ROW_FILTERS entries.
-        """
+        """Dynamically discovers all ROLE_<NAME>=tables entries from env vars."""
         result: dict[str, list[str]] = {}
         for key, value in os.environ.items():
             if not key.startswith("ROLE_"):
@@ -98,16 +115,11 @@ class Settings(BaseSettings):
         return result
 
     def get_tables_for_role(self, role: str) -> list[str] | None:
-        """Returns allowed tables for a role, or None if role is not defined."""
         return self.role_tables_map.get(role.lower())
 
     def get_restrict_columns_for_role(self, role: str) -> dict[str, list[str]]:
-        """Returns column restriction map for a role, falls back to global DB_RESTRICT_COLUMNS.
-        Looks for ROLE_<NAME>_RESTRICT_COLUMNS in env vars dynamically.
-        """
         env_key = f"ROLE_{role.upper()}_RESTRICT_COLUMNS"
         raw = os.environ.get(env_key, "").strip() or self.db_restrict_columns
-
         result: dict[str, list[str]] = {}
         for entry in raw.split(","):
             entry = entry.strip()
@@ -115,6 +127,21 @@ class Settings(BaseSettings):
                 continue
             table, col = entry.split(".", 1)
             result.setdefault(table.strip(), []).append(col.strip())
+        return result
+
+    def get_row_filters_for_role(self, role: str) -> dict[str, str]:
+        env_key = f"ROLE_{role.upper()}_ROW_FILTERS"
+        raw = os.environ.get(env_key, "").strip()
+        if not raw:
+            return {}
+        result: dict[str, str] = {}
+        separator = "|" if "|" in raw else ","
+        for entry in raw.split(separator):
+            entry = entry.strip()
+            if ":" not in entry:
+                continue
+            table, condition = entry.split(":", 1)
+            result[table.strip()] = condition.strip()
         return result
 
     # ── Validators ────────────────────────────────────────────────────

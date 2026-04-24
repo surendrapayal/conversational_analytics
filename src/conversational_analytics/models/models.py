@@ -8,6 +8,7 @@ from typing_extensions import TypedDict
 
 class AgentState(TypedDict):
     user_input: str
+    user_id: str | None
     messages: Annotated[list, add_messages]
     intermediate_steps: list[str]
     tool_results: list[str]
