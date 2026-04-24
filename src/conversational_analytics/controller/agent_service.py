@@ -17,36 +17,97 @@ _graph = build_graph()  # built once, checkpointer is attached
 def run_agent(request: AgentRequest) -> AgentResponse:
     start = time.time()
     config = {"configurable": {"thread_id": request.session_id}}
+    input_state = {
+        "user_input": request.query,
+        "user_id": request.user_id,
+        "conversation_id": request.conversation_id,
+        "messages": [HumanMessage(content=request.query)],
+        "role": request.role,
+        "prompt": None,
+    }
 
-    result = _graph.invoke(
-        {
-            "user_input": request.query,
-            "user_id": request.user_id,
-            "conversation_id": request.conversation_id,
-            "messages": [HumanMessage(content=request.query)],
-            "role": request.role,
-            "prompt": None,
-        },
-        config=config,
-    )
+    # track state — same as stream_agent but without yielding SSE
+    _tools_invoked: list[str] = []
+    _tool_results: list[str] = []
+    _final_response: str = ""
+    _vega_spec: dict | None = None
+    _token_usage: dict | None = None
+    _prompt: str | None = None
+    _sql_generated: str | None = None
+    _has_vega: bool = False
+    _step_number: int = 0
+    _llm_call_start: float = time.time()
+
+    for chunk in _graph.stream(input_state, config=config, stream_mode="updates"):
+        for node_name, state_update in chunk.items():
+            if node_name == "agent":
+                if state_update.get("token_usage"):
+                    _token_usage = state_update["token_usage"]
+                if state_update.get("prompt") and _prompt is None:
+                    _prompt = state_update["prompt"]
+                for msg in state_update.get("messages", []):
+                    if not isinstance(msg, AIMessage):
+                        continue
+                    for tc in msg.tool_calls:
+                        if tc["name"] == "sql_db_query" and tc["args"].get("query"):
+                            _sql_generated = tc["args"]["query"]
+                    # log llm_call step
+                    _step_number += 1
+                    step_token_usage = None
+                    if msg.usage_metadata:
+                        um = msg.usage_metadata
+                        step_token_usage = {
+                            "input_tokens": um.get("input_tokens", 0),
+                            "output_tokens": um.get("output_tokens", 0),
+                            "total_tokens": um.get("total_tokens", 0),
+                            "reasoning_tokens": um.get("output_token_details", {}).get("reasoning", 0),
+                        }
+                    tool_names = [tc["name"] for tc in msg.tool_calls]
+                    llm_output = f"Decided to call: {tool_names}" if tool_names else "Generated final response"
+                    try:
+                        log_agent_step(
+                            conversation_id=request.conversation_id,
+                            session_id=request.session_id,
+                            user_id=request.user_id,
+                            step_number=_step_number,
+                            step_type="llm_call",
+                            output=llm_output,
+                            token_usage=step_token_usage,
+                            duration_ms=int((time.time() - _llm_call_start) * 1000),
+                        )
+                    except Exception as e:
+                        logger.debug(f"Failed to log llm_call step: {e}")
+
+            elif node_name == "tools":
+                for msg in state_update.get("messages", []):
+                    if isinstance(msg, ToolMessage):
+                        _tools_invoked.append(msg.name)
+                        _tool_results.append(msg.content)
+                        _step_number += 1
+                        try:
+                            log_agent_step(
+                                conversation_id=request.conversation_id,
+                                session_id=request.session_id,
+                                user_id=request.user_id,
+                                step_number=_step_number,
+                                step_type="tool_result",
+                                tool_name=msg.name,
+                                output=msg.content[:500],
+                            )
+                        except Exception as e:
+                            logger.debug(f"Failed to log tool_result step: {e}")
+                        _llm_call_start = time.time()
+
+            elif node_name == "response_formatter":
+                final = state_update.get("final_response", "")
+                vega = state_update.get("vega_spec")
+                if final:
+                    _final_response = final
+                    _vega_spec = vega
+                    _has_vega = vega is not None
+
     execution_ms = int((time.time() - start) * 1000)
     logger.info(f"Agent completed for user={request.user_id} session={request.session_id}")
-
-    response_text = result["final_response"]
-    vega_spec = result.get("vega_spec")
-    tools_invoked = result.get("tools_invoked", [])
-    token_usage = result.get("token_usage")
-    prompt = result.get("prompt")
-    # extract SQL from messages — look in AIMessage tool_calls args for sql_db_query
-    sql_generated = None
-    for msg in reversed(result.get("messages", [])):
-        if hasattr(msg, "tool_calls"):
-            for tc in msg.tool_calls:
-                if tc["name"] == "sql_db_query" and tc["args"].get("query"):
-                    sql_generated = tc["args"]["query"]
-                    break
-        if sql_generated:
-            break
 
     try:
         log_query(
@@ -55,13 +116,13 @@ def run_agent(request: AgentRequest) -> AgentResponse:
             user_id=request.user_id,
             role=request.role,
             user_query=request.query,
-            prompt=prompt,
-            sql_generated=sql_generated,
-            tools_invoked=tools_invoked,
-            agent_response=response_text,
-            vega_spec=vega_spec,
-            token_usage=token_usage,
-            has_vega=vega_spec is not None,
+            prompt=_prompt,
+            sql_generated=_sql_generated,
+            tools_invoked=_tools_invoked,
+            agent_response=_final_response,
+            vega_spec=_vega_spec,
+            token_usage=_token_usage,
+            has_vega=_has_vega,
             execution_ms=execution_ms,
         )
         save_conversation_summary(
@@ -69,20 +130,19 @@ def run_agent(request: AgentRequest) -> AgentResponse:
             session_id=request.session_id,
             conversation_id=request.conversation_id,
             user_query=request.query,
-            response_text=response_text,
+            response_text=_final_response,
             role=request.role,
         )
     except Exception as e:
         logger.warning(f"Failed to log query to long-term memory: {e}")
 
     return AgentResponse(
-        response_text=response_text,
-        vega_spec=vega_spec,
+        response_text=_final_response,
+        vega_spec=_vega_spec,
         metadata=AgentMetadata(
             conversation_id=request.conversation_id,
-            tools_invoked=tools_invoked,
-            thinking=result.get("thinking") or None,
-            token_usage=token_usage,
+            # tools_invoked=_tools_invoked,
+            # token_usage=_token_usage,
         ),
     )
 

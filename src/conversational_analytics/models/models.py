@@ -35,9 +35,9 @@ class AgentRequest(BaseModel):
 
 class AgentMetadata(BaseModel):
     conversation_id: str | None = None
-    tools_invoked: list[str] = Field(default_factory=list)
-    thinking: str | None = None
-    token_usage: dict | None = None
+    # tools_invoked: list[str] = Field(default_factory=list)
+    # thinking: str | None = None
+    # token_usage: dict | None = None
 
 
 class AgentResponse(BaseModel):
