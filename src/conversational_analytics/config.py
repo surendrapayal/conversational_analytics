@@ -27,11 +27,11 @@ class Settings(BaseSettings):
     include_thoughts: bool = True
 
     # ── Analytics Database ────────────────────────────────────────────
-    db_host: str = "localhost"
-    db_port: int = 5433
-    db_name: str = "zenvyra"
-    db_user: str = "admin_user"
-    db_password: str = "admin_password"
+    analytics_db_host: str = "localhost"
+    analytics_db_port: int = 5433
+    analytics_db_name: str = "zenvyra"
+    analytics_db_user: str = "ca_agent_user"
+    analytics_db_password: str = "ca_agent_password"
     db_ignore_tables: str = ""
     db_include_tables: str = ""
     db_sample_rows_in_table_info: int = 3
@@ -39,11 +39,11 @@ class Settings(BaseSettings):
     db_restrict_columns: str = ""
 
     # ── Long-Term Memory Database (separate from analytics DB) ────────
-    memory_db_host: str = "localhost"
-    memory_db_port: int = 5433
-    memory_db_name: str = "zenvyra"
-    memory_db_user: str = "admin_user"
-    memory_db_password: str = "admin_password"
+    long_term_memory_db_host: str = "localhost"
+    long_term_memory_db_port: int = 5433
+    long_term_memory_db_name: str = "zenvyra"
+    long_term_memory_db_user: str = "admin_user"
+    long_term_memory_db_password: str = "admin_password"
 
     # ── Redis (short-term memory) ─────────────────────────────────────
     redis_url: str = "redis://localhost:6379"
@@ -61,7 +61,7 @@ class Settings(BaseSettings):
 
     @property
     def db_uri(self) -> str:
-        return f"postgresql+psycopg2://{self.db_user}:{self.db_password}@{self.db_host}:{self.db_port}/{self.db_name}"
+        return f"postgresql+psycopg2://{self.analytics_db_user}:{self.analytics_db_password}@{self.analytics_db_host}:{self.analytics_db_port}/{self.analytics_db_name}"
 
     @property
     def db_restrict_columns_map(self) -> dict[str, list[str]]:
@@ -85,17 +85,17 @@ class Settings(BaseSettings):
     # ── Memory DB properties ──────────────────────────────────────────
 
     @property
-    def memory_db_uri(self) -> str:
-        return f"postgresql://{self.memory_db_user}:{self.memory_db_password}@{self.memory_db_host}:{self.memory_db_port}/{self.memory_db_name}"
+    def long_term_memory_db_uri(self) -> str:
+        return f"postgresql://{self.long_term_memory_db_user}:{self.long_term_memory_db_password}@{self.long_term_memory_db_host}:{self.long_term_memory_db_port}/{self.long_term_memory_db_name}"
 
     @property
-    def memory_db_dsn(self) -> dict:
+    def long_term_memory_db_dsn(self) -> dict:
         return {
-            "host": self.memory_db_host,
-            "port": self.memory_db_port,
-            "dbname": self.memory_db_name,
-            "user": self.memory_db_user,
-            "password": self.memory_db_password,
+            "host": self.long_term_memory_db_host,
+            "port": self.long_term_memory_db_port,
+            "dbname": self.long_term_memory_db_name,
+            "user": self.long_term_memory_db_user,
+            "password": self.long_term_memory_db_password,
         }
 
     # ── Role properties ───────────────────────────────────────────────

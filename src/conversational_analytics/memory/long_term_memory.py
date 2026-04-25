@@ -20,7 +20,7 @@ def get_long_term_store() -> PostgresStore:
     logger.info("Initialising long-term PostgresStore connection pool...")
     try:
         pool = ConnectionPool(
-            get_settings().memory_db_uri,
+            get_settings().long_term_memory_db_uri,
             min_size=1,
             max_size=10,
             kwargs={"autocommit": True, "prepare_threshold": 0, "row_factory": dict_row},
@@ -41,7 +41,7 @@ def _get_audit_pool() -> psycopg2.pool.ThreadedConnectionPool:
     logger.debug("Creating psycopg2 audit connection pool (min=1 max=5)...")
     try:
         cfg = get_settings()
-        pool = psycopg2.pool.ThreadedConnectionPool(minconn=1, maxconn=5, **cfg.memory_db_dsn)
+        pool = psycopg2.pool.ThreadedConnectionPool(minconn=1, maxconn=5, **cfg.long_term_memory_db_dsn)
         logger.info("Audit connection pool created")
         return pool
     except Exception as e:
@@ -54,7 +54,7 @@ def setup_schema() -> None:
     sql_file = Path(__file__).parent / "migrations" / "001_long_term_memory.sql"
     logger.info(f"Running memory schema migration from {sql_file}")
     cfg = get_settings()
-    conn = psycopg2.connect(**cfg.memory_db_dsn)
+    conn = psycopg2.connect(**cfg.long_term_memory_db_dsn)
     try:
         conn.autocommit = True
         with conn.cursor() as cur:

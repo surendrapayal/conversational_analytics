@@ -217,11 +217,11 @@ def get_table_descriptions(visible_tables: list[str] | None = None) -> dict[str,
     from conversational_analytics.config import get_settings
     cfg = get_settings()
     documenter = SchemaDocumenter(
-        db_host=cfg.db_host,
-        db_port=cfg.db_port,
-        db_name=cfg.db_name,
-        db_user=cfg.db_user,
-        db_password=cfg.db_password,
+        db_host=cfg.analytics_db_host,
+        db_port=cfg.analytics_db_port,
+        db_name=cfg.analytics_db_name,
+        db_user=cfg.analytics_db_user,
+        db_password=cfg.analytics_db_password,
     )
     try:
         all_descriptions = documenter.generate_natural_language_descriptions()
