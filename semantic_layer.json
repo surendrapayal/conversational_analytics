@@ -625,11 +625,30 @@
   ],
   "join_notes": {
     "orders->customers": "NULL customer_id = walk-in (no account)",
-    "payments->orders": "one-to-one: each order has exactly one payment",
+    "orders->location": "location where the order was placed",
+    "orders->employee": "employee who took the order",
+    "orders->tables": "table where customer is seated (NULL for takeaway)",
     "order_items->orders": "use with WHERE status='completed' for revenue calculations",
+    "order_items->menu_items": "links ordered items to menu for name and price",
+    "payments->orders": "one-to-one: each order has exactly one payment",
+    "order_discounts->orders": "links discount codes applied to a specific order",
+    "order_discounts->discounts": "discount details for codes applied to orders",
+    "loyalty_accounts->customers": "one loyalty account per customer",
     "loyalty_txn->loyalty_accounts": "points history chain: loyalty_txn -> loyalty_accounts -> customers",
+    "inventory->location": "stock levels are tracked per location",
+    "inventory->ingredients": "links stock record to the ingredient being tracked",
+    "recipe_items->menu_items": "which dish this ingredient belongs to",
     "recipe_items->ingredients": "ingredient quantities per dish",
-    "supplier_items->ingredients": "pricing per ingredient from each supplier"
+    "supplier_items->supplier": "which supplier provides this ingredient",
+    "supplier_items->ingredients": "pricing per ingredient from each supplier",
+    "employee->roles": "job title/role of the employee",
+    "employee->location": "location where the employee is assigned",
+    "shifts->employee": "which employee is working this shift",
+    "shifts->location": "location where the shift takes place",
+    "reservations->tables": "which table is reserved",
+    "reservations->customers": "which customer made the reservation",
+    "tables->location": "which location this dining table belongs to",
+    "menu_items->menu_categories": "category the dish belongs to (Appetizers, Entrees, etc.)"
   },
   "roles": {
     "admin": {
