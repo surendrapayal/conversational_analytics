@@ -12,7 +12,7 @@ CREATE EXTENSION IF NOT EXISTS vector;
 -- Create index for faster similarity search
 --CREATE INDEX ON embeddings USING ivfflat (embedding vector_cosine_ops);
 
---RELATIONAL TABLES
+-- RELATIONAL TABLES FOR RESTAURANT MANAGEMENT SYSTEM
 -- ============================================================================
 -- CORE MASTER DATA TABLES
 -- ============================================================================

@@ -15,9 +15,19 @@
           "sql": "SELECT SUM(total_amount + tax_amount) FROM orders WHERE status = 'completed'",
           "unit": "USD"
         },
+        "total_gross_revenue": {
+          "description": "Total gross revenue including tax and tips from completed orders",
+          "sql": "SELECT SUM(total_amount + tax_amount + tip_amount) FROM orders WHERE status = 'completed'",
+          "unit": "USD"
+        },
         "total_tips": {
           "description": "Total tips collected from completed orders",
           "sql": "SELECT SUM(tip_amount) FROM orders WHERE status = 'completed'",
+          "unit": "USD"
+        },
+        "total_tax_collected": {
+          "description": "Total tax collected from completed orders",
+          "sql": "SELECT SUM(tax_amount) FROM orders WHERE status = 'completed'",
           "unit": "USD"
         },
         "average_order_value": {
@@ -28,6 +38,10 @@
         "total_orders": {
           "description": "Total number of orders placed (all statuses)",
           "sql": "SELECT COUNT(*) FROM orders"
+        },
+        "open_orders": {
+          "description": "Number of currently open (in-progress) orders",
+          "sql": "SELECT COUNT(*) FROM orders WHERE status = 'open'"
         },
         "completed_orders": {
           "description": "Number of successfully completed orders",
@@ -53,6 +67,14 @@
         "revenue_by_month": {
           "description": "Monthly revenue trend for completed orders",
           "sql": "SELECT DATE_TRUNC('month', order_time) AS month, SUM(total_amount) AS revenue FROM orders WHERE status = 'completed' GROUP BY 1 ORDER BY 1"
+        },
+        "orders_by_employee": {
+          "description": "Number of completed orders handled per employee",
+          "sql": "SELECT e.name AS employee, COUNT(o.id) AS order_count, SUM(o.total_amount) AS total_sales FROM orders o JOIN employee e ON o.employee_id = e.id WHERE o.status = 'completed' GROUP BY e.name ORDER BY total_sales DESC"
+        },
+        "revenue_by_hour": {
+          "description": "Revenue breakdown by hour of day to identify peak trading hours",
+          "sql": "SELECT EXTRACT(HOUR FROM order_time) AS hour, SUM(total_amount) AS revenue, COUNT(*) AS order_count FROM orders WHERE status = 'completed' GROUP BY 1 ORDER BY 1"
         }
       }
     },
@@ -66,6 +88,14 @@
         "active_menu_items": {
           "description": "Number of currently available menu items",
           "sql": "SELECT COUNT(*) FROM menu_items WHERE is_active = true"
+        },
+        "inactive_menu_items": {
+          "description": "Number of menu items currently unavailable",
+          "sql": "SELECT COUNT(*) FROM menu_items WHERE is_active = false"
+        },
+        "menu_items_by_category": {
+          "description": "Count of menu items per category",
+          "sql": "SELECT mc.name AS category, COUNT(mi.id) AS item_count FROM menu_items mi JOIN menu_categories mc ON mi.category_id = mc.id GROUP BY mc.name ORDER BY item_count DESC"
         },
         "top_selling_items": {
           "description": "Top 10 best-selling menu items by total quantity ordered",
@@ -84,9 +114,13 @@
           "sql": "SELECT AVG(base_price) FROM menu_items WHERE is_active = true",
           "unit": "USD"
         },
+        "price_range_by_category": {
+          "description": "Min and max price per menu category for active items",
+          "sql": "SELECT mc.name AS category, MIN(mi.base_price) AS min_price, MAX(mi.base_price) AS max_price, AVG(mi.base_price) AS avg_price FROM menu_items mi JOIN menu_categories mc ON mi.category_id = mc.id WHERE mi.is_active = true GROUP BY mc.name ORDER BY avg_price DESC"
+        },
         "items_never_ordered": {
           "description": "Active menu items that have never been ordered",
-          "sql": "SELECT mi.name FROM menu_items mi WHERE mi.is_active = true AND mi.id NOT IN (SELECT DISTINCT menu_item_id FROM order_items)"
+          "sql": "SELECT mi.name, mi.base_price, mc.name AS category FROM menu_items mi JOIN menu_categories mc ON mi.category_id = mc.id WHERE mi.is_active = true AND mi.id NOT IN (SELECT DISTINCT menu_item_id FROM order_items) ORDER BY mc.name"
         }
       }
     },
@@ -101,13 +135,21 @@
           "description": "Number of customers who have placed at least one order",
           "sql": "SELECT COUNT(DISTINCT customer_id) FROM orders WHERE customer_id IS NOT NULL"
         },
+        "repeat_customers": {
+          "description": "Number of customers who have placed more than one order",
+          "sql": "SELECT COUNT(*) FROM (SELECT customer_id FROM orders WHERE customer_id IS NOT NULL GROUP BY customer_id HAVING COUNT(*) > 1) sub"
+        },
         "walkin_orders": {
           "description": "Number of orders placed by walk-in customers (no account)",
           "sql": "SELECT COUNT(*) FROM orders WHERE customer_id IS NULL"
         },
+        "walkin_vs_registered_rate": {
+          "description": "Percentage split between walk-in and registered customer orders",
+          "sql": "SELECT ROUND(100.0 * COUNT(*) FILTER (WHERE customer_id IS NULL) / COUNT(*), 2) AS walkin_pct, ROUND(100.0 * COUNT(*) FILTER (WHERE customer_id IS NOT NULL) / COUNT(*), 2) AS registered_pct FROM orders"
+        },
         "top_customers_by_spend": {
           "description": "Top 10 customers by total spend on completed orders",
-          "sql": "SELECT c.name, SUM(o.total_amount) AS total_spend FROM orders o JOIN customers c ON o.customer_id = c.id WHERE o.status = 'completed' GROUP BY c.name ORDER BY total_spend DESC LIMIT 10"
+          "sql": "SELECT c.name, SUM(o.total_amount) AS total_spend, COUNT(o.id) AS order_count FROM orders o JOIN customers c ON o.customer_id = c.id WHERE o.status = 'completed' GROUP BY c.name ORDER BY total_spend DESC LIMIT 10"
         },
         "customer_order_frequency": {
           "description": "Average number of orders per customer",
@@ -217,13 +259,13 @@
           "description": "Full inventory stock levels per location",
           "sql": "SELECT l.name AS location, i.name AS ingredient, inv.quantity_on_hand, i.unit FROM inventory inv JOIN ingredients i ON inv.ingredient_id = i.id JOIN location l ON inv.location_id = l.id ORDER BY l.name, i.name"
         },
-        "ingredient_cost_by_supplier": {
-          "description": "Cost per ingredient from each supplier - useful for procurement decisions",
-          "sql": "SELECT s.name AS supplier, i.name AS ingredient, si.unit_cost, i.unit FROM supplier_items si JOIN supplier s ON si.supplier_id = s.id JOIN ingredients i ON si.ingredient_id = i.id ORDER BY i.name, si.unit_cost"
+        "stock_deficit": {
+          "description": "Ingredients below reorder threshold showing how much needs to be ordered",
+          "sql": "SELECT l.name AS location, i.name AS ingredient, inv.quantity_on_hand, inv.reorder_threshold, ROUND(inv.reorder_threshold - inv.quantity_on_hand, 2) AS deficit FROM inventory inv JOIN ingredients i ON inv.ingredient_id = i.id JOIN location l ON inv.location_id = l.id WHERE inv.quantity_on_hand < inv.reorder_threshold ORDER BY deficit DESC"
         },
-        "cheapest_supplier_per_ingredient": {
-          "description": "Lowest cost supplier for each ingredient",
-          "sql": "SELECT i.name AS ingredient, s.name AS supplier, si.unit_cost FROM supplier_items si JOIN supplier s ON si.supplier_id = s.id JOIN ingredients i ON si.ingredient_id = i.id WHERE si.unit_cost = (SELECT MIN(unit_cost) FROM supplier_items WHERE ingredient_id = si.ingredient_id) ORDER BY i.name"
+        "total_ingredients": {
+          "description": "Total number of distinct ingredients tracked",
+          "sql": "SELECT COUNT(*) FROM ingredients"
         }
       }
     },
@@ -242,6 +284,10 @@
           "description": "Number of employees per job role",
           "sql": "SELECT r.role_name, COUNT(e.id) AS count FROM employee e JOIN roles r ON e.role_id = r.id GROUP BY r.role_name ORDER BY count DESC"
         },
+        "employees_by_role_per_location": {
+          "description": "Breakdown of employee roles per location",
+          "sql": "SELECT l.name AS location, r.role_name, COUNT(e.id) AS count FROM employee e JOIN roles r ON e.role_id = r.id JOIN location l ON e.location_id = l.id GROUP BY l.name, r.role_name ORDER BY l.name, count DESC"
+        },
         "total_shifts": {
           "description": "Total number of shifts scheduled",
           "sql": "SELECT COUNT(*) FROM shifts"
@@ -255,9 +301,17 @@
           "description": "Number of shifts per location",
           "sql": "SELECT l.name AS location, COUNT(s.id) AS shift_count FROM shifts s JOIN location l ON s.location_id = l.id GROUP BY l.name ORDER BY shift_count DESC"
         },
+        "upcoming_shifts": {
+          "description": "All shifts scheduled from now onwards",
+          "sql": "SELECT e.name AS employee, r.role_name, l.name AS location, s.shift_start, s.shift_end FROM shifts s JOIN employee e ON s.employee_id = e.id JOIN roles r ON e.role_id = r.id JOIN location l ON s.location_id = l.id WHERE s.shift_start >= NOW() ORDER BY s.shift_start"
+        },
         "recently_hired_employees": {
           "description": "Employees hired in the last 90 days",
           "sql": "SELECT e.name, r.role_name, l.name AS location, e.hire_date FROM employee e JOIN roles r ON e.role_id = r.id JOIN location l ON e.location_id = l.id WHERE e.hire_date >= CURRENT_DATE - INTERVAL '90 days' ORDER BY e.hire_date DESC"
+        },
+        "total_shift_hours_by_employee": {
+          "description": "Total hours worked per employee based on scheduled shifts",
+          "sql": "SELECT e.name AS employee, ROUND(SUM(EXTRACT(EPOCH FROM (s.shift_end - s.shift_start)) / 3600), 2) AS total_hours FROM shifts s JOIN employee e ON s.employee_id = e.id GROUP BY e.name ORDER BY total_hours DESC"
         }
       }
     },
@@ -277,6 +331,16 @@
           "sql": "SELECT ROUND(100.0 * COUNT(*) FILTER (WHERE status = 'no_show') / COUNT(*), 2) FROM reservations",
           "unit": "percent"
         },
+        "checked_in_rate": {
+          "description": "Percentage of reservations that were successfully checked in",
+          "sql": "SELECT ROUND(100.0 * COUNT(*) FILTER (WHERE status = 'checked_in') / COUNT(*), 2) FROM reservations",
+          "unit": "percent"
+        },
+        "average_reservation_duration_hours": {
+          "description": "Average duration of a reservation in hours",
+          "sql": "SELECT ROUND(AVG(EXTRACT(EPOCH FROM (end_time - start_time)) / 3600), 2) FROM reservations",
+          "unit": "hours"
+        },
         "table_utilisation": {
           "description": "Number of reservations per table - identifies most and least used tables",
           "sql": "SELECT t.table_number, l.name AS location, COUNT(r.id) AS reservation_count FROM reservations r JOIN tables t ON r.table_id = t.id JOIN location l ON t.location_id = l.id GROUP BY t.table_number, l.name ORDER BY reservation_count DESC"
@@ -284,6 +348,10 @@
         "upcoming_reservations": {
           "description": "All reservations scheduled from today onwards",
           "sql": "SELECT c.name AS customer, t.table_number, l.name AS location, r.start_time, r.end_time, r.status FROM reservations r JOIN customers c ON r.customer_id = c.id JOIN tables t ON r.table_id = t.id JOIN location l ON t.location_id = l.id WHERE r.start_time >= NOW() ORDER BY r.start_time"
+        },
+        "reservations_by_location": {
+          "description": "Total reservations per location",
+          "sql": "SELECT l.name AS location, COUNT(r.id) AS reservation_count FROM reservations r JOIN tables t ON r.table_id = t.id JOIN location l ON t.location_id = l.id GROUP BY l.name ORDER BY reservation_count DESC"
         }
       }
     },
@@ -309,6 +377,68 @@
         "total_seating_capacity": {
           "description": "Total seating capacity per location",
           "sql": "SELECT l.name AS location, SUM(t.capacity) AS total_seats FROM tables t JOIN location l ON t.location_id = l.id GROUP BY l.name ORDER BY total_seats DESC"
+        },
+        "revenue_per_seat": {
+          "description": "Revenue efficiency per seat - total revenue divided by seating capacity per location",
+          "sql": "SELECT l.name AS location, ROUND(SUM(o.total_amount) / NULLIF(SUM(t.capacity), 0), 2) AS revenue_per_seat FROM orders o JOIN location l ON o.location_id = l.id JOIN tables t ON t.location_id = l.id WHERE o.status = 'completed' GROUP BY l.name ORDER BY revenue_per_seat DESC"
+        },
+        "average_order_value_by_location": {
+          "description": "Average order value per location for completed orders",
+          "sql": "SELECT l.name AS location, ROUND(AVG(o.total_amount), 2) AS avg_order_value FROM orders o JOIN location l ON o.location_id = l.id WHERE o.status = 'completed' GROUP BY l.name ORDER BY avg_order_value DESC"
+        }
+      }
+    },
+    "recipes": {
+      "description": "Recipe composition and ingredient requirements per menu item",
+      "metrics": {
+        "total_recipes": {
+          "description": "Total number of menu items with defined recipes",
+          "sql": "SELECT COUNT(DISTINCT menu_item_id) FROM recipe_items"
+        },
+        "ingredients_per_dish": {
+          "description": "Number of ingredients required per menu item",
+          "sql": "SELECT mi.name AS menu_item, COUNT(ri.ingredient_id) AS ingredient_count FROM recipe_items ri JOIN menu_items mi ON ri.menu_item_id = mi.id GROUP BY mi.name ORDER BY ingredient_count DESC"
+        },
+        "most_used_ingredients": {
+          "description": "Ingredients used across the most menu items",
+          "sql": "SELECT i.name AS ingredient, i.unit, COUNT(ri.menu_item_id) AS used_in_dishes FROM recipe_items ri JOIN ingredients i ON ri.ingredient_id = i.id GROUP BY i.name, i.unit ORDER BY used_in_dishes DESC"
+        },
+        "recipe_details": {
+          "description": "Full recipe breakdown showing all ingredients and quantities per dish",
+          "sql": "SELECT mi.name AS menu_item, mc.name AS category, i.name AS ingredient, ri.qty_per_recipe, i.unit FROM recipe_items ri JOIN menu_items mi ON ri.menu_item_id = mi.id JOIN menu_categories mc ON mi.category_id = mc.id JOIN ingredients i ON ri.ingredient_id = i.id ORDER BY mi.name, i.name"
+        },
+        "menu_items_without_recipe": {
+          "description": "Active menu items that have no recipe defined",
+          "sql": "SELECT mi.name, mc.name AS category FROM menu_items mi JOIN menu_categories mc ON mi.category_id = mc.id WHERE mi.is_active = true AND mi.id NOT IN (SELECT DISTINCT menu_item_id FROM recipe_items) ORDER BY mc.name"
+        }
+      }
+    },
+    "suppliers": {
+      "description": "Supplier management, ingredient pricing and procurement",
+      "metrics": {
+        "total_suppliers": {
+          "description": "Total number of ingredient suppliers",
+          "sql": "SELECT COUNT(*) FROM supplier"
+        },
+        "ingredients_per_supplier": {
+          "description": "Number of ingredients each supplier provides",
+          "sql": "SELECT s.name AS supplier, COUNT(si.ingredient_id) AS ingredient_count FROM supplier_items si JOIN supplier s ON si.supplier_id = s.id GROUP BY s.name ORDER BY ingredient_count DESC"
+        },
+        "ingredient_cost_by_supplier": {
+          "description": "Cost per ingredient from each supplier - useful for procurement decisions",
+          "sql": "SELECT s.name AS supplier, i.name AS ingredient, si.unit_cost, i.unit FROM supplier_items si JOIN supplier s ON si.supplier_id = s.id JOIN ingredients i ON si.ingredient_id = i.id ORDER BY i.name, si.unit_cost"
+        },
+        "cheapest_supplier_per_ingredient": {
+          "description": "Lowest cost supplier for each ingredient",
+          "sql": "SELECT i.name AS ingredient, s.name AS supplier, si.unit_cost, i.unit FROM supplier_items si JOIN supplier s ON si.supplier_id = s.id JOIN ingredients i ON si.ingredient_id = i.id WHERE si.unit_cost = (SELECT MIN(unit_cost) FROM supplier_items WHERE ingredient_id = si.ingredient_id) ORDER BY i.name"
+        },
+        "supplier_price_comparison": {
+          "description": "Side-by-side price comparison for ingredients available from multiple suppliers",
+          "sql": "SELECT i.name AS ingredient, i.unit, COUNT(si.supplier_id) AS supplier_count, MIN(si.unit_cost) AS min_price, MAX(si.unit_cost) AS max_price, ROUND(AVG(si.unit_cost), 2) AS avg_price FROM supplier_items si JOIN ingredients i ON si.ingredient_id = i.id GROUP BY i.name, i.unit HAVING COUNT(si.supplier_id) > 1 ORDER BY (MAX(si.unit_cost) - MIN(si.unit_cost)) DESC"
+        },
+        "ingredients_with_single_supplier": {
+          "description": "Ingredients sourced from only one supplier - supply chain risk",
+          "sql": "SELECT i.name AS ingredient, s.name AS supplier, si.unit_cost, i.unit FROM supplier_items si JOIN ingredients i ON si.ingredient_id = i.id JOIN supplier s ON si.supplier_id = s.id WHERE i.id IN (SELECT ingredient_id FROM supplier_items GROUP BY ingredient_id HAVING COUNT(*) = 1) ORDER BY i.name"
         }
       }
     }
@@ -465,31 +595,6 @@
       "type": "many-to-one"
     }
   ],
-  "visualization_rules": {
-    "schema": "https://vega.github.io/schema/vega-lite/v5.json",
-    "default_width": 700,
-    "default_height": 400,
-    "instructions": [
-      "Always include $schema at the top level: 'https://vega.github.io/schema/vega-lite/v5.json'",
-      "Always include a descriptive title derived from the user query",
-      "Always include tooltips showing exact values on hover - tooltip format '$,.2f' is correct inside tooltip field definitions",
-      "Always sort bar charts in descending order for ranking queries (Top N)",
-      "For currency y-axis: place format inside axis object e.g. 'axis': {'format': '$,.2f'} NOT at the top level of the y encoding",
-      "For percentage y-axis: place format inside axis object e.g. 'axis': {'format': '.1%'}",
-      "Return the Vega-Lite spec as JSON inside a markdown code block tagged vega - return the spec object directly, do NOT wrap it in a 'vega_spec' key",
-      "Only generate a chart when the result has 2+ rows and at least one numeric column",
-      "Do NOT generate a chart for single scalar values (e.g. a total count)"
-    ],
-    "chart_selection": {
-      "bar": "Ranking or comparing categories - e.g. top N items, revenue by location",
-      "line": "Trends over time with a date/timestamp dimension - e.g. daily revenue, monthly orders",
-      "area": "Cumulative volume over time - e.g. running total, stacked time series",
-      "arc": "Part-to-whole with 2-6 categories - e.g. payment method split, market share",
-      "point": "Correlation between two numeric metrics - e.g. price vs quantity",
-      "bar_binned": "Distribution of a numeric field - e.g. order size frequency, histogram",
-      "boxplot": "Statistical spread and outliers across groups - e.g. order value by location"
-    }
-  },
   "business_rules": [
     "Completed orders: status = 'completed' - use this filter for all revenue calculations",
     "Active menu items: is_active = true - only these are available for ordering",
@@ -517,8 +622,6 @@
         "reservations",
         "locations"
       ],
-      "restricted_columns": [],
-      "row_filters": {},
       "business_rules": [
         "Full access to all tables including supplier pricing and recipe costs",
         "Can view all customer PII including email, phone, address",
@@ -539,13 +642,6 @@
         "reservations",
         "locations"
       ],
-      "restricted_columns": [
-        "customers.email",
-        "customers.phone",
-        "customers.address",
-        "employee.email"
-      ],
-      "row_filters": {},
       "business_rules": [
         "Cannot access supplier pricing or recipe ingredient costs - supplier and supplier_items tables are not available",
         "Customer and employee PII (email, phone, address) is hidden - use name only",
@@ -564,15 +660,6 @@
         "reservations",
         "payments"
       ],
-      "restricted_columns": [
-        "employee.email"
-      ],
-      "row_filters": {
-        "orders": "location_id = <assigned_location_id>",
-        "shifts": "location_id = <assigned_location_id>",
-        "inventory": "location_id = <assigned_location_id>",
-        "employee": "location_id = <assigned_location_id>"
-      },
       "business_rules": [
         "ALL queries are automatically filtered to the manager's assigned location",
         "Revenue means revenue for this location only - never cross-location totals",
@@ -587,8 +674,6 @@
         "menu",
         "inventory"
       ],
-      "restricted_columns": [],
-      "row_filters": {},
       "business_rules": [
         "Can only access menu items, recipe ingredients and inventory stock levels",
         "Cannot access any financial data, revenue, payments or customer information",
@@ -604,12 +689,6 @@
         "menu",
         "reservations"
       ],
-      "restricted_columns": [
-        "customers.email",
-        "customers.phone",
-        "customers.address"
-      ],
-      "row_filters": {},
       "business_rules": [
         "Can view current orders, table status and today's reservations",
         "Cannot access financial totals, revenue, payment amounts or tips - do NOT query total_amount, tax_amount, tip_amount",
@@ -625,8 +704,6 @@
         "payments",
         "discounts"
       ],
-      "restricted_columns": [],
-      "row_filters": {},
       "business_rules": [
         "Can view orders and order items to process payments",
         "Can apply discount codes to orders",
@@ -651,13 +728,6 @@
         "reservations",
         "locations"
       ],
-      "restricted_columns": [
-        "customers.email",
-        "customers.phone",
-        "customers.address",
-        "employee.email"
-      ],
-      "row_filters": {},
       "business_rules": [
         "Read-only access - never suggest INSERT, UPDATE, DELETE or DROP",
         "All customer and employee PII is hidden - use aggregated data only",

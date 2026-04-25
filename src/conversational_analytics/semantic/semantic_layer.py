@@ -36,17 +36,6 @@ def _load() -> dict:
     return data
 
 
-def _parse_restrict_columns(restricted: list[str]) -> dict[str, list[str]]:
-    """Converts ['customers.email', 'employee.email'] → {'customers': ['email'], 'employee': ['email']}"""
-    result: dict[str, list[str]] = {}
-    for entry in restricted:
-        if "." not in entry:
-            continue
-        table, col = entry.split(".", 1)
-        result.setdefault(table.strip(), []).append(col.strip())
-    return result
-
-
 def get_role_config(role: str | None) -> dict:
     """Returns the semantic layer config for a role.
 

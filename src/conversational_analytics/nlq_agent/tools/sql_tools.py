@@ -23,15 +23,93 @@ Rules:
 - Format numeric results clearly (currency with 2 decimal places)
 
 VISUALIZATION (append after your complete text response):
-- Only after completing your full text response, if results contain 2+ rows with at least one numeric column, append a Vega-Lite chart
-- Return the spec as JSON inside a markdown code block tagged 'vega'
-- Return the spec object directly - do NOT wrap it in a 'vega_spec' key
-- Always include: {{"$schema": "https://vega.github.io/schema/vega-lite/v5.json", "width": 700, "height": 400, "title": "..."}}
-- For currency y-axis: use "axis": {{"format": "$,.2f"}} inside the y encoding - NOT "format" at the top level of y
+
+Generate a Vega-Lite chart ONLY when results contain 2+ rows with at least one numeric column.
+Return the spec as JSON inside a markdown code block tagged 'vega'.
+Return the spec object directly - do NOT wrap it in a 'vega_spec' key.
+Do NOT generate a chart for single scalar values (e.g. a single total count).
+
+REQUIRED FIELDS (always include):
+- "$schema": "https://vega.github.io/schema/vega-lite/v5.json"
+- "width": 700
+- "height": 400
+- "title": descriptive title derived from the user query
+- "config": {{"view": {{"stroke": "transparent"}}}}
+
+FORMATTING RULES:
+- Currency y-axis: use "axis": {{"format": "$,.2f"}} inside the y encoding - NOT "format" at top level of y
 - Tooltip format "$,.2f" is correct inside tooltip field definitions
-- Always sort bar charts descending for ranking queries (Top N)
-- Chart type: bar=ranking/comparing, line=trends over time, arc=part-to-whole (2-6 categories), point=correlation
-- Do NOT generate a chart for single scalar values
+- Always include tooltips showing exact values on hover
+- Always sort bar charts descending for ranking queries (Top N) using "sort": "-y" on x-axis
+- Use "point": true on line marks to show data points
+
+CHART TYPE SELECTION - choose based on data shape and query intent:
+
+1.  BAR (mark: "bar")
+    When: ranking or comparing categories, Top N queries
+    Example: top menu items, revenue by location, orders by employee
+
+2.  HORIZONTAL BAR (mark: "bar" with x/y swapped)
+    When: 6+ categories or long category names
+    Example: ingredient costs, employee performance with long names
+
+3.  LINE (mark: {{"type": "line", "point": true}})
+    When: trends over time with a date/timestamp dimension
+    Example: daily revenue, monthly orders, weekly customer count
+
+4.  AREA (mark: {{"type": "area", "opacity": 0.7}})
+    When: cumulative volume over time or stacked trends
+    Example: running total revenue, inventory levels over time
+
+5.  STACKED BAR (mark: "bar" + color encoding on second dimension)
+    When: comparing categories broken down by a second dimension
+    Example: revenue by location AND category, orders by status per month
+
+6.  GROUPED BAR (mark: "bar" + "xOffset" encoding for dodge)
+    When: side-by-side comparison of sub-categories
+    Example: revenue vs target by location
+
+7.  PIE / DONUT (mark: {{"type": "arc", "innerRadius": 50}})
+    When: part-to-whole with 2-8 categories
+    Example: payment method split, order status distribution
+
+8.  SCATTER PLOT (mark: "point")
+    When: correlation between two numeric metrics
+    Example: price vs quantity sold, tenure vs sales volume
+
+9.  HEATMAP (mark: "rect" + color encoding)
+    When: two categorical dimensions with a numeric value
+    Example: revenue by location x day of week, orders by hour x day
+
+10. HISTOGRAM (mark: "bar" + bin: true on x field)
+    When: distribution of a single numeric field
+    Example: order value distribution, tip amount frequency
+
+11. BOX PLOT (mark: "boxplot")
+    When: statistical spread and outliers across groups
+    Example: order values by location, tip amounts by day of week
+
+12. MULTI-LINE (mark: "line" + color encoding by category)
+    When: multiple time series on the same chart
+    Example: revenue per location over time, orders by category per month
+
+13. LAYERED (layer: [...])
+    When: combining bar + line on the same chart
+    Example: monthly revenue bars with trend line overlay
+
+DECISION GUIDE:
+- 1 category + 1 number                    → BAR
+- 1 category + 1 number (6+ or long names) → HORIZONTAL BAR
+- 1 date + 1 number                        → LINE
+- 1 date + 1 number (cumulative)           → AREA
+- 2 categories + 1 number                  → STACKED BAR or HEATMAP
+- 1 category + 2 numbers (comparison)      → GROUPED BAR
+- 1 category + 2 numbers (correlation)     → SCATTER
+- 1 category (2-8 values, part-of-whole)   → PIE/DONUT
+- 1 number (distribution)                  → HISTOGRAM
+- 1 category + 1 number (spread/outliers)  → BOX PLOT
+- 1 date + multiple numeric series         → MULTI-LINE
+- bar + trend overlay                      → LAYERED
 {semantic_section}"""
 
 _role_cache: dict[str, dict] = {}
