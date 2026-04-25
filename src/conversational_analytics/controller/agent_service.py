@@ -234,8 +234,9 @@ def stream_agent(request: AgentRequest, stream_mode: str = "standard") -> Genera
                         yield _sse("response", {"text": state["final_response"], "vega_spec": state["vega_spec"]}, request.session_id, request.conversation_id)
 
         yield _sse("done", {"status": "completed"}, request.session_id, request.conversation_id)
+        execution_ms = int((time.time() - start) * 1000)
         logger.info(f"Stream completed for user_id={request.user_id} session_id={request.session_id} conversation_id={request.conversation_id} execution_time={execution_ms}ms")
-        _persist_audit(request, state, int((time.time() - start) * 1000))
+        _persist_audit(request, state, execution_ms)
 
     except Exception as e:
         logger.error(f"Error in stream_agent: {str(e)}", exc_info=True)

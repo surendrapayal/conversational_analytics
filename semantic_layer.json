@@ -607,6 +607,30 @@
     "Percentage discounts: discounts.type = 'percent'",
     "Fixed amount discounts: discounts.type = 'fixed'"
   ],
+  "sql_patterns": [
+    "Revenue/order queries: always filter WHERE status = 'completed'",
+    "Open orders: WHERE status = 'open'",
+    "Cancelled orders: WHERE status = 'cancelled'",
+    "Active menu items: always filter WHERE is_active = true",
+    "Loyalty points earned: WHERE txn_type = 'earn' AND points_change > 0",
+    "Loyalty points redeemed: WHERE txn_type = 'redeem' AND points_change < 0",
+    "Successful payments: WHERE status = 'paid'",
+    "Failed payments: WHERE status = 'failed'",
+    "Refunded payments: WHERE status = 'refunded'",
+    "No-show reservations: WHERE status = 'no_show'",
+    "Checked-in reservations: WHERE status = 'checked_in'",
+    "Active discounts: WHERE start_date <= CURRENT_DATE AND end_date >= CURRENT_DATE",
+    "Walk-in customers: orders.customer_id IS NULL (no registered account)",
+    "Registered customers: orders.customer_id IS NOT NULL"
+  ],
+  "join_notes": {
+    "orders->customers": "NULL customer_id = walk-in (no account)",
+    "payments->orders": "one-to-one: each order has exactly one payment",
+    "order_items->orders": "use with WHERE status='completed' for revenue calculations",
+    "loyalty_txn->loyalty_accounts": "points history chain: loyalty_txn -> loyalty_accounts -> customers",
+    "recipe_items->ingredients": "ingredient quantities per dish",
+    "supplier_items->ingredients": "pricing per ingredient from each supplier"
+  },
   "roles": {
     "admin": {
       "description": "Full system access - all domains, all data, no restrictions",
