@@ -1,0 +1,36 @@
+-- Daily inserts into payments (2026-04-25T10:28:33.388461)
+
+INSERT INTO payments (order_id, payment_time, amount, method, status) VALUES (3101, '2026-04-09T21:59:19'::timestamp, 37.78, 'debit_card', 'paid');
+INSERT INTO payments (order_id, payment_time, amount, method, status) VALUES (3103, '2026-04-15T19:31:28'::timestamp, 158.87, 'debit_card', 'paid');
+INSERT INTO payments (order_id, payment_time, amount, method, status) VALUES (3104, '2026-04-13T17:10:35'::timestamp, 183.19, 'credit_card', 'paid');
+INSERT INTO payments (order_id, payment_time, amount, method, status) VALUES (3105, '2026-04-22T08:51:04'::timestamp, 111.35, 'cash', 'paid');
+INSERT INTO payments (order_id, payment_time, amount, method, status) VALUES (3106, '2026-04-02T23:36:40'::timestamp, 123.81, 'credit_card', 'paid');
+INSERT INTO payments (order_id, payment_time, amount, method, status) VALUES (3108, '2026-04-24T23:40:01'::timestamp, 150.01, 'debit_card', 'paid');
+INSERT INTO payments (order_id, payment_time, amount, method, status) VALUES (3109, '2026-04-03T12:01:46'::timestamp, 181.74, 'cash', 'paid');
+INSERT INTO payments (order_id, payment_time, amount, method, status) VALUES (3110, '2026-04-23T03:52:06'::timestamp, 67.59, 'debit_card', 'paid');
+INSERT INTO payments (order_id, payment_time, amount, method, status) VALUES (3111, '2026-04-17T14:07:09'::timestamp, 62.96, 'cash', 'paid');
+INSERT INTO payments (order_id, payment_time, amount, method, status) VALUES (3112, '2026-04-05T22:14:53'::timestamp, 56.26, 'cash', 'paid');
+INSERT INTO payments (order_id, payment_time, amount, method, status) VALUES (3113, '2026-04-24T21:33:12'::timestamp, 77.2, 'credit_card', 'paid');
+INSERT INTO payments (order_id, payment_time, amount, method, status) VALUES (3114, '2026-04-16T11:16:07'::timestamp, 28.67, 'digital_wallet', 'paid');
+INSERT INTO payments (order_id, payment_time, amount, method, status) VALUES (3116, '2026-04-25T00:46:56'::timestamp, 107.04, 'cash', 'paid');
+INSERT INTO payments (order_id, payment_time, amount, method, status) VALUES (3117, '2026-04-09T19:57:43'::timestamp, 113.41, 'debit_card', 'paid');
+INSERT INTO payments (order_id, payment_time, amount, method, status) VALUES (3119, '2026-04-08T15:35:15'::timestamp, 92.17, 'cash', 'paid');
+INSERT INTO payments (order_id, payment_time, amount, method, status) VALUES (3121, '2026-04-01T22:31:40'::timestamp, 43.93, 'credit_card', 'paid');
+INSERT INTO payments (order_id, payment_time, amount, method, status) VALUES (3123, '2026-04-24T23:23:43'::timestamp, 121.12, 'debit_card', 'paid');
+INSERT INTO payments (order_id, payment_time, amount, method, status) VALUES (3125, '2026-04-01T18:14:09'::timestamp, 86.63, 'digital_wallet', 'paid');
+INSERT INTO payments (order_id, payment_time, amount, method, status) VALUES (3126, '2026-04-12T01:02:40'::timestamp, 171.91, 'digital_wallet', 'paid');
+INSERT INTO payments (order_id, payment_time, amount, method, status) VALUES (3127, '2026-04-02T11:05:37'::timestamp, 78.1, 'credit_card', 'paid');
+INSERT INTO payments (order_id, payment_time, amount, method, status) VALUES (3128, '2026-04-13T02:45:18'::timestamp, 91.07, 'credit_card', 'paid');
+INSERT INTO payments (order_id, payment_time, amount, method, status) VALUES (3130, '2026-04-12T00:00:30'::timestamp, 164.85, 'digital_wallet', 'paid');
+INSERT INTO payments (order_id, payment_time, amount, method, status) VALUES (3131, '2026-04-08T12:36:16'::timestamp, 85.61, 'cash', 'paid');
+INSERT INTO payments (order_id, payment_time, amount, method, status) VALUES (3132, '2026-04-16T21:58:22'::timestamp, 161.26, 'debit_card', 'paid');
+INSERT INTO payments (order_id, payment_time, amount, method, status) VALUES (3133, '2026-04-16T05:33:09'::timestamp, 173.65, 'digital_wallet', 'pending');
+INSERT INTO payments (order_id, payment_time, amount, method, status) VALUES (3136, '2026-04-17T23:43:21'::timestamp, 76.93, 'digital_wallet', 'paid');
+INSERT INTO payments (order_id, payment_time, amount, method, status) VALUES (3137, '2026-04-24T12:05:48'::timestamp, 169.34, 'cash', 'paid');
+INSERT INTO payments (order_id, payment_time, amount, method, status) VALUES (3140, '2026-04-21T10:55:05'::timestamp, 130.2, 'debit_card', 'paid');
+INSERT INTO payments (order_id, payment_time, amount, method, status) VALUES (3142, '2026-04-12T07:14:49'::timestamp, 109.1, 'debit_card', 'paid');
+INSERT INTO payments (order_id, payment_time, amount, method, status) VALUES (3143, '2026-04-15T14:29:17'::timestamp, 197.0, 'cash', 'paid');
+INSERT INTO payments (order_id, payment_time, amount, method, status) VALUES (3144, '2026-04-08T01:49:22'::timestamp, 162.45, 'credit_card', 'paid');
+INSERT INTO payments (order_id, payment_time, amount, method, status) VALUES (3145, '2026-04-13T08:50:49'::timestamp, 106.02, 'debit_card', 'failed');
+INSERT INTO payments (order_id, payment_time, amount, method, status) VALUES (3147, '2026-04-07T11:29:57'::timestamp, 146.94, 'credit_card', 'paid');
+INSERT INTO payments (order_id, payment_time, amount, method, status) VALUES (3149, '2026-04-02T13:33:56'::timestamp, 155.04, 'debit_card', 'paid');
