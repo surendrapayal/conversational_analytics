@@ -30,6 +30,7 @@ CREATE TABLE IF NOT EXISTS memory.query_log (
     agent_response  TEXT,
     vega_spec       JSONB,
     token_usage     JSONB,
+    stream_events   JSONB,
     has_vega        BOOLEAN     NOT NULL DEFAULT FALSE,
     execution_ms    INT,
     created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
@@ -41,6 +42,7 @@ ALTER TABLE memory.query_log ADD COLUMN IF NOT EXISTS vega_spec JSONB;
 ALTER TABLE memory.query_log ADD COLUMN IF NOT EXISTS token_usage JSONB;
 ALTER TABLE memory.query_log ADD COLUMN IF NOT EXISTS conversation_id UUID;
 ALTER TABLE memory.query_log ADD COLUMN IF NOT EXISTS prompt TEXT;
+ALTER TABLE memory.query_log ADD COLUMN IF NOT EXISTS stream_events JSONB;
 
 CREATE INDEX IF NOT EXISTS idx_query_log_user_id
     ON memory.query_log(user_id, created_at DESC);

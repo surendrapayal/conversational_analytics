@@ -147,12 +147,13 @@ def log_query(
     agent_response: str | None = None,
     vega_spec: dict | None = None,
     token_usage: dict | None = None,
+    stream_events: list[dict] | None = None,
     has_vega: bool = False,
     execution_ms: int | None = None,
 ) -> None:
     """Writes a query audit record to memory.query_log using the connection pool."""
     import json as _json
-    logger.debug(f"Logging query — user={user_id} session={session_id} conversation={conversation_id} tools={tools_invoked} has_vega={has_vega} execution_ms={execution_ms}")
+    logger.debug(f"Logging query — user={user_id} session={session_id} conversation={conversation_id} tools={tools_invoked} has_vega={has_vega} execution_ms={execution_ms} stream_events={len(stream_events) if stream_events else 0}")
     pool = _get_audit_pool()
     conn = pool.getconn()
     try:
@@ -161,17 +162,18 @@ def log_query(
                 INSERT INTO memory.query_log
                     (conversation_id, session_id, user_id, role, user_query, prompt,
                      sql_generated, tools_invoked, agent_response, vega_spec,
-                     token_usage, has_vega, execution_ms)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                     token_usage, stream_events, has_vega, execution_ms)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             """, (
                 conversation_id, session_id, user_id, role, user_query, prompt,
                 sql_generated, tools_invoked, agent_response,
                 _json.dumps(vega_spec) if vega_spec else None,
                 _json.dumps(token_usage) if token_usage else None,
+                _json.dumps(stream_events) if stream_events else None,
                 has_vega, execution_ms,
             ))
         conn.commit()
-        logger.info(f"Query logged — user={user_id} conversation={conversation_id} execution_ms={execution_ms} has_vega={has_vega}")
+        logger.info(f"Query logged — user={user_id} conversation={conversation_id} execution_ms={execution_ms} has_vega={has_vega} stream_events={len(stream_events) if stream_events else 0}")
         if token_usage:
             logger.info(f"Token usage — input={token_usage.get('input_tokens',0)} output={token_usage.get('output_tokens',0)} total={token_usage.get('total_tokens',0)} reasoning={token_usage.get('reasoning_tokens',0)}")
     except Exception as e:

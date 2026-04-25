@@ -117,6 +117,7 @@ def _persist_audit(request: AgentRequest, state: dict, execution_ms: int) -> Non
             agent_response=state["final_response"],
             vega_spec=state["vega_spec"],
             token_usage=state["token_usage"],
+            stream_events=state.get("stream_events") or None,
             has_vega=state["has_vega"],
             execution_ms=execution_ms,
         )
@@ -144,6 +145,7 @@ def _init_state() -> dict:
         "has_vega": False,
         "step_number": 0,
         "llm_call_start": time.time(),
+        "stream_events": [],   # collects all SSE events for query_log
     }
 
 
@@ -177,7 +179,15 @@ def _sse(event: str, payload: dict, session_id: str = "", conversation_id: str =
     payload["session_id"] = session_id
     payload["conversation_id"] = conversation_id
     payload["timestamp"] = datetime.now(timezone.utc).isoformat()
-    logger.debug(f"SSE event: {event} payload: {payload}")
+    return f"event: {event}\ndata: {json.dumps(payload)}\n\n"
+
+
+def _sse_collect(event: str, payload: dict, session_id: str, conversation_id: str, state: dict) -> str:
+    """Formats SSE event, appends to state stream_events for audit log, and returns SSE string."""
+    payload["session_id"] = session_id
+    payload["conversation_id"] = conversation_id
+    payload["timestamp"] = datetime.now(timezone.utc).isoformat()
+    state["stream_events"].append({"event": event, **payload})
     return f"event: {event}\ndata: {json.dumps(payload)}\n\n"
 
 
@@ -215,30 +225,30 @@ def stream_agent(request: AgentRequest, stream_mode: str = "standard") -> Genera
                         if stream_mode == "verbose" and isinstance(msg.content, list):
                             for part in msg.content:
                                 if isinstance(part, dict) and part.get("type") == "thinking" and part.get("thinking"):
-                                    yield _sse("thinking", {"reasoning": part["thinking"].strip()}, request.session_id, request.conversation_id)
+                                    yield _sse_collect("thinking", {"reasoning": part["thinking"].strip()}, request.session_id, request.conversation_id, state)
                         for tc in msg.tool_calls:
                             if stream_mode == "verbose":
-                                yield _sse("tool_call", {"tool": tc["name"], "args": tc["args"]}, request.session_id, request.conversation_id)
+                                yield _sse_collect("tool_call", {"tool": tc["name"], "args": tc["args"]}, request.session_id, request.conversation_id, state)
                             else:
                                 label = _TOOL_STEP_LABELS.get(tc["name"], "Processing")
-                                yield _sse("step", {"message": label}, request.session_id, request.conversation_id)
+                                yield _sse_collect("step", {"message": label}, request.session_id, request.conversation_id, state)
 
                 elif node_name == "tools":
                     if stream_mode == "verbose":
                         for msg in state_update.get("messages", []):
                             if isinstance(msg, ToolMessage):
-                                yield _sse("tool_result", {"tool": msg.name, "output": msg.content}, request.session_id, request.conversation_id)
+                                yield _sse_collect("tool_result", {"tool": msg.name, "output": msg.content}, request.session_id, request.conversation_id, state)
 
                 elif node_name == "response_formatter":
                     if state["final_response"]:
-                        yield _sse("response", {"text": state["final_response"], "vega_spec": state["vega_spec"]}, request.session_id, request.conversation_id)
+                        yield _sse_collect("response", {"text": state["final_response"], "vega_spec": state["vega_spec"]}, request.session_id, request.conversation_id, state)
 
-        yield _sse("done", {"status": "completed"}, request.session_id, request.conversation_id)
+        yield _sse_collect("done", {"status": "completed"}, request.session_id, request.conversation_id, state)
         execution_ms = int((time.time() - start) * 1000)
         logger.info(f"Stream completed for user_id={request.user_id} session_id={request.session_id} conversation_id={request.conversation_id} execution_time={execution_ms}ms")
         _persist_audit(request, state, execution_ms)
 
     except Exception as e:
         logger.error(f"Error in stream_agent: {str(e)}", exc_info=True)
-        yield _sse("error", {"message": str(e)}, request.session_id, request.conversation_id)
-        yield _sse("done", {"status": "failed"}, request.session_id, request.conversation_id)
+        yield _sse_collect("error", {"message": str(e)}, request.session_id, request.conversation_id, state)
+        yield _sse_collect("done", {"status": "failed"}, request.session_id, request.conversation_id, state)
