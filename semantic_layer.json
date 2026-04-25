@@ -1,9 +1,7 @@
 {
   "database": "zenvyra",
   "description": "Zenvyra Restaurant Management System - semantic layer for conversational analytics",
-
   "domains": {
-
     "sales": {
       "description": "Revenue, orders and sales performance",
       "metrics": {
@@ -58,7 +56,6 @@
         }
       }
     },
-
     "menu": {
       "description": "Menu items, categories and pricing performance",
       "metrics": {
@@ -93,7 +90,6 @@
         }
       }
     },
-
     "customers": {
       "description": "Customer base, retention and loyalty",
       "metrics": {
@@ -123,7 +119,6 @@
         }
       }
     },
-
     "loyalty": {
       "description": "Loyalty program points and engagement",
       "metrics": {
@@ -158,7 +153,6 @@
         }
       }
     },
-
     "payments": {
       "description": "Payment methods, success rates and financial reconciliation",
       "metrics": {
@@ -187,7 +181,6 @@
         }
       }
     },
-
     "discounts": {
       "description": "Discount usage, impact and promotional effectiveness",
       "metrics": {
@@ -209,7 +202,6 @@
         }
       }
     },
-
     "inventory": {
       "description": "Stock levels, reorder alerts and ingredient usage",
       "metrics": {
@@ -235,7 +227,6 @@
         }
       }
     },
-
     "workforce": {
       "description": "Employee headcount, shifts and scheduling",
       "metrics": {
@@ -270,7 +261,6 @@
         }
       }
     },
-
     "reservations": {
       "description": "Table bookings, occupancy and no-show rates",
       "metrics": {
@@ -297,7 +287,6 @@
         }
       }
     },
-
     "locations": {
       "description": "Restaurant branch performance comparison",
       "metrics": {
@@ -324,35 +313,158 @@
       }
     }
   },
-
   "relationships": [
-    {"from": "orders", "to": "customers", "join": "orders.customer_id = customers.id", "type": "many-to-one"},
-    {"from": "orders", "to": "location", "join": "orders.location_id = location.id", "type": "many-to-one"},
-    {"from": "orders", "to": "employee", "join": "orders.employee_id = employee.id", "type": "many-to-one"},
-    {"from": "orders", "to": "tables", "join": "orders.table_id = tables.id", "type": "many-to-one"},
-    {"from": "order_items", "to": "orders", "join": "order_items.order_id = orders.id", "type": "many-to-one"},
-    {"from": "order_items", "to": "menu_items", "join": "order_items.menu_item_id = menu_items.id", "type": "many-to-one"},
-    {"from": "menu_items", "to": "menu_categories", "join": "menu_items.category_id = menu_categories.id", "type": "many-to-one"},
-    {"from": "payments", "to": "orders", "join": "payments.order_id = orders.id", "type": "one-to-one"},
-    {"from": "order_discounts", "to": "orders", "join": "order_discounts.order_id = orders.id", "type": "many-to-one"},
-    {"from": "order_discounts", "to": "discounts", "join": "order_discounts.discount_id = discounts.id", "type": "many-to-one"},
-    {"from": "loyalty_accounts", "to": "customers", "join": "loyalty_accounts.customer_id = customers.id", "type": "one-to-one"},
-    {"from": "loyalty_txn", "to": "loyalty_accounts", "join": "loyalty_txn.loyalty_id = loyalty_accounts.id", "type": "many-to-one"},
-    {"from": "inventory", "to": "location", "join": "inventory.location_id = location.id", "type": "many-to-one"},
-    {"from": "inventory", "to": "ingredients", "join": "inventory.ingredient_id = ingredients.id", "type": "many-to-one"},
-    {"from": "recipe_items", "to": "menu_items", "join": "recipe_items.menu_item_id = menu_items.id", "type": "many-to-one"},
-    {"from": "recipe_items", "to": "ingredients", "join": "recipe_items.ingredient_id = ingredients.id", "type": "many-to-one"},
-    {"from": "supplier_items", "to": "supplier", "join": "supplier_items.supplier_id = supplier.id", "type": "many-to-one"},
-    {"from": "supplier_items", "to": "ingredients", "join": "supplier_items.ingredient_id = ingredients.id", "type": "many-to-one"},
-    {"from": "employee", "to": "roles", "join": "employee.role_id = roles.id", "type": "many-to-one"},
-    {"from": "employee", "to": "location", "join": "employee.location_id = location.id", "type": "many-to-one"},
-    {"from": "shifts", "to": "employee", "join": "shifts.employee_id = employee.id", "type": "many-to-one"},
-    {"from": "shifts", "to": "location", "join": "shifts.location_id = location.id", "type": "many-to-one"},
-    {"from": "reservations", "to": "tables", "join": "reservations.table_id = tables.id", "type": "many-to-one"},
-    {"from": "reservations", "to": "customers", "join": "reservations.customer_id = customers.id", "type": "many-to-one"},
-    {"from": "tables", "to": "location", "join": "tables.location_id = location.id", "type": "many-to-one"}
+    {
+      "from": "orders",
+      "to": "customers",
+      "join": "orders.customer_id = customers.id",
+      "type": "many-to-one"
+    },
+    {
+      "from": "orders",
+      "to": "location",
+      "join": "orders.location_id = location.id",
+      "type": "many-to-one"
+    },
+    {
+      "from": "orders",
+      "to": "employee",
+      "join": "orders.employee_id = employee.id",
+      "type": "many-to-one"
+    },
+    {
+      "from": "orders",
+      "to": "tables",
+      "join": "orders.table_id = tables.id",
+      "type": "many-to-one"
+    },
+    {
+      "from": "order_items",
+      "to": "orders",
+      "join": "order_items.order_id = orders.id",
+      "type": "many-to-one"
+    },
+    {
+      "from": "order_items",
+      "to": "menu_items",
+      "join": "order_items.menu_item_id = menu_items.id",
+      "type": "many-to-one"
+    },
+    {
+      "from": "menu_items",
+      "to": "menu_categories",
+      "join": "menu_items.category_id = menu_categories.id",
+      "type": "many-to-one"
+    },
+    {
+      "from": "payments",
+      "to": "orders",
+      "join": "payments.order_id = orders.id",
+      "type": "one-to-one"
+    },
+    {
+      "from": "order_discounts",
+      "to": "orders",
+      "join": "order_discounts.order_id = orders.id",
+      "type": "many-to-one"
+    },
+    {
+      "from": "order_discounts",
+      "to": "discounts",
+      "join": "order_discounts.discount_id = discounts.id",
+      "type": "many-to-one"
+    },
+    {
+      "from": "loyalty_accounts",
+      "to": "customers",
+      "join": "loyalty_accounts.customer_id = customers.id",
+      "type": "one-to-one"
+    },
+    {
+      "from": "loyalty_txn",
+      "to": "loyalty_accounts",
+      "join": "loyalty_txn.loyalty_id = loyalty_accounts.id",
+      "type": "many-to-one"
+    },
+    {
+      "from": "inventory",
+      "to": "location",
+      "join": "inventory.location_id = location.id",
+      "type": "many-to-one"
+    },
+    {
+      "from": "inventory",
+      "to": "ingredients",
+      "join": "inventory.ingredient_id = ingredients.id",
+      "type": "many-to-one"
+    },
+    {
+      "from": "recipe_items",
+      "to": "menu_items",
+      "join": "recipe_items.menu_item_id = menu_items.id",
+      "type": "many-to-one"
+    },
+    {
+      "from": "recipe_items",
+      "to": "ingredients",
+      "join": "recipe_items.ingredient_id = ingredients.id",
+      "type": "many-to-one"
+    },
+    {
+      "from": "supplier_items",
+      "to": "supplier",
+      "join": "supplier_items.supplier_id = supplier.id",
+      "type": "many-to-one"
+    },
+    {
+      "from": "supplier_items",
+      "to": "ingredients",
+      "join": "supplier_items.ingredient_id = ingredients.id",
+      "type": "many-to-one"
+    },
+    {
+      "from": "employee",
+      "to": "roles",
+      "join": "employee.role_id = roles.id",
+      "type": "many-to-one"
+    },
+    {
+      "from": "employee",
+      "to": "location",
+      "join": "employee.location_id = location.id",
+      "type": "many-to-one"
+    },
+    {
+      "from": "shifts",
+      "to": "employee",
+      "join": "shifts.employee_id = employee.id",
+      "type": "many-to-one"
+    },
+    {
+      "from": "shifts",
+      "to": "location",
+      "join": "shifts.location_id = location.id",
+      "type": "many-to-one"
+    },
+    {
+      "from": "reservations",
+      "to": "tables",
+      "join": "reservations.table_id = tables.id",
+      "type": "many-to-one"
+    },
+    {
+      "from": "reservations",
+      "to": "customers",
+      "join": "reservations.customer_id = customers.id",
+      "type": "many-to-one"
+    },
+    {
+      "from": "tables",
+      "to": "location",
+      "join": "tables.location_id = location.id",
+      "type": "many-to-one"
+    }
   ],
-
   "visualization_rules": {
     "schema": "https://vega.github.io/schema/vega-lite/v5.json",
     "default_width": 700,
@@ -378,7 +490,6 @@
       "boxplot": "Statistical spread and outliers across groups - e.g. order value by location"
     }
   },
-
   "business_rules": [
     "Completed orders: status = 'completed' - use this filter for all revenue calculations",
     "Active menu items: is_active = true - only these are available for ordering",
@@ -391,12 +502,21 @@
     "Percentage discounts: discounts.type = 'percent'",
     "Fixed amount discounts: discounts.type = 'fixed'"
   ],
-
   "roles": {
-
     "admin": {
       "description": "Full system access - all domains, all data, no restrictions",
-      "domains": ["sales", "menu", "customers", "loyalty", "payments", "discounts", "inventory", "workforce", "reservations", "locations"],
+      "domains": [
+        "sales",
+        "menu",
+        "customers",
+        "loyalty",
+        "payments",
+        "discounts",
+        "inventory",
+        "workforce",
+        "reservations",
+        "locations"
+      ],
       "restricted_columns": [],
       "row_filters": {},
       "business_rules": [
@@ -405,11 +525,26 @@
         "Can view all locations data without restriction"
       ]
     },
-
     "general_manager": {
       "description": "Cross-location management - all domains except supplier procurement, PII restricted",
-      "domains": ["sales", "menu", "customers", "loyalty", "payments", "discounts", "inventory", "workforce", "reservations", "locations"],
-      "restricted_columns": ["customers.email", "customers.phone", "customers.address", "employee.email"],
+      "domains": [
+        "sales",
+        "menu",
+        "customers",
+        "loyalty",
+        "payments",
+        "discounts",
+        "inventory",
+        "workforce",
+        "reservations",
+        "locations"
+      ],
+      "restricted_columns": [
+        "customers.email",
+        "customers.phone",
+        "customers.address",
+        "employee.email"
+      ],
       "row_filters": {},
       "business_rules": [
         "Cannot access supplier pricing or recipe ingredient costs - supplier and supplier_items tables are not available",
@@ -419,11 +554,19 @@
         "Inventory metrics available: low_stock_items, out_of_stock_items, inventory_by_location only"
       ]
     },
-
     "location_manager": {
       "description": "Single location management - location-scoped data only",
-      "domains": ["sales", "menu", "inventory", "workforce", "reservations", "payments"],
-      "restricted_columns": ["employee.email"],
+      "domains": [
+        "sales",
+        "menu",
+        "inventory",
+        "workforce",
+        "reservations",
+        "payments"
+      ],
+      "restricted_columns": [
+        "employee.email"
+      ],
       "row_filters": {
         "orders": "location_id = <assigned_location_id>",
         "shifts": "location_id = <assigned_location_id>",
@@ -438,10 +581,12 @@
         "Cannot access loyalty program, discount management or supplier data"
       ]
     },
-
     "chef": {
       "description": "Kitchen operations - menu, recipes and inventory only",
-      "domains": ["menu", "inventory"],
+      "domains": [
+        "menu",
+        "inventory"
+      ],
       "restricted_columns": [],
       "row_filters": {},
       "business_rules": [
@@ -452,11 +597,18 @@
         "Low stock means quantity_on_hand <= reorder_threshold"
       ]
     },
-
     "waiter": {
       "description": "Floor operations - orders, tables, reservations and menu only",
-      "domains": ["sales", "menu", "reservations"],
-      "restricted_columns": ["customers.email", "customers.phone", "customers.address"],
+      "domains": [
+        "sales",
+        "menu",
+        "reservations"
+      ],
+      "restricted_columns": [
+        "customers.email",
+        "customers.phone",
+        "customers.address"
+      ],
       "row_filters": {},
       "business_rules": [
         "Can view current orders, table status and today's reservations",
@@ -466,10 +618,13 @@
         "Active menu items means is_active = true - only show available dishes"
       ]
     },
-
     "cashier": {
       "description": "Payment processing - orders, payments and discounts only",
-      "domains": ["sales", "payments", "discounts"],
+      "domains": [
+        "sales",
+        "payments",
+        "discounts"
+      ],
       "restricted_columns": [],
       "row_filters": {},
       "business_rules": [
@@ -482,11 +637,26 @@
         "Failed payments: status = 'failed', Refunded: status = 'refunded'"
       ]
     },
-
     "analyst": {
       "description": "Read-only analytics - all aggregated data, no PII, no supplier costs",
-      "domains": ["sales", "menu", "customers", "loyalty", "payments", "discounts", "inventory", "workforce", "reservations", "locations"],
-      "restricted_columns": ["customers.email", "customers.phone", "customers.address", "employee.email"],
+      "domains": [
+        "sales",
+        "menu",
+        "customers",
+        "loyalty",
+        "payments",
+        "discounts",
+        "inventory",
+        "workforce",
+        "reservations",
+        "locations"
+      ],
+      "restricted_columns": [
+        "customers.email",
+        "customers.phone",
+        "customers.address",
+        "employee.email"
+      ],
       "row_filters": {},
       "business_rules": [
         "Read-only access - never suggest INSERT, UPDATE, DELETE or DROP",

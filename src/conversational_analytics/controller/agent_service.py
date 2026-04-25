@@ -9,15 +9,14 @@ from conversational_analytics.models import AgentRequest, AgentResponse, AgentMe
 from conversational_analytics.memory import log_query, save_conversation_summary, log_agent_step
 
 logger = logging.getLogger(__name__)
-logger.propagate = True  # Ensure logs propagate to root logger
+logger.propagate = True
 
 _graph = build_graph()  # built once, checkpointer is attached
 
 
-def run_agent(request: AgentRequest) -> AgentResponse:
-    start = time.time()
-    config = {"configurable": {"thread_id": request.session_id}}
-    input_state = {
+def _build_input_state(request: AgentRequest) -> dict:
+    """Builds the initial graph state from a request."""
+    return {
         "user_input": request.query,
         "user_id": request.user_id,
         "conversation_id": request.conversation_id,
@@ -26,89 +25,85 @@ def run_agent(request: AgentRequest) -> AgentResponse:
         "prompt": None,
     }
 
-    # track state — same as stream_agent but without yielding SSE
-    _tools_invoked: list[str] = []
-    _tool_results: list[str] = []
-    _final_response: str = ""
-    _vega_spec: dict | None = None
-    _token_usage: dict | None = None
-    _prompt: str | None = None
-    _sql_generated: str | None = None
-    _has_vega: bool = False
-    _step_number: int = 0
-    _llm_call_start: float = time.time()
 
-    for chunk in _graph.stream(input_state, config=config, stream_mode="updates"):
-        for node_name, state_update in chunk.items():
-            if node_name == "agent":
-                if state_update.get("token_usage"):
-                    _token_usage = state_update["token_usage"]
-                if state_update.get("prompt") and _prompt is None:
-                    _prompt = state_update["prompt"]
-                for msg in state_update.get("messages", []):
-                    if not isinstance(msg, AIMessage):
-                        continue
-                    for tc in msg.tool_calls:
-                        if tc["name"] == "sql_db_query" and tc["args"].get("query"):
-                            _sql_generated = tc["args"]["query"]
-                    # log llm_call step
-                    _step_number += 1
-                    step_token_usage = None
-                    if msg.usage_metadata:
-                        um = msg.usage_metadata
-                        step_token_usage = {
-                            "input_tokens": um.get("input_tokens", 0),
-                            "output_tokens": um.get("output_tokens", 0),
-                            "total_tokens": um.get("total_tokens", 0),
-                            "reasoning_tokens": um.get("output_token_details", {}).get("reasoning", 0),
-                        }
-                    tool_names = [tc["name"] for tc in msg.tool_calls]
-                    llm_output = f"Decided to call: {tool_names}" if tool_names else "Generated final response"
+def _extract_step_token_usage(msg: AIMessage) -> dict | None:
+    """Extracts per-step token usage from an AIMessage."""
+    if not msg.usage_metadata:
+        return None
+    um = msg.usage_metadata
+    return {
+        "input_tokens": um.get("input_tokens", 0),
+        "output_tokens": um.get("output_tokens", 0),
+        "total_tokens": um.get("total_tokens", 0),
+        "reasoning_tokens": um.get("output_token_details", {}).get("reasoning", 0),
+    }
+
+
+def _process_chunk(
+    chunk: dict,
+    request: AgentRequest,
+    state: dict,
+) -> None:
+    """Processes a single graph stream chunk — updates state and logs agent steps."""
+    for node_name, state_update in chunk.items():
+        if node_name == "agent":
+            if state_update.get("token_usage"):
+                state["token_usage"] = state_update["token_usage"]
+            if state_update.get("prompt") and state["prompt"] is None:
+                state["prompt"] = state_update["prompt"]
+            for msg in state_update.get("messages", []):
+                if not isinstance(msg, AIMessage):
+                    continue
+                for tc in msg.tool_calls:
+                    if tc["name"] == "sql_db_query" and tc["args"].get("query"):
+                        state["sql_generated"] = tc["args"]["query"]
+                state["step_number"] += 1
+                tool_names = [tc["name"] for tc in msg.tool_calls]
+                llm_output = f"Decided to call: {tool_names}" if tool_names else "Generated final response"
+                try:
+                    log_agent_step(
+                        conversation_id=request.conversation_id,
+                        session_id=request.session_id,
+                        user_id=request.user_id,
+                        step_number=state["step_number"],
+                        step_type="llm_call",
+                        output=llm_output,
+                        token_usage=_extract_step_token_usage(msg),
+                        duration_ms=int((time.time() - state["llm_call_start"]) * 1000),
+                    )
+                except Exception as e:
+                    logger.debug(f"Failed to log llm_call step: {e}")
+
+        elif node_name == "tools":
+            for msg in state_update.get("messages", []):
+                if isinstance(msg, ToolMessage):
+                    state["tools_invoked"].append(msg.name)
+                    state["step_number"] += 1
                     try:
                         log_agent_step(
                             conversation_id=request.conversation_id,
                             session_id=request.session_id,
                             user_id=request.user_id,
-                            step_number=_step_number,
-                            step_type="llm_call",
-                            output=llm_output,
-                            token_usage=step_token_usage,
-                            duration_ms=int((time.time() - _llm_call_start) * 1000),
+                            step_number=state["step_number"],
+                            step_type="tool_result",
+                            tool_name=msg.name,
+                            output=msg.content[:500],
                         )
                     except Exception as e:
-                        logger.debug(f"Failed to log llm_call step: {e}")
+                        logger.debug(f"Failed to log tool_result step: {e}")
+                    state["llm_call_start"] = time.time()
 
-            elif node_name == "tools":
-                for msg in state_update.get("messages", []):
-                    if isinstance(msg, ToolMessage):
-                        _tools_invoked.append(msg.name)
-                        _tool_results.append(msg.content)
-                        _step_number += 1
-                        try:
-                            log_agent_step(
-                                conversation_id=request.conversation_id,
-                                session_id=request.session_id,
-                                user_id=request.user_id,
-                                step_number=_step_number,
-                                step_type="tool_result",
-                                tool_name=msg.name,
-                                output=msg.content[:500],
-                            )
-                        except Exception as e:
-                            logger.debug(f"Failed to log tool_result step: {e}")
-                        _llm_call_start = time.time()
+        elif node_name == "response_formatter":
+            final = state_update.get("final_response", "")
+            vega = state_update.get("vega_spec")
+            if final:
+                state["final_response"] = final
+                state["vega_spec"] = vega
+                state["has_vega"] = vega is not None
 
-            elif node_name == "response_formatter":
-                final = state_update.get("final_response", "")
-                vega = state_update.get("vega_spec")
-                if final:
-                    _final_response = final
-                    _vega_spec = vega
-                    _has_vega = vega is not None
 
-    execution_ms = int((time.time() - start) * 1000)
-    logger.info(f"Agent completed for user={request.user_id} session={request.session_id}")
-
+def _persist_audit(request: AgentRequest, state: dict, execution_ms: int) -> None:
+    """Persists query log and conversation summary after graph completes."""
     try:
         log_query(
             conversation_id=request.conversation_id,
@@ -116,13 +111,13 @@ def run_agent(request: AgentRequest) -> AgentResponse:
             user_id=request.user_id,
             role=request.role,
             user_query=request.query,
-            prompt=_prompt,
-            sql_generated=_sql_generated,
-            tools_invoked=_tools_invoked,
-            agent_response=_final_response,
-            vega_spec=_vega_spec,
-            token_usage=_token_usage,
-            has_vega=_has_vega,
+            prompt=state["prompt"],
+            sql_generated=state["sql_generated"],
+            tools_invoked=state["tools_invoked"],
+            agent_response=state["final_response"],
+            vega_spec=state["vega_spec"],
+            token_usage=state["token_usage"],
+            has_vega=state["has_vega"],
             execution_ms=execution_ms,
         )
         save_conversation_summary(
@@ -130,19 +125,49 @@ def run_agent(request: AgentRequest) -> AgentResponse:
             session_id=request.session_id,
             conversation_id=request.conversation_id,
             user_query=request.query,
-            response_text=_final_response,
+            response_text=state["final_response"],
             role=request.role,
         )
     except Exception as e:
-        logger.warning(f"Failed to log query to long-term memory: {e}")
+        logger.warning(f"Failed to persist audit: {e}")
+
+
+def _init_state() -> dict:
+    """Returns a fresh tracking state dict."""
+    return {
+        "tools_invoked": [],
+        "final_response": "",
+        "vega_spec": None,
+        "token_usage": None,
+        "prompt": None,
+        "sql_generated": None,
+        "has_vega": False,
+        "step_number": 0,
+        "llm_call_start": time.time(),
+    }
+
+
+def run_agent(request: AgentRequest) -> AgentResponse:
+    start = time.time()
+    config = {"configurable": {"thread_id": request.session_id}}
+    state = _init_state()
+
+    logger.info(f"run_agent started for user_id={request.user_id} session_id={request.session_id} conversation_id={request.conversation_id}")
+
+    for chunk in _graph.stream(_build_input_state(request), config=config, stream_mode="updates"):
+        _process_chunk(chunk, request, state)
+
+    execution_ms = int((time.time() - start) * 1000)
+    logger.info(f"Agent completed for user_id={request.user_id} session_id={request.session_id} conversation_id={request.conversation_id} execution_time={execution_ms}ms")
+    _persist_audit(request, state, execution_ms)
 
     return AgentResponse(
-        response_text=_final_response,
-        vega_spec=_vega_spec,
+        response_text=state["final_response"],
+        vega_spec=state["vega_spec"],
         metadata=AgentMetadata(
             conversation_id=request.conversation_id,
-            # tools_invoked=_tools_invoked,
-            # token_usage=_token_usage,
+            # tools_invoked=state["tools_invoked"],
+            # token_usage=state["token_usage"],
         ),
     )
 
@@ -152,10 +177,10 @@ def _sse(event: str, payload: dict, session_id: str = "", conversation_id: str =
     payload["session_id"] = session_id
     payload["conversation_id"] = conversation_id
     payload["timestamp"] = datetime.now(timezone.utc).isoformat()
+    logger.debug(f"SSE event: {event} payload: {payload}")
     return f"event: {event}\ndata: {json.dumps(payload)}\n\n"
 
 
-# Maps internal SQL tool names to business-friendly step descriptions
 _TOOL_STEP_LABELS = {
     "sql_db_list_tables": "Identifying available data sources",
     "sql_db_schema": "Analysing data structure",
@@ -168,74 +193,23 @@ def stream_agent(request: AgentRequest, stream_mode: str = "standard") -> Genera
     """Streams agent execution as Server-Sent Events.
 
     stream_mode:
-      standard - business-friendly output (default): step progress + final response only
+      standard - business-friendly output: step progress + final response only
       verbose  - full internal details: thinking, tool names, args, raw DB output
     """
     start = time.time()
     try:
-        logger.info(f"stream_agent started for user={request.user_id} session={request.session_id}")
+        logger.info(f"stream_agent started for user_id={request.user_id} session_id={request.session_id} conversation_id={request.conversation_id} stream_mode={stream_mode}")
         config = {"configurable": {"thread_id": request.session_id}}
-        input_state = {
-            "user_input": request.query,
-            "user_id": request.user_id,
-            "conversation_id": request.conversation_id,
-            "messages": [HumanMessage(content=request.query)],
-            "role": request.role,
-            "prompt": None,
-        }
+        state = _init_state()
 
-        # track state for audit log
-        _tools_invoked: list[str] = []
-        _tool_results: list[str] = []
-        _final_response: str = ""
-        _vega_spec: dict | None = None
-        _token_usage: dict | None = None
-        _prompt: str | None = None
-        _sql_generated: str | None = None
-        _has_vega: bool = False
-        _step_number: int = 0
-        _llm_call_start: float = time.time()
-
-        for chunk in _graph.stream(input_state, config=config, stream_mode="updates"):
+        for chunk in _graph.stream(_build_input_state(request), config=config, stream_mode="updates"):
             for node_name, state_update in chunk.items():
+                # process chunk for logging (shared logic)
+                _process_chunk({node_name: state_update}, request, state)
+
+                # SSE output
                 if node_name == "agent":
-                    if state_update.get("token_usage"):
-                        _token_usage = state_update["token_usage"]
-                    if state_update.get("prompt") and _prompt is None:
-                        _prompt = state_update["prompt"]
                     for msg in state_update.get("messages", []):
-                        if not isinstance(msg, AIMessage):
-                            continue
-                        # capture SQL from tool call args
-                        for tc in msg.tool_calls:
-                            if tc["name"] == "sql_db_query" and tc["args"].get("query"):
-                                _sql_generated = tc["args"]["query"]
-                        # log llm_call step
-                        _step_number += 1
-                        step_token_usage = None
-                        if msg.usage_metadata:
-                            um = msg.usage_metadata
-                            step_token_usage = {
-                                "input_tokens": um.get("input_tokens", 0),
-                                "output_tokens": um.get("output_tokens", 0),
-                                "total_tokens": um.get("total_tokens", 0),
-                                "reasoning_tokens": um.get("output_token_details", {}).get("reasoning", 0),
-                            }
-                        tool_names = [tc["name"] for tc in msg.tool_calls]
-                        llm_output = f"Decided to call: {tool_names}" if tool_names else "Generated final response"
-                        try:
-                            log_agent_step(
-                                conversation_id=request.conversation_id,
-                                session_id=request.session_id,
-                                user_id=request.user_id,
-                                step_number=_step_number,
-                                step_type="llm_call",
-                                output=llm_output,
-                                token_usage=step_token_usage,
-                                duration_ms=int((time.time() - _llm_call_start) * 1000),
-                            )
-                        except Exception as e:
-                            logger.debug(f"Failed to log llm_call step: {e}")
                         if not isinstance(msg, AIMessage):
                             continue
                         if stream_mode == "verbose" and isinstance(msg.content, list):
@@ -250,69 +224,18 @@ def stream_agent(request: AgentRequest, stream_mode: str = "standard") -> Genera
                                 yield _sse("step", {"message": label}, request.session_id, request.conversation_id)
 
                 elif node_name == "tools":
-                    for msg in state_update.get("messages", []):
-                        if isinstance(msg, ToolMessage):
-                            _tools_invoked.append(msg.name)
-                            _tool_results.append(msg.content)
-                            # log tool_call and tool_result steps
-                            _step_number += 1
-                            tool_input = None
-                            # find matching tool call args from previous AIMessage
-                            try:
-                                log_agent_step(
-                                    conversation_id=request.conversation_id,
-                                    session_id=request.session_id,
-                                    user_id=request.user_id,
-                                    step_number=_step_number,
-                                    step_type="tool_result",
-                                    tool_name=msg.name,
-                                    output=msg.content[:500],  # truncate large outputs
-                                )
-                            except Exception as e:
-                                logger.debug(f"Failed to log tool_result step: {e}")
-                            _llm_call_start = time.time()  # reset timer for next LLM call
-                            if stream_mode == "verbose":
+                    if stream_mode == "verbose":
+                        for msg in state_update.get("messages", []):
+                            if isinstance(msg, ToolMessage):
                                 yield _sse("tool_result", {"tool": msg.name, "output": msg.content}, request.session_id, request.conversation_id)
 
                 elif node_name == "response_formatter":
-                    final = state_update.get("final_response", "")
-                    vega = state_update.get("vega_spec")
-                    if final:
-                        _final_response = final
-                        _vega_spec = vega
-                        _has_vega = vega is not None
-                        yield _sse("response", {"text": final, "vega_spec": vega}, request.session_id, request.conversation_id)
+                    if state["final_response"]:
+                        yield _sse("response", {"text": state["final_response"], "vega_spec": state["vega_spec"]}, request.session_id, request.conversation_id)
 
         yield _sse("done", {"status": "completed"}, request.session_id, request.conversation_id)
-        logger.info(f"Stream completed for user={request.user_id} session={request.session_id} conversation={request.conversation_id}")
-
-        # persist audit log and session summary after stream completes
-        try:
-            log_query(
-                conversation_id=request.conversation_id,
-                session_id=request.session_id,
-                user_id=request.user_id,
-                role=request.role,
-                user_query=request.query,
-                prompt=_prompt,
-                sql_generated=_sql_generated,
-                tools_invoked=_tools_invoked,
-                agent_response=_final_response,
-                vega_spec=_vega_spec,
-                token_usage=_token_usage,
-                has_vega=_has_vega,
-                execution_ms=int((time.time() - start) * 1000),
-            )
-            save_conversation_summary(
-                user_id=request.user_id,
-                session_id=request.session_id,
-                conversation_id=request.conversation_id,
-                user_query=request.query,
-                response_text=_final_response,
-                role=request.role,
-            )
-        except Exception as e:
-            logger.warning(f"Failed to log query audit: {e}")
+        logger.info(f"Stream completed for user_id={request.user_id} session_id={request.session_id} conversation_id={request.conversation_id} execution_time={execution_ms}ms")
+        _persist_audit(request, state, int((time.time() - start) * 1000))
 
     except Exception as e:
         logger.error(f"Error in stream_agent: {str(e)}", exc_info=True)

@@ -25,6 +25,7 @@ def query(
 ):
     """Accepts a natural language query and returns a SQL-backed response."""
     conversation_id = str(uuid.uuid4())  # always generate a new UUID per stream request
+    logger.info(f"Chat request received: user_id={body.user_id}, sessionId={session_id}, role={role}, conversation_id={conversation_id}")
     try:
         request = AgentRequest(
             user_id=body.user_id,
@@ -33,6 +34,7 @@ def query(
             role=role,
             conversation_id=conversation_id,
         )
+        logger.debug(f"Constructed AgentRequest: {request}")
         return run_agent(request)
     except Exception as e:
         logger.error(f"Agent error for session={session_id}: {e}")
@@ -50,7 +52,7 @@ def stream(
     """
     try:
         conversation_id = str(uuid.uuid4())  # always generate a new UUID per stream request
-        logger.info(f"Stream request received: user={body.user_id}, session={session_id}, role={role}, conversation={conversation_id}")
+        logger.info(f"Stream request received: user_id={body.user_id}, sessionId={session_id}, role={role}, conversation_id={conversation_id}")
         request = AgentRequest(
             user_id=body.user_id,
             session_id=session_id,
@@ -58,6 +60,7 @@ def stream(
             role=role,
             conversation_id=conversation_id,
         )
+        logger.debug(f"Constructed AgentRequest: {request}")
         return StreamingResponse(
             stream_agent(request, stream_mode=body.stream_mode),
             media_type="text/event-stream",

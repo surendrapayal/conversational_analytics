@@ -34,15 +34,15 @@ VISUALIZATION (append after your complete text response):
 - Do NOT generate a chart for single scalar values
 {semantic_section}"""
 
-# Role context holds everything needed per role
-_role_cache: dict[str, dict] = {}  # {role: {db, tools, system_message}}
-_default_context: dict = {}         # used when no role is specified
+_role_cache: dict[str, dict] = {}
+_default_context: dict = {}
 
 
 def _apply_column_restrictions(descriptions: dict[str, str], restrict_map: dict[str, list[str]]) -> dict[str, str]:
     """Strips restricted columns from table descriptions so the LLM never sees them."""
     for table, restricted_cols in restrict_map.items():
         if table not in descriptions:
+            logger.debug(f"Table '{table}' not found in descriptions — skipping column restriction")
             continue
         desc = descriptions[table]
         for col in restricted_cols:
@@ -55,17 +55,25 @@ def _apply_column_restrictions(descriptions: dict[str, str], restrict_map: dict[
 def _build_custom_table_info(visible_tables: list[str], restrict_map: dict[str, list[str]]) -> dict[str, str] | None:
     """Builds custom_table_info from live DB only when column restrictions are set."""
     if not restrict_map:
+        logger.debug("No column restrictions configured — skipping custom_table_info")
         return None
+    logger.debug(f"Building custom_table_info for {len(visible_tables)} tables with restrictions: {restrict_map}")
     descriptions = get_table_descriptions(visible_tables)
     if not descriptions:
+        logger.warning("Could not retrieve table descriptions from DB — custom_table_info will be empty")
         return None
-    return _apply_column_restrictions(descriptions, restrict_map)
+    result = _apply_column_restrictions(descriptions, restrict_map)
+    logger.info(f"Built custom_table_info for {len(result)} tables")
+    return result
 
 
 def _build_system_message(visible_tables: list[str], role: str | None) -> SystemMessage:
     """Builds system message with semantic layer injected if available."""
+    logger.debug(f"Building system message for role={role}, tables={len(visible_tables)}")
     semantic_suffix = build_system_prompt_suffix(role, visible_tables)
     semantic_section = f"\n\n{semantic_suffix}" if semantic_suffix else ""
+    if semantic_suffix:
+        logger.debug(f"Semantic layer injected into system prompt ({len(semantic_suffix)} chars)")
     content = SYSTEM_PROMPT_TEMPLATE.format(
         tables=", ".join(sorted(visible_tables)),
         semantic_section=semantic_section,
@@ -77,19 +85,22 @@ def _build_context(include_tables: list[str] | None, ignore_tables: list[str] | 
                    restrict_map: dict[str, list[str]], role: str | None = None) -> dict:
     """Builds and returns a context dict {db, tools, system_message} for a given table filter."""
     cfg = get_settings()
+    logger.debug(f"Building context for role={role}, include={include_tables}, ignore={ignore_tables}")
 
     base_db = SQLDatabase.from_uri(cfg.db_uri)
     all_tables = list(base_db.get_usable_table_names())
+    logger.debug(f"Found {len(all_tables)} tables in database")
 
-    # resolve visible tables
     if include_tables:
         visible_tables = [t for t in all_tables if t in include_tables]
+        logger.debug(f"include_tables filter applied: {len(visible_tables)} visible tables")
     elif ignore_tables:
         visible_tables = [t for t in all_tables if t not in ignore_tables]
+        logger.debug(f"ignore_tables filter applied: excluded {len(ignore_tables)}, {len(visible_tables)} visible tables")
     else:
         visible_tables = all_tables
+        logger.debug(f"No table filter — all {len(visible_tables)} tables visible")
 
-    # build DB with role-specific restrict map
     custom_table_info = _build_custom_table_info(visible_tables, restrict_map)
     db_kwargs = {
         "include_tables": include_tables or None,
@@ -100,8 +111,10 @@ def _build_context(include_tables: list[str] | None, ignore_tables: list[str] | 
     if custom_table_info:
         db_kwargs["custom_table_info"] = custom_table_info
 
+    logger.debug(f"Creating SQLDatabase with kwargs: include={include_tables}, ignore={ignore_tables}, view_support={cfg.db_view_support}")
     db = SQLDatabase.from_uri(cfg.db_uri, **db_kwargs)
     tools = SQLDatabaseToolkit(db=db, llm=get_llm()).get_tools()
+    logger.debug(f"SQL toolkit created with {len(tools)} tools")
     system_message = _build_system_message(visible_tables, role)
 
     return {"db": db, "tools": tools, "system_message": system_message}
@@ -110,9 +123,10 @@ def _build_context(include_tables: list[str] | None, ignore_tables: list[str] | 
 def _init():
     """Runs once at startup - builds context for each role and the default context."""
     cfg = get_settings()
+    logger.info("Initialising SQL contexts at startup...")
 
-    # build default context using global DB_RESTRICT_COLUMNS
     global _default_context
+    logger.info("Building default SQL context (no role)...")
     _default_context = _build_context(
         include_tables=cfg.db_include_tables_list or None,
         ignore_tables=cfg.db_ignore_tables_list or None,
@@ -121,16 +135,25 @@ def _init():
     )
     logger.info("Default SQL context initialised")
 
-    # build one context per role using role-specific restrict columns
-    for role, tables in cfg.role_tables_map.items():
-        restrict_map = cfg.get_restrict_columns_for_role(role)
-        _role_cache[role] = _build_context(
-            include_tables=tables,
-            ignore_tables=None,
-            restrict_map=restrict_map,
-            role=role,
-        )
-        logger.info(f"Role '{role}' SQL context initialised - tables: {', '.join(sorted(tables))}")
+    roles = cfg.role_tables_map
+    if not roles:
+        logger.warning("No roles defined in .env — only default context available")
+    else:
+        logger.info(f"Building SQL context for {len(roles)} roles: {list(roles.keys())}")
+        for role, tables in roles.items():
+            logger.info(f"Building context for role='{role}' ({len(tables)} tables)...")
+            restrict_map = cfg.get_restrict_columns_for_role(role)
+            if restrict_map:
+                logger.debug(f"Role '{role}' has column restrictions: {restrict_map}")
+            _role_cache[role] = _build_context(
+                include_tables=tables,
+                ignore_tables=None,
+                restrict_map=restrict_map,
+                role=role,
+            )
+            logger.info(f"Role '{role}' SQL context initialised — tables: {', '.join(sorted(tables))}")
+
+    logger.info(f"SQL context initialisation complete — default + {len(_role_cache)} role(s) ready")
 
 
 # initialise everything at module load
@@ -142,8 +165,13 @@ def _get_context(role: str | None) -> dict:
     if role:
         role = role.lower()
         if role not in _role_cache:
+            logger.error(f"Unknown role '{role}' requested. Defined roles: {list(_role_cache.keys())}")
             raise ValueError(f"Unknown role '{role}'. Defined roles: {list(_role_cache.keys())}")
+        logger.debug(f"Returning cached context for role='{role}'")
+        logger.debug(f"Context for role='{role}': db={_role_cache[role]['db']}, tools={len(_role_cache[role]['tools'])} tools, system_message_length={len(_role_cache[role]['system_message'].content)} chars")
+        logger.debug(f"System message for role='{role}': {_role_cache[role]['system_message'].content}")
         return _role_cache[role]
+    logger.debug("No role specified — returning default context")
     return _default_context
 
 

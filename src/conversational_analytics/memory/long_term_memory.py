@@ -17,38 +17,52 @@ logger = logging.getLogger(__name__)
 @lru_cache
 def get_long_term_store() -> PostgresStore:
     """Returns the LangGraph PostgresStore using a connection pool — cached singleton."""
-    pool = ConnectionPool(
-        get_settings().memory_db_uri,
-        min_size=1,
-        max_size=10,
-        kwargs={"autocommit": True, "prepare_threshold": 0, "row_factory": dict_row},
-        open=True,
-    )
-    store = PostgresStore(conn=pool)
-    store.setup()  # creates public.store table managed by LangGraph
-    logger.info("Long-term memory store initialised (PostgresStore)")
-    return store
+    logger.info("Initialising long-term PostgresStore connection pool...")
+    try:
+        pool = ConnectionPool(
+            get_settings().memory_db_uri,
+            min_size=1,
+            max_size=10,
+            kwargs={"autocommit": True, "prepare_threshold": 0, "row_factory": dict_row},
+            open=True,
+        )
+        store = PostgresStore(conn=pool)
+        store.setup()
+        logger.info("Long-term memory store initialised (PostgresStore with pool min=1 max=10)")
+        return store
+    except Exception as e:
+        logger.error(f"Failed to initialise long-term memory store: {e}")
+        raise
 
 
 @lru_cache
 def _get_audit_pool() -> psycopg2.pool.ThreadedConnectionPool:
     """Shared psycopg2 connection pool for audit log writes."""
-    cfg = get_settings()
-    return psycopg2.pool.ThreadedConnectionPool(
-        minconn=1, maxconn=5, **cfg.memory_db_dsn
-    )
+    logger.debug("Creating psycopg2 audit connection pool (min=1 max=5)...")
+    try:
+        cfg = get_settings()
+        pool = psycopg2.pool.ThreadedConnectionPool(minconn=1, maxconn=5, **cfg.memory_db_dsn)
+        logger.info("Audit connection pool created")
+        return pool
+    except Exception as e:
+        logger.error(f"Failed to create audit connection pool: {e}")
+        raise
 
 
 def setup_schema() -> None:
     """Creates the memory schema, views and audit tables if they do not exist."""
     sql_file = Path(__file__).parent / "migrations" / "001_long_term_memory.sql"
+    logger.info(f"Running memory schema migration from {sql_file}")
     cfg = get_settings()
     conn = psycopg2.connect(**cfg.memory_db_dsn)
     try:
         conn.autocommit = True
         with conn.cursor() as cur:
             cur.execute(sql_file.read_text(encoding="utf-8"))
-        logger.info("Long-term memory schema initialised")
+        logger.info("Long-term memory schema initialised successfully")
+    except Exception as e:
+        logger.error(f"Memory schema migration failed: {e}")
+        raise
     finally:
         conn.close()
 
@@ -61,11 +75,8 @@ def save_conversation_summary(
     response_text: str,
     role: str | None,
 ) -> None:
-    """Writes a distilled conversation summary to the long-term store.
-
-    Stored under namespace ('conversation_summaries', user_id) keyed by conversation_id.
-    Each conversation gets its own entry — multiple conversations per session are preserved.
-    """
+    """Writes a distilled conversation summary to the long-term store."""
+    logger.debug(f"Saving conversation summary — user={user_id} session={session_id} conversation={conversation_id}")
     store = get_long_term_store()
     summary = f"Q: {user_query[:150]} | A: {response_text[:300]}"
     try:
@@ -79,9 +90,9 @@ def save_conversation_summary(
                 "role": role,
             },
         )
-        logger.info(f"Saved conversation summary for user={user_id} session={session_id} conversation={conversation_id}")
+        logger.info(f"Conversation summary saved — user={user_id} session={session_id} conversation={conversation_id}")
     except Exception as e:
-        logger.warning(f"Could not save conversation summary: {e}")
+        logger.warning(f"Could not save conversation summary for user={user_id} conversation={conversation_id}: {e}")
 
 
 def log_agent_step(
@@ -96,14 +107,9 @@ def log_agent_step(
     token_usage: dict | None = None,
     duration_ms: int | None = None,
 ) -> None:
-    """Logs a single ReAct agent step to memory.agent_steps.
-
-    step_type values:
-      llm_call    — LLM was invoked (thinking + tool decision or final response)
-      tool_call   — a tool was called with args
-      tool_result — a tool returned a result
-    """
+    """Logs a single ReAct agent step to memory.agent_steps."""
     import json as _json
+    logger.debug(f"Logging agent step — conversation={conversation_id} step={step_number} type={step_type} tool={tool_name}")
     pool = _get_audit_pool()
     conn = pool.getconn()
     try:
@@ -120,8 +126,10 @@ def log_agent_step(
                 duration_ms,
             ))
         conn.commit()
-    except Exception:
+        logger.debug(f"Agent step logged — step={step_number} type={step_type} duration={duration_ms}ms")
+    except Exception as e:
         conn.rollback()
+        logger.error(f"Failed to log agent step {step_number} for conversation={conversation_id}: {e}")
         raise
     finally:
         pool.putconn(conn)
@@ -144,6 +152,7 @@ def log_query(
 ) -> None:
     """Writes a query audit record to memory.query_log using the connection pool."""
     import json as _json
+    logger.debug(f"Logging query — user={user_id} session={session_id} conversation={conversation_id} tools={tools_invoked} has_vega={has_vega} execution_ms={execution_ms}")
     pool = _get_audit_pool()
     conn = pool.getconn()
     try:
@@ -162,8 +171,12 @@ def log_query(
                 has_vega, execution_ms,
             ))
         conn.commit()
-    except Exception:
+        logger.info(f"Query logged — user={user_id} conversation={conversation_id} execution_ms={execution_ms} has_vega={has_vega}")
+        if token_usage:
+            logger.info(f"Token usage — input={token_usage.get('input_tokens',0)} output={token_usage.get('output_tokens',0)} total={token_usage.get('total_tokens',0)} reasoning={token_usage.get('reasoning_tokens',0)}")
+    except Exception as e:
         conn.rollback()
+        logger.error(f"Failed to log query for conversation={conversation_id}: {e}")
         raise
     finally:
         pool.putconn(conn)

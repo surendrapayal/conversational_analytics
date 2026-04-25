@@ -1,16 +1,18 @@
 import logging
-import uvicorn
-from fastapi import FastAPI
-from conversational_analytics.controller import router
 from conversational_analytics.config import get_settings
 
-from conversational_analytics.memory import setup_schema
-
+# Configure logging FIRST — before any imports that trigger module-level code
 cfg = get_settings()
 logging.basicConfig(
     level=getattr(logging, cfg.log_level.upper(), logging.INFO),
     format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
 )
+
+# All other imports after logging is configured
+import uvicorn
+from fastapi import FastAPI
+from conversational_analytics.controller import router
+from conversational_analytics.memory import setup_schema
 
 # initialise long-term memory schema on startup
 try:
