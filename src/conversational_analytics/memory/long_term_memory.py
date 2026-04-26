@@ -1,10 +1,10 @@
 import logging
-import time
+import psycopg2
+import psycopg2.pool
+import psycopg2.extras
 from pathlib import Path
 from functools import lru_cache
 
-import psycopg2
-import psycopg2.pool
 from psycopg_pool import ConnectionPool
 from psycopg.rows import dict_row
 from langgraph.store.postgres import PostgresStore
@@ -16,19 +16,53 @@ logger = logging.getLogger(__name__)
 
 @lru_cache
 def get_long_term_store() -> PostgresStore:
-    """Returns the LangGraph PostgresStore using a connection pool — cached singleton."""
-    logger.info("Initialising long-term PostgresStore connection pool...")
+    """Returns PostgresStore with pgvector auto-embedding via store.put().
+
+    Passes GoogleGenerativeAIEmbeddings (Vertex AI, ADC) to the index config.
+    LangGraph automatically:
+    1. Extracts the 'summary' field from the value dict
+    2. Calls text-embedding-005 to generate a 768-dim vector
+    3. Stores JSONB value + VECTOR embedding in a single INSERT
+    """
+    from langchain_google_genai import GoogleGenerativeAIEmbeddings
+
+    logger.info("Initialising long-term PostgresStore with pgvector auto-embedding...")
     try:
+        cfg = get_settings()
+
+        # ── 1. Embedding model (ADC via Vertex AI — no API key needed) ─
+        embeddings = GoogleGenerativeAIEmbeddings(
+            model=f"models/{cfg.embedding_model}",
+            vertexai=True,
+            project=cfg.google_cloud_project,
+            location=cfg.llm_region,
+        )
+        logger.info(f"Embedding model: {cfg.embedding_model} ({cfg.embedding_dimension} dims)")
+
+        # ── 2. Connection pool ────────────────────────────────────────
         pool = ConnectionPool(
-            get_settings().long_term_memory_db_uri,
+            cfg.long_term_memory_db_uri,
             min_size=1,
             max_size=10,
             kwargs={"autocommit": True, "prepare_threshold": 0, "row_factory": dict_row},
             open=True,
         )
-        store = PostgresStore(conn=pool)
+
+        # ── 3. Store with pgvector index config ───────────────────────
+        # 'fields' = which JSONB keys to embed — only meaningful text fields
+        # store.put() will concatenate these fields and call embed automatically
+        store = PostgresStore(
+            conn=pool,
+            index={
+                "embed": embeddings,
+                "dims": cfg.embedding_dimension,
+                "fields": ["summary"],  # embed the summary field only
+            },
+        )
+
+        # ── 4. Creates store table + vector column + HNSW index ───────
         store.setup()
-        logger.info("Long-term memory store initialised (PostgresStore with pool min=1 max=10)")
+        logger.info("Long-term memory store initialised (PostgresStore + pgvector auto-embedding)")
         return store
     except Exception as e:
         logger.error(f"Failed to initialise long-term memory store: {e}")
@@ -75,8 +109,16 @@ def save_conversation_summary(
     response_text: str,
     role: str | None,
 ) -> None:
-    """Writes a distilled conversation summary to the long-term store."""
-    logger.debug(f"Saving conversation summary — user={user_id} session={session_id} conversation={conversation_id}")
+    """Saves conversation summary using store.put() — LangGraph auto-generates
+    and stores the embedding for the 'summary' field in a single operation.
+
+    Flow:
+      store.put(value={"summary": "Q: ... | A: ..."})
+        → LangGraph extracts "summary" field (configured in index.fields)
+        → calls VertexAI text-embedding-005 → 768-dim vector
+        → INSERT INTO public.store (prefix, key, value, embedding) in one shot
+    """
+    logger.debug(f"Saving conversation summary — user={user_id} conversation={conversation_id}")
     store = get_long_term_store()
     summary = f"Q: {user_query[:150]} | A: {response_text[:300]}"
     try:
@@ -84,15 +126,53 @@ def save_conversation_summary(
             ("conversation_summaries", user_id),
             conversation_id,
             {
-                "summary": summary,
+                "summary": summary,          # ← this field gets auto-embedded
                 "session_id": session_id,
                 "conversation_id": conversation_id,
                 "role": role,
             },
         )
-        logger.info(f"Conversation summary saved — user={user_id} session={session_id} conversation={conversation_id}")
+        logger.info(f"Conversation summary + embedding saved — user={user_id} conversation={conversation_id}")
     except Exception as e:
-        logger.warning(f"Could not save conversation summary for user={user_id} conversation={conversation_id}: {e}")
+        logger.warning(f"Could not save conversation summary for user={user_id}: {e}")
+
+
+def search_similar_conversations(
+    user_id: str,
+    query: str,
+    limit: int = 3,
+) -> list[dict]:
+    """Semantic search over past conversation summaries using pgvector.
+
+    LangGraph store.search() automatically:
+    1. Embeds the query string using the configured embedding model
+    2. Queries store_vectors table for cosine similarity
+    3. Returns results ordered by similarity score
+    """
+    logger.debug(f"Semantic search for user={user_id} query='{query[:80]}' limit={limit}")
+    store = get_long_term_store()
+    try:
+        results = store.search(
+            ("conversation_summaries", user_id),
+            query=query,
+            limit=limit,
+        )
+        formatted = [
+            {
+                "conversation_id": r.key,
+                "summary": r.value.get("summary", ""),
+                "role": r.value.get("role"),
+                "session_id": r.value.get("session_id"),
+                "similarity": r.score,
+            }
+            for r in results
+            if r.value.get("summary")
+        ]
+        logger.info(f"Semantic search returned {len(formatted)} results for user={user_id}")
+        return formatted
+    except Exception as e:
+        logger.warning(f"Semantic search failed for user={user_id}: {e}")
+        return []
 
 
 def log_agent_step(
@@ -153,7 +233,7 @@ def log_query(
 ) -> None:
     """Writes a query audit record to memory.query_log using the connection pool."""
     import json as _json
-    logger.debug(f"Logging query — user={user_id} session={session_id} conversation={conversation_id} tools={tools_invoked} has_vega={has_vega} execution_ms={execution_ms} stream_events={len(stream_events) if stream_events else 0}")
+    logger.debug(f"Logging query — user={user_id} conversation={conversation_id} tools={tools_invoked} has_vega={has_vega} execution_ms={execution_ms}")
     pool = _get_audit_pool()
     conn = pool.getconn()
     try:
@@ -173,9 +253,9 @@ def log_query(
                 has_vega, execution_ms,
             ))
         conn.commit()
-        logger.info(f"Query logged — user={user_id} conversation={conversation_id} execution_ms={execution_ms} has_vega={has_vega} stream_events={len(stream_events) if stream_events else 0}")
+        logger.info(f"Query logged — user={user_id} conversation={conversation_id} execution_ms={execution_ms} has_vega={has_vega}")
         if token_usage:
-            logger.info(f"Token usage — input={token_usage.get('input_tokens',0)} output={token_usage.get('output_tokens',0)} total={token_usage.get('total_tokens',0)} reasoning={token_usage.get('reasoning_tokens',0)}")
+            logger.info(f"Token usage — input={token_usage.get('input_tokens',0)} output={token_usage.get('output_tokens',0)} total={token_usage.get('total_tokens',0)}")
     except Exception as e:
         conn.rollback()
         logger.error(f"Failed to log query for conversation={conversation_id}: {e}")

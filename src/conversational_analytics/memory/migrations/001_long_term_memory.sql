@@ -16,6 +16,15 @@
 
 CREATE SCHEMA IF NOT EXISTS memory;
 
+-- Enable pgvector extension for semantic similarity search
+CREATE EXTENSION IF NOT EXISTS vector;
+
+-- NOTE: LangGraph PostgresStore stores embeddings in a separate 'store_vectors' table
+-- (not in public.store). This table is created automatically by store.setup().
+-- Schema: store_vectors (prefix, key, field_name, embedding VECTOR, created_at, updated_at)
+-- The 'embedding' column we added to public.store is not used by LangGraph.
+ALTER TABLE IF EXISTS public.store DROP COLUMN IF EXISTS embedding;
+
 -- ── 1. Query audit log ────────────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS memory.query_log (
     id              BIGSERIAL   PRIMARY KEY,

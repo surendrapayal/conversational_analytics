@@ -26,27 +26,32 @@ def agent_node(state: AgentState, store: BaseStore) -> dict:
     tools = get_sql_tools(role)
     system_msg = get_system_message(role)
 
-    # ── Long-term recall: past conversation summaries ─────────────────
+    # ── Long-term recall: semantic search over past conversation summaries ──
     memory_context = ""
     if user_id and store and not tools_invoked:
-        logger.debug(f"First agent call — searching long-term memory for user={user_id}")
+        logger.debug(f"First agent call — semantic search for user={user_id}")
         try:
-            past_sessions = store.search(("conversation_summaries", user_id), limit=3)
-            if past_sessions:
+            from conversational_analytics.memory import search_similar_conversations
+            past = search_similar_conversations(
+                user_id=user_id,
+                query=state.get("user_input", ""),
+                limit=3,
+            )
+            if past:
                 summaries = "\n".join(
-                    f"- {m.value.get('summary', '')}"
-                    for m in past_sessions
-                    if m.value.get("summary")
+                    f"- {r['summary']} (similarity: {r['similarity']:.2f})"
+                    for r in past
+                    if r.get("summary")
                 )
                 if summaries:
-                    memory_context = f"\n\nContext from past sessions:\n{summaries}"
-                    logger.info(f"Recalled {len(past_sessions)} past conversation summaries for user={user_id}")
+                    memory_context = f"\n\nRelevant past conversations (semantic search):\n{summaries}"
+                    logger.info(f"Recalled {len(past)} semantically similar conversations for user={user_id}")
             else:
-                logger.debug(f"No past conversation summaries found for user={user_id}")
+                logger.debug(f"No similar past conversations found for user={user_id}")
         except Exception as e:
-            logger.warning(f"Could not retrieve long-term memory for user={user_id}: {e}")
+            logger.warning(f"Semantic search failed for user={user_id}: {e}")
     elif tools_invoked:
-        logger.debug(f"ReAct loop iteration — skipping long-term memory recall (tools_invoked={tools_invoked})")
+        logger.debug(f"ReAct loop — skipping memory recall (tools_invoked={tools_invoked})")
 
     enriched_system = SystemMessage(
         content=system_msg.content + memory_context

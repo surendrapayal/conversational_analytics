@@ -55,7 +55,11 @@ class Settings(BaseSettings):
     log_level: str = "INFO"
     agent_max_iterations: int = 10
     semantic_layer_path: str = ""
-    log_prompt: bool = False  # set True to store full system prompt in query_log
+    log_prompt: bool = False
+
+    # ── Embedding (pgvector semantic search) ─────────────────────────
+    embedding_model: str = "text-embedding-005"
+    embedding_dimension: int = 768
 
     # ── Analytics DB properties ───────────────────────────────────────
 
