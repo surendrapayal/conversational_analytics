@@ -39,6 +39,7 @@ class Settings(BaseSettings):
     db_restrict_columns: str = ""
 
     # ── Short-Term Memory (Redis) ─────────────────────────────────────
+    short_term_memory_type: str = "redis"  # redis | inmemory
     short_term_memory_host: str = "localhost"
     short_term_memory_port: int = 6379
     short_term_memory_password: str = ""
@@ -169,6 +170,10 @@ class Settings(BaseSettings):
             raise ValueError(
                 "DB_IGNORE_TABLES and DB_INCLUDE_TABLES are mutually exclusive. "
                 "Set only one of them in .env."
+            )
+        if self.short_term_memory_type not in ("redis", "inmemory"):
+            raise ValueError(
+                f"SHORT_TERM_MEMORY_TYPE must be 'redis' or 'inmemory', got '{self.short_term_memory_type}'"
             )
         return self
 
