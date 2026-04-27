@@ -182,9 +182,8 @@ async def run_agent(request: AgentRequest) -> AgentResponse:
         response_text=state["final_response"],
         vega_spec=state["vega_spec"],
         metadata=AgentMetadata(
-            conversation_id=request.conversation_id,
-            tools_invoked=state["tools_invoked"],
-            token_usage=state["token_usage"],
+            session_id=request.session_id,
+            conversation_id=request.conversation_id
         ),
     )
 

@@ -34,6 +34,7 @@ class AgentRequest(BaseModel):
 
 
 class AgentMetadata(BaseModel):
+    session_id: str | None = None
     conversation_id: str | None = None
     # tools_invoked: list[str] = Field(default_factory=list)
     # thinking: str | None = None

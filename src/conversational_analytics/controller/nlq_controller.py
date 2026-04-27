@@ -2,7 +2,7 @@ import uuid
 import logging
 import nh3
 from typing import Literal
-from fastapi import APIRouter, Header, HTTPException
+from fastapi import APIRouter, Header, HTTPException, Response
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field, field_validator
 from conversational_analytics.models import AgentRequest, AgentResponse
@@ -48,14 +48,16 @@ class QueryRequest(BaseModel):
 @router.post("/chat", response_model=AgentResponse)
 async def query(
     body: QueryRequest,
-    session_id: str = Header(None, description="Session ID for conversation memory"),
+    response: Response,
+    session_id: str = Header(None, alias="X-Session-Id", description="Session ID for conversation memory"),
     role: str | None = Header(None, description="User role"),
 ):
     """Accepts a natural language query and returns a SQL-backed response."""
     if not session_id:
         session_id = str(uuid.uuid4())
-        logger.debug(f"No session_id provided — generated session_id={session_id}")
+        logger.debug(f"No X-Session-Id provided — generated session_id={session_id}")
 
+    response.headers["X-Session-Id"] = session_id
     conversation_id = str(uuid.uuid4())
     logger.info(f"Chat request: query_len={len(body.query)} mode={body.stream_mode}")
     try:
@@ -75,13 +77,13 @@ async def query(
 @router.post("/stream")
 async def stream(
     body: QueryRequest,
-    session_id: str = Header(None, description="Session ID for conversation memory"),
+    session_id: str = Header(None, alias="X-Session-Id", description="Session ID for conversation memory"),
     role: str | None = Header(None, description="User role"),
 ):
     """Streams agent execution as Server-Sent Events (SSE)."""
     if not session_id:
         session_id = str(uuid.uuid4())
-        logger.debug(f"No session_id provided — generated session_id={session_id}")
+        logger.debug(f"No X-Session-Id provided — generated session_id={session_id}")
 
     conversation_id = str(uuid.uuid4())
     logger.info(f"Stream request: query_len={len(body.query)} mode={body.stream_mode}")
@@ -96,7 +98,7 @@ async def stream(
         return StreamingResponse(
             stream_agent(request, stream_mode=body.stream_mode),
             media_type="text/event-stream",
-            headers={"X-Accel-Buffering": "no"},
+            headers={"X-Accel-Buffering": "no", "X-Session-Id": session_id},
         )
     except Exception as e:
         logger.error(f"Stream error: {e}", exc_info=True)
