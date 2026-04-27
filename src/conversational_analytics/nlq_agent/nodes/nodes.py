@@ -32,7 +32,7 @@ async def agent_node(state: AgentState, store: BaseStore) -> dict:
     # Subsequent turns already have Redis short-term context, so the embedding call is skipped.
     is_first_session_turn = len(state.get("messages", [])) <= 1
     memory_context = ""
-    if user_id and store and not tools_invoked and is_first_session_turn:
+    if cfg.long_term_memory_enabled and user_id and store and not tools_invoked and is_first_session_turn:
         logger.debug(f"First session turn — semantic search for user={user_id}")
         try:
             from conversational_analytics.memory import search_similar_conversations

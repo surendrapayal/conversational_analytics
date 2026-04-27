@@ -49,7 +49,10 @@ def _extract_step_token_usage(msg: AIMessage) -> dict | None:
 
 def _fire_log_agent_step(**kwargs) -> None:
     """Enqueues agent step — non-blocking, microseconds."""
-    audit_writer.enqueue_agent_step(**kwargs)
+    from conversational_analytics.config import get_settings
+    cfg = get_settings()
+    if cfg.long_term_memory_enabled:
+        audit_writer.enqueue_agent_step(**kwargs)
 
 
 def _process_chunk(chunk: dict, request: AgentRequest, state: dict) -> None:
@@ -106,32 +109,39 @@ def _process_chunk(chunk: dict, request: AgentRequest, state: dict) -> None:
 
 
 async def _persist_audit(request: AgentRequest, state: dict, execution_ms: int) -> None:
-    """Enqueues query log (non-blocking) and saves conversation summary (async) concurrently."""
+    """Enqueues query log (non-blocking) and saves conversation summary (async) if enabled."""
     try:
-        audit_writer.enqueue_query_log(
-            conversation_id=request.conversation_id,
-            session_id=request.session_id,
-            user_id=request.user_id,
-            role=request.role,
-            user_query=request.query,
-            prompt=state["prompt"],
-            sql_generated=state["sql_generated"],
-            tools_invoked=state["tools_invoked"],
-            agent_response=state["final_response"],
-            vega_spec=state["vega_spec"],
-            token_usage=state["token_usage"],
-            stream_events=state.get("stream_events") or None,
-            has_vega=state["has_vega"],
-            execution_ms=execution_ms,
-        )
-        await save_conversation_summary(
-            user_id=request.user_id,
-            session_id=request.session_id,
-            conversation_id=request.conversation_id,
-            user_query=request.query,
-            response_text=state["final_response"],
-            role=request.role,
-        )
+        from conversational_analytics.config import get_settings
+        cfg = get_settings()
+
+        if cfg.long_term_memory_enabled:
+            audit_writer.enqueue_query_log(
+                conversation_id=request.conversation_id,
+                session_id=request.session_id,
+                user_id=request.user_id,
+                role=request.role,
+                user_query=request.query,
+                prompt=state["prompt"],
+                sql_generated=state["sql_generated"],
+                tools_invoked=state["tools_invoked"],
+                agent_response=state["final_response"],
+                vega_spec=state["vega_spec"],
+                token_usage=state["token_usage"],
+                stream_events=state.get("stream_events") or None,
+                has_vega=state["has_vega"],
+                execution_ms=execution_ms,
+            )
+
+        # Only save conversation summary if long-term memory is enabled
+        if cfg.long_term_memory_enabled:
+            await save_conversation_summary(
+                user_id=request.user_id,
+                session_id=request.session_id,
+                conversation_id=request.conversation_id,
+                user_query=request.query,
+                response_text=state["final_response"],
+                role=request.role,
+            )
     except Exception as e:
         logger.warning(f"Failed to persist audit: {e}")
 

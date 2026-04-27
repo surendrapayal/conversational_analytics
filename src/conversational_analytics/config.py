@@ -65,6 +65,7 @@ class Settings(BaseSettings):
     embedding_dimension: int = 768
     memory_long_term_recall_limit: int = 3
     memory_short_term_message_limit: int = 0  # 0 = unlimited
+    long_term_memory_enabled: bool = True
 
     # ── Analytics DB properties ───────────────────────────────────────
 
