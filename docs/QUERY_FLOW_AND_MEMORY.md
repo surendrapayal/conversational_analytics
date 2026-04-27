@@ -9,145 +9,195 @@ HTTP POST /api/v1/chat  or  /api/v1/stream
   nlq_controller.py
   ├── Validate & sanitize input (nh3)
   ├── Generate conversation_id (uuid4)
-  ├── session_id from header (or generate new)
+  ├── session_id from X-Session-Id header (or generate new)
+  ├── Return X-Session-Id in response header
   └── Call run_agent(request)  or  stream_agent(request)
          │
          ▼
   agent_service.py  →  _graph.astream()
          │
-         ▼
-  ┌──────────────────────────────────────────┐
-  │           LangGraph StateGraph           │
-  │                                          │
-  │  agent_node ──► tools_node ──► agent_node│
-  │      │              (loop)               │
-  │      └──────────────────► response_      │
-  │                           formatter_node │
-  └──────────────────────────────────────────┘
+         ├── Per node chunk: _process_chunk()
+         │     ├── agent node   → _fire_log_agent_step() [enqueue, ~1µs]
+         │     └── tools node   → _fire_log_agent_step() [enqueue, ~1µs]
          │
          ▼
-  asyncio.create_task(_persist_audit())   ← fire-and-forget, does NOT block response
-  ├── log_query()              → run_in_executor (thread pool) ─┐ asyncio.gather
-  └── save_conversation_summary() → AsyncPostgresStore + pgvector ┘ (concurrent)
+  ┌──────────────────────────────────────────────┐
+  │             LangGraph StateGraph             │
+  │                                              │
+  │  agent_node ──► tools_node ──► agent_node   │
+  │      │               (ReAct loop)            │
+  │      └─────────────────────► response_       │
+  │                              formatter_node  │
+  └──────────────────────────────────────────────┘
+         │
+         ├──► HTTP response / SSE "done" returned to client immediately
+         │
+         └──► asyncio.create_task(_persist_audit())   [background, non-blocking]
+                   ├── audit_writer.enqueue_query_log()     [always, ~1µs]
+                   └── save_conversation_summary()          [only if LONG_TERM_MEMORY_ENABLED=true]
 ```
 
 ---
 
-## 2. Short-Term Memory (Redis — `AsyncRedisSaver`)
+## 2. /chat vs /stream — Flow Difference
 
-**What it stores:** The full LangGraph `AgentState` — all messages in the conversation thread (HumanMessage, AIMessage, ToolMessage), intermediate steps, token usage, tool results.
+Both endpoints use the same underlying `_graph.astream()` execution and `_process_chunk()` state tracking. The difference is only in how chunks are delivered to the client:
 
-**Key:** `thread_id = session_id` (passed via `config = {"configurable": {"thread_id": request.session_id}}`)
+| | `/chat` (`run_agent`) | `/stream` (`stream_agent`) |
+|---|---|---|
+| Graph execution | Identical | Identical |
+| Chunk handling | Buffers all chunks silently | Yields each chunk as SSE event immediately |
+| Client receives | One JSON response when graph finishes | Progressive SSE events as graph executes |
+| `_persist_audit` | `create_task` after graph finishes | `create_task` after `done` SSE event is yielded |
+| Response header | `X-Session-Id` | `X-Session-Id` |
+
+---
+
+## 3. Short-Term Memory
+
+**Backend:** Configurable via `SHORT_TERM_MEMORY_TYPE` — `redis` (default, production) or `inmemory` (local dev only).
+
+**Implementation:** `AsyncRedisSaver` (Redis) or `MemorySaver` (in-memory), used as LangGraph checkpointer.
+
+**What it stores:** Full `AgentState` per session — all `HumanMessage`, `AIMessage`, `ToolMessage` objects, intermediate steps, token usage, tool results.
+
+**Key:** `thread_id = session_id` passed via `config = {"configurable": {"thread_id": request.session_id}}`.
 
 **When it's READ:**
-LangGraph reads it automatically at the start of every `_graph.astream()` call. Before `agent_node` even runs, LangGraph's checkpointer loads the previous state for that `thread_id` from Redis and merges it with the new input. This gives the LLM the full conversation history across multiple turns within the same session.
+LangGraph reads it automatically at the start of every `_graph.astream()` call. Before `agent_node` runs, the checkpointer loads the previous state for that `thread_id` and merges it with the new input — giving the LLM full conversation history across all turns of the same session.
 
 **When it's WRITTEN:**
-LangGraph writes to Redis automatically after every node completes — `agent_node`, `tools_node`, `response_formatter_node`. Each node's state delta is checkpointed incrementally.
+LangGraph writes automatically after every node completes (`agent_node`, `tools_node`, `response_formatter_node`). Each node's state delta is checkpointed incrementally.
+
+**Message window limit:**
+Controlled by `MEMORY_SHORT_TERM_MESSAGE_LIMIT` (default `0` = unlimited). When set, only the last N messages are sent to the LLM — reduces token usage for long sessions but risks losing earlier context.
 
 **Latency impact:**
-- Read: ~1–3ms (local Redis). Happens once before the graph starts — **on the critical path**.
-- Write: ~1–2ms per node, 3–4 writes per query. Happens inside the graph execution — **on the critical path** but negligible.
-- Redis is in-process async so it does not block the event loop.
+- Read: ~1–3ms. Happens once before graph starts — on the critical path but negligible.
+- Write: ~1–2ms per node. On the critical path but negligible.
 
-**Scope:** Per-session only. If the user starts a new session (new `session_id`), Redis has no history. Data expires based on Redis TTL config.
+**Scope:** Per-session only. New `session_id` = no history. Data expires per Redis TTL (`SHORT_TERM_MEMORY_SESSION_TTL`, default 3600s).
 
 ---
 
-## 3. Long-Term Memory (PostgreSQL — `AsyncPostgresStore` + pgvector)
+## 4. Long-Term Memory
 
-**What it stores:** Compressed conversation summaries with vector embeddings. Format: `"Q: <first 150 chars of query> | A: <first 300 chars of response>"`. Stored in `public.store` table, embeddings in `store_vectors` table (managed by LangGraph).
+**Controlled by:** `LONG_TERM_MEMORY_ENABLED` (default `true`). When `false`, both read and write are skipped entirely — no Vertex AI embedding calls, no pgvector queries.
 
-**Key:** namespace = `("conversation_summaries", user_id)`, key = `conversation_id`
+**Backend:** `AsyncPostgresStore` (LangGraph) with `AsyncConnectionPool` (psycopg async). Embeddings stored in `store_vectors` table via pgvector. Document stored in `public.store`.
+
+**What it stores:** Compressed conversation summaries. Format: `"Q: <first 150 chars> | A: <first 300 chars>"`. Auto-embedded on write via `GoogleGenerativeAIEmbeddings` (Vertex AI, `text-embedding-005`, 768 dims).
+
+**Key:** namespace = `("conversation_summaries", user_id)`, key = `conversation_id`.
 
 **When it's READ:**
-Inside `agent_node`, on the **first turn of a session only** — guarded by two conditions:
+Inside `agent_node`, guarded by three conditions:
 
 ```python
-# nodes.py
-is_first_session_turn = len(state.get("messages", [])) <= 1
-if user_id and store and not tools_invoked and is_first_session_turn:
+if cfg.long_term_memory_enabled and user_id and store and not tools_invoked and is_first_session_turn:
     past = await asyncio.wait_for(
-        search_similar_conversations(user_id, query, limit=3),
+        search_similar_conversations(user_id, query, limit=cfg.memory_long_term_recall_limit),
         timeout=1.0,
     )
-    # → top 3 results appended to system prompt as "Relevant past conversations"
 ```
 
-- `not tools_invoked` — skips recall on every ReAct loop iteration after the first.
-- `is_first_session_turn` — skips recall on follow-up messages within the same session. Redis already holds the full conversation history for those turns, so the Vertex AI embedding call is unnecessary.
-- `timeout=1.0` — if pgvector or Vertex AI is slow, the LLM call proceeds after 1 second without memory context rather than stalling the user.
+- `long_term_memory_enabled` — feature flag, skips entirely if false
+- `not tools_invoked` — skips on every ReAct loop iteration after the first LLM call
+- `is_first_session_turn` (`len(messages) <= 1`) — skips on follow-up turns within the same session; Redis already has full context for those
+- `timeout=1.0` — if Vertex AI or pgvector is slow, proceeds without memory context rather than stalling
+
+Top N results (configured via `MEMORY_LONG_TERM_RECALL_LIMIT`, default `3`) are injected into the system prompt as `"Relevant past conversations"`.
 
 **When it's WRITTEN:**
-In `_persist_audit()`, fired as a background task after the graph completes. `save_conversation_summary()` calls `store.aput()` which auto-generates the embedding via `GoogleGenerativeAIEmbeddings` and stores both the document and vector.
+In `_persist_audit()`, fired as `asyncio.create_task` after graph completes. `save_conversation_summary()` calls `store.aput()` which auto-generates the embedding and writes to both `public.store` and `store_vectors`.
 
-**Latency impact (after optimizations):**
-- Read (`asearch`): **50–200ms**, capped at **1s timeout**. Only on the first message of a new session — **on the critical path** for that turn only.
-- Write (`aput`): **100–300ms** — now runs as a background `asyncio.create_task`, completely off the critical path.
+**Latency impact:**
+- Read: 50–200ms, capped at 1s timeout. Only on first turn of a new session — on the critical path for that turn only.
+- Write: 100–300ms. Runs in background task — completely off the critical path.
 
-**Scope:** Cross-session, per-user. Persists indefinitely. Enables the LLM to recall what a user asked about in previous sessions.
+**Scope:** Cross-session, per-user. Persists indefinitely. Enables the LLM to recall context from previous sessions.
 
 ---
 
-## 4. Audit Log (PostgreSQL — `ThreadPoolExecutor`)
+## 5. Audit Logging
 
-**Tables:** `memory.query_log` and `memory.agent_steps`
+**Backend:** `AuditWriter` — production-grade async queue-based writer (`audit_writer.py`).
 
-**What it stores:**
-- `memory.query_log`: One row per conversation — query, SQL generated, response, vega spec, token usage, all SSE stream events (JSONB), execution time.
-- `memory.agent_steps`: One row per ReAct step — tool name, input/output, token usage per step, duration.
+**Tables:** `memory.query_log` (one row per conversation) and `memory.agent_steps` (one row per ReAct step).
+
+**Always runs regardless of `LONG_TERM_MEMORY_ENABLED`.** Audit logs are operational records, not memory.
+
+**Architecture:**
+
+```
+enqueue_query_log() / enqueue_agent_step()
+         │  ~1µs, put_nowait, never blocks event loop
+         ▼
+  asyncio.Queue (bounded, max 10,000 items)
+         │
+         ▼
+  Background worker (_worker coroutine)
+  ├── Collects up to 50 items per batch (or flushes after 0.5s)
+  ├── Splits batch into query_logs + agent_steps
+  ├── Writes via cursor.executemany() — single round-trip per type
+  ├── Exponential backoff retry (3 attempts: 0.5s → 1s → 2s)
+  └── Drops batch with ERROR log after 3 failures
+```
 
 **When it's WRITTEN:**
-- `log_agent_step()` — called via `_fire_log_agent_step()` inside `_process_chunk()` during graph streaming. Submitted to a dedicated `ThreadPoolExecutor(max_workers=4)` using `executor.submit()` — completely non-blocking, no `await` required.
-- `log_query()` — called inside `_persist_audit()` via `loop.run_in_executor()`, running concurrently with `save_conversation_summary()` via `asyncio.gather`.
+- `enqueue_agent_step()` — called via `_fire_log_agent_step()` inside `_process_chunk()` during graph streaming. One call per `agent` node output (LLM call) and one per `tools` node output (tool result). Returns in ~1µs.
+- `enqueue_query_log()` — called inside `_persist_audit()` background task after graph completes. Returns in ~1µs.
 
-**Latency impact (after optimizations):**
-- `log_agent_step()`: **0ms on event loop** — offloaded to thread pool, fire-and-forget.
-- `log_query()`: **0ms on event loop** — runs in thread pool concurrently with the embedding write, both off the critical path via `create_task`.
+**Graceful shutdown:** `audit_writer.stop()` in lifespan calls `queue.join()` with a 30s timeout — drains all queued items before closing the DB pool.
+
+**Backpressure:** If the queue reaches 10,000 items (e.g. DB is down for an extended period), new items are dropped with a WARNING log. This protects the event loop from unbounded memory growth.
+
+**Latency impact:** ~1µs on the event loop for both enqueue calls. The actual DB write happens in the background worker — zero impact on request latency.
 
 ---
 
-## 5. Persist Flow — Before vs After Optimizations
+## 6. Persist Flow
 
-**Before:**
 ```
 graph completes
      │
-     ▼ (await — blocks response)
-log_query()                   ← sync psycopg2, ~5–10ms, blocks event loop
+     ├──► HTTP response / SSE "done" returned to client immediately
      │
-     ▼ (await — blocks response)
-save_conversation_summary()   ← Vertex AI embed + DB write, ~100–300ms
-     │
-     ▼
-HTTP response returned         ← user waits ~110–310ms after graph finishes
-```
-
-**After:**
-```
-graph completes
-     │
-     ├──► HTTP response returned immediately  ← user gets response here
-     │
-     └──► asyncio.create_task(_persist_audit())   ← background, non-blocking
+     └──► asyncio.create_task(_persist_audit())   [background]
                │
-               └──► asyncio.gather(
-                        run_in_executor(log_query),        ─┐ concurrent
-                        save_conversation_summary(),        ┘
-                    )
+               ├── audit_writer.enqueue_query_log()    [~1µs, always]
+               │         └──► queue → worker → DB batch insert
+               │
+               └── if LONG_TERM_MEMORY_ENABLED:
+                       save_conversation_summary()     [async, Vertex AI + pgvector]
 ```
 
-The user receives the response as soon as the graph finishes. Audit persistence happens entirely in the background. Total background time = `max(log_query, save_summary)` instead of `log_query + save_summary`.
-
-**Trade-off:** If the server process crashes in the milliseconds between response and task completion, that conversation's audit record is lost. This is acceptable for an analytics audit log.
+**Trade-off:** If the server process crashes between response and task completion, that conversation's audit record and summary may be lost. Acceptable for analytics audit logs — the `queue.join()` drain on graceful shutdown mitigates this for planned restarts.
 
 ---
 
-## 6. Summary Table
+## 7. Configuration Reference
 
-| Memory Layer | Technology | Read timing | Write timing | On critical path | Typical latency |
+| Key | Default | Controls |
+|---|---|---|
+| `SHORT_TERM_MEMORY_TYPE` | `redis` | `redis` or `inmemory` backend |
+| `SHORT_TERM_MEMORY_HOST` | `localhost` | Redis host |
+| `SHORT_TERM_MEMORY_PORT` | `6379` | Redis port |
+| `SHORT_TERM_MEMORY_PASSWORD` | `` | Redis password (optional) |
+| `SHORT_TERM_MEMORY_SESSION_TTL` | `3600` | Redis key TTL in seconds |
+| `MEMORY_SHORT_TERM_MESSAGE_LIMIT` | `0` | Max messages sent to LLM (0 = unlimited) |
+| `LONG_TERM_MEMORY_ENABLED` | `true` | Enable/disable pgvector read + write |
+| `MEMORY_LONG_TERM_RECALL_LIMIT` | `3` | Max past summaries injected into prompt |
+| `EMBEDDING_MODEL` | `text-embedding-005` | Vertex AI embedding model |
+| `EMBEDDING_DIMENSION` | `768` | Embedding vector dimensions |
+
+---
+
+## 8. Summary Table
+
+| Layer | Technology | Read timing | Write timing | On critical path | Latency |
 |---|---|---|---|---|---|
-| Short-term | Redis `AsyncRedisSaver` | Before graph starts (auto) | After each node (auto) | Yes (read + write) | 1–5ms |
-| Long-term recall | `AsyncPostgresStore` + pgvector | First turn of new session only | Background task | Read only, capped 1s | Read: 50–200ms (max 1s), Write: off-path |
-| Audit log (steps) | `ThreadPoolExecutor` | Never | During graph streaming (thread pool) | No | ~0ms on event loop |
-| Audit log (query) | `ThreadPoolExecutor` | Never | Background task (concurrent with summary) | No | ~0ms on event loop |
+| Short-term | Redis `AsyncRedisSaver` or `MemorySaver` | Before graph starts (auto) | After each node (auto) | Yes | ~1–5ms |
+| Long-term recall | `AsyncPostgresStore` + pgvector | First turn of new session only (if enabled) | Background task (if enabled) | Read only, capped 1s | Read: 50–200ms, Write: off-path |
+| Audit steps | `AuditWriter` async queue | Never | During graph streaming (~1µs enqueue) | No | ~1µs |
+| Audit query log | `AuditWriter` async queue | Never | Background task (~1µs enqueue) | No | ~1µs |
