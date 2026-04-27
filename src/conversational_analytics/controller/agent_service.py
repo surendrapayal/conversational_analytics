@@ -1,12 +1,17 @@
+import asyncio
 import logging
 import json
 import time
+from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone
 from collections.abc import AsyncGenerator
+from functools import partial
 from langchain_core.messages import HumanMessage, AIMessage, ToolMessage
 from conversational_analytics.graph import build_graph
 from conversational_analytics.models import AgentRequest, AgentResponse, AgentMetadata
 from conversational_analytics.memory import log_query, save_conversation_summary, log_agent_step
+
+_audit_executor = ThreadPoolExecutor(max_workers=4, thread_name_prefix="audit")
 
 logger = logging.getLogger(__name__)
 logger.propagate = True
@@ -46,6 +51,11 @@ def _extract_step_token_usage(msg: AIMessage) -> dict | None:
     }
 
 
+def _fire_log_agent_step(**kwargs) -> None:
+    """Submits log_agent_step to the audit thread pool — non-blocking."""
+    _audit_executor.submit(partial(log_agent_step, **kwargs))
+
+
 def _process_chunk(chunk: dict, request: AgentRequest, state: dict) -> None:
     """Processes a single graph stream chunk — updates state and logs agent steps."""
     for node_name, state_update in chunk.items():
@@ -63,37 +73,31 @@ def _process_chunk(chunk: dict, request: AgentRequest, state: dict) -> None:
                 state["step_number"] += 1
                 tool_names = [tc["name"] for tc in msg.tool_calls]
                 llm_output = f"Decided to call: {tool_names}" if tool_names else "Generated final response"
-                try:
-                    log_agent_step(
-                        conversation_id=request.conversation_id,
-                        session_id=request.session_id,
-                        user_id=request.user_id,
-                        step_number=state["step_number"],
-                        step_type="llm_call",
-                        output=llm_output,
-                        token_usage=_extract_step_token_usage(msg),
-                        duration_ms=int((time.time() - state["llm_call_start"]) * 1000),
-                    )
-                except Exception as e:
-                    logger.debug(f"Failed to log llm_call step: {e}")
+                _fire_log_agent_step(
+                    conversation_id=request.conversation_id,
+                    session_id=request.session_id,
+                    user_id=request.user_id,
+                    step_number=state["step_number"],
+                    step_type="llm_call",
+                    output=llm_output,
+                    token_usage=_extract_step_token_usage(msg),
+                    duration_ms=int((time.time() - state["llm_call_start"]) * 1000),
+                )
 
         elif node_name == "tools":
             for msg in state_update.get("messages", []):
                 if isinstance(msg, ToolMessage):
                     state["tools_invoked"].append(msg.name)
                     state["step_number"] += 1
-                    try:
-                        log_agent_step(
-                            conversation_id=request.conversation_id,
-                            session_id=request.session_id,
-                            user_id=request.user_id,
-                            step_number=state["step_number"],
-                            step_type="tool_result",
-                            tool_name=msg.name,
-                            output=msg.content[:500],
-                        )
-                    except Exception as e:
-                        logger.debug(f"Failed to log tool_result step: {e}")
+                    _fire_log_agent_step(
+                        conversation_id=request.conversation_id,
+                        session_id=request.session_id,
+                        user_id=request.user_id,
+                        step_number=state["step_number"],
+                        step_type="tool_result",
+                        tool_name=msg.name,
+                        output=msg.content[:500],
+                    )
                     state["llm_call_start"] = time.time()
 
         elif node_name == "response_formatter":
@@ -106,31 +110,38 @@ def _process_chunk(chunk: dict, request: AgentRequest, state: dict) -> None:
 
 
 async def _persist_audit(request: AgentRequest, state: dict, execution_ms: int) -> None:
-    """Persists query log and conversation summary after graph completes."""
+    """Persists query log (thread pool) and conversation summary (async) concurrently."""
     try:
-        log_query(
-            conversation_id=request.conversation_id,
-            session_id=request.session_id,
-            user_id=request.user_id,
-            role=request.role,
-            user_query=request.query,
-            prompt=state["prompt"],
-            sql_generated=state["sql_generated"],
-            tools_invoked=state["tools_invoked"],
-            agent_response=state["final_response"],
-            vega_spec=state["vega_spec"],
-            token_usage=state["token_usage"],
-            stream_events=state.get("stream_events") or None,
-            has_vega=state["has_vega"],
-            execution_ms=execution_ms,
-        )
-        await save_conversation_summary(
-            user_id=request.user_id,
-            session_id=request.session_id,
-            conversation_id=request.conversation_id,
-            user_query=request.query,
-            response_text=state["final_response"],
-            role=request.role,
+        loop = asyncio.get_event_loop()
+        await asyncio.gather(
+            loop.run_in_executor(
+                _audit_executor,
+                partial(
+                    log_query,
+                    conversation_id=request.conversation_id,
+                    session_id=request.session_id,
+                    user_id=request.user_id,
+                    role=request.role,
+                    user_query=request.query,
+                    prompt=state["prompt"],
+                    sql_generated=state["sql_generated"],
+                    tools_invoked=state["tools_invoked"],
+                    agent_response=state["final_response"],
+                    vega_spec=state["vega_spec"],
+                    token_usage=state["token_usage"],
+                    stream_events=state.get("stream_events") or None,
+                    has_vega=state["has_vega"],
+                    execution_ms=execution_ms,
+                ),
+            ),
+            save_conversation_summary(
+                user_id=request.user_id,
+                session_id=request.session_id,
+                conversation_id=request.conversation_id,
+                user_query=request.query,
+                response_text=state["final_response"],
+                role=request.role,
+            ),
         )
     except Exception as e:
         logger.warning(f"Failed to persist audit: {e}")
@@ -165,7 +176,7 @@ async def run_agent(request: AgentRequest) -> AgentResponse:
 
     execution_ms = int((time.time() - start) * 1000)
     logger.info(f"Agent completed — user={request.user_id} conversation={request.conversation_id} execution_ms={execution_ms}")
-    await _persist_audit(request, state, execution_ms)
+    asyncio.create_task(_persist_audit(request, state, execution_ms))
 
     return AgentResponse(
         response_text=state["final_response"],
@@ -235,7 +246,7 @@ async def stream_agent(request: AgentRequest, stream_mode: str = "standard") -> 
         yield _sse_collect("done", {"status": "completed"}, request.session_id, request.conversation_id, state)
         execution_ms = int((time.time() - start) * 1000)
         logger.info(f"Stream completed — user={request.user_id} conversation={request.conversation_id} execution_ms={execution_ms}")
-        await _persist_audit(request, state, execution_ms)
+        asyncio.create_task(_persist_audit(request, state, execution_ms))
 
     except Exception as e:
         logger.error(f"Error in stream_agent: {str(e)}", exc_info=True)

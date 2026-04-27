@@ -26,9 +26,9 @@ HTTP POST /api/v1/chat  or  /api/v1/stream
   └──────────────────────────────────────────┘
          │
          ▼
-  _persist_audit()   ← called AFTER graph completes
-  ├── log_query()         → memory.query_log (PostgreSQL, sync)
-  └── save_conversation_summary() → AsyncPostgresStore + pgvector (async)
+  asyncio.create_task(_persist_audit())   ← fire-and-forget, does NOT block response
+  ├── log_query()              → run_in_executor (thread pool) ─┐ asyncio.gather
+  └── save_conversation_summary() → AsyncPostgresStore + pgvector ┘ (concurrent)
 ```
 
 ---
@@ -61,27 +61,35 @@ LangGraph writes to Redis automatically after every node completes — `agent_no
 **Key:** namespace = `("conversation_summaries", user_id)`, key = `conversation_id`
 
 **When it's READ:**
-Inside `agent_node`, on the **first LangGraph iteration only** (when `tools_invoked` is empty). It calls `search_similar_conversations()` which does a pgvector cosine similarity search against the user's past summaries. The top 3 results are injected into the system prompt as context before the LLM is called.
+Inside `agent_node`, on the **first turn of a session only** — guarded by two conditions:
 
 ```python
-# nodes.py — only on first agent call
-if user_id and store and not tools_invoked:
-    past = await search_similar_conversations(user_id, query, limit=3)
-    # → appended to system prompt as "Relevant past conversations"
+# nodes.py
+is_first_session_turn = len(state.get("messages", [])) <= 1
+if user_id and store and not tools_invoked and is_first_session_turn:
+    past = await asyncio.wait_for(
+        search_similar_conversations(user_id, query, limit=3),
+        timeout=1.0,
+    )
+    # → top 3 results appended to system prompt as "Relevant past conversations"
 ```
 
-**When it's WRITTEN:**
-In `_persist_audit()`, called **after the graph fully completes**. `save_conversation_summary()` calls `store.aput()` which auto-generates the embedding via `GoogleGenerativeAIEmbeddings` and stores both the document and vector.
+- `not tools_invoked` — skips recall on every ReAct loop iteration after the first.
+- `is_first_session_turn` — skips recall on follow-up messages within the same session. Redis already holds the full conversation history for those turns, so the Vertex AI embedding call is unnecessary.
+- `timeout=1.0` — if pgvector or Vertex AI is slow, the LLM call proceeds after 1 second without memory context rather than stalling the user.
 
-**Latency impact:**
-- Read (`asearch`): **50–200ms** — this is on the critical path. It involves an embedding API call to Vertex AI (to embed the query) + a pgvector ANN search. This adds latency to every first LLM call.
-- Write (`aput`): **100–300ms** — embedding generation + PostgreSQL insert. This is called in `_persist_audit()` which is `await`ed **sequentially after** the graph completes, so it adds latency to the total response time before the HTTP response is returned.
+**When it's WRITTEN:**
+In `_persist_audit()`, fired as a background task after the graph completes. `save_conversation_summary()` calls `store.aput()` which auto-generates the embedding via `GoogleGenerativeAIEmbeddings` and stores both the document and vector.
+
+**Latency impact (after optimizations):**
+- Read (`asearch`): **50–200ms**, capped at **1s timeout**. Only on the first message of a new session — **on the critical path** for that turn only.
+- Write (`aput`): **100–300ms** — now runs as a background `asyncio.create_task`, completely off the critical path.
 
 **Scope:** Cross-session, per-user. Persists indefinitely. Enables the LLM to recall what a user asked about in previous sessions.
 
 ---
 
-## 4. Audit Log (PostgreSQL — psycopg2 sync)
+## 4. Audit Log (PostgreSQL — `ThreadPoolExecutor`)
 
 **Tables:** `memory.query_log` and `memory.agent_steps`
 
@@ -90,44 +98,48 @@ In `_persist_audit()`, called **after the graph fully completes**. `save_convers
 - `memory.agent_steps`: One row per ReAct step — tool name, input/output, token usage per step, duration.
 
 **When it's WRITTEN:**
-- `log_agent_step()` — called inside `_process_chunk()` during graph streaming, once per `agent` node output and once per `tools` node output. Uses a `psycopg2.ThreadedConnectionPool`.
-- `log_query()` — called in `_persist_audit()` after graph completes.
+- `log_agent_step()` — called via `_fire_log_agent_step()` inside `_process_chunk()` during graph streaming. Submitted to a dedicated `ThreadPoolExecutor(max_workers=4)` using `executor.submit()` — completely non-blocking, no `await` required.
+- `log_query()` — called inside `_persist_audit()` via `loop.run_in_executor()`, running concurrently with `save_conversation_summary()` via `asyncio.gather`.
 
-**Latency impact:** `log_agent_step()` is sync and called inline during streaming — it uses a thread pool connection but **does block** briefly (~2–5ms per step). `log_query()` is also sync and sequential in `_persist_audit()`.
+**Latency impact (after optimizations):**
+- `log_agent_step()`: **0ms on event loop** — offloaded to thread pool, fire-and-forget.
+- `log_query()`: **0ms on event loop** — runs in thread pool concurrently with the embedding write, both off the critical path via `create_task`.
 
 ---
 
-## 5. Sequential vs Fire-and-Forget
+## 5. Persist Flow — Before vs After Optimizations
 
-This is the most important thing to understand about the current design:
-
+**Before:**
 ```
-_persist_audit() is awaited sequentially:
-
-  graph completes
-       │
-       ▼
-  log_query()                  ← sync, ~5–10ms
-       │
-       ▼
-  save_conversation_summary()  ← async, ~100–300ms (embedding + DB write)
-       │
-       ▼
-  HTTP response returned
+graph completes
+     │
+     ▼ (await — blocks response)
+log_query()                   ← sync psycopg2, ~5–10ms, blocks event loop
+     │
+     ▼ (await — blocks response)
+save_conversation_summary()   ← Vertex AI embed + DB write, ~100–300ms
+     │
+     ▼
+HTTP response returned         ← user waits ~110–310ms after graph finishes
 ```
 
-**Both writes are sequential and on the critical path.** The user waits for both before getting a response. `save_conversation_summary()` is the expensive one — it calls the Vertex AI embedding API synchronously in the await chain.
-
-**For `/stream`**, the `done` SSE event is sent to the client before `_persist_audit()` is called, so the user sees the response immediately. But the server-side generator is still running until persist completes — the HTTP connection stays open.
-
-**If you want true fire-and-forget** to eliminate that latency, `_persist_audit` could be wrapped in `asyncio.create_task()`:
-
-```python
-# agent_service.py — fire-and-forget pattern (not current code)
-asyncio.create_task(_persist_audit(request, state, execution_ms))
+**After:**
+```
+graph completes
+     │
+     ├──► HTTP response returned immediately  ← user gets response here
+     │
+     └──► asyncio.create_task(_persist_audit())   ← background, non-blocking
+               │
+               └──► asyncio.gather(
+                        run_in_executor(log_query),        ─┐ concurrent
+                        save_conversation_summary(),        ┘
+                    )
 ```
 
-The trade-off: if the server crashes before the task runs, the audit record is lost.
+The user receives the response as soon as the graph finishes. Audit persistence happens entirely in the background. Total background time = `max(log_query, save_summary)` instead of `log_query + save_summary`.
+
+**Trade-off:** If the server process crashes in the milliseconds between response and task completion, that conversation's audit record is lost. This is acceptable for an analytics audit log.
 
 ---
 
@@ -136,6 +148,6 @@ The trade-off: if the server crashes before the task runs, the audit record is l
 | Memory Layer | Technology | Read timing | Write timing | On critical path | Typical latency |
 |---|---|---|---|---|---|
 | Short-term | Redis `AsyncRedisSaver` | Before graph starts (auto) | After each node (auto) | Yes (read + write) | 1–5ms |
-| Long-term recall | `AsyncPostgresStore` + pgvector | First `agent_node` call only | After graph completes | Yes (read) | Read: 50–200ms, Write: 100–300ms |
-| Audit log (steps) | psycopg2 sync | Never | During graph streaming | Yes | 2–5ms per step |
-| Audit log (query) | psycopg2 sync | Never | After graph completes | Yes | 5–10ms |
+| Long-term recall | `AsyncPostgresStore` + pgvector | First turn of new session only | Background task | Read only, capped 1s | Read: 50–200ms (max 1s), Write: off-path |
+| Audit log (steps) | `ThreadPoolExecutor` | Never | During graph streaming (thread pool) | No | ~0ms on event loop |
+| Audit log (query) | `ThreadPoolExecutor` | Never | Background task (concurrent with summary) | No | ~0ms on event loop |
