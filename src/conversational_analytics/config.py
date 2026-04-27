@@ -38,16 +38,18 @@ class Settings(BaseSettings):
     db_view_support: bool = False
     db_restrict_columns: str = ""
 
-    # ── Long-Term Memory Database (separate from analytics DB) ────────
+    # ── Short-Term Memory (Redis) ─────────────────────────────────────
+    short_term_memory_host: str = "localhost"
+    short_term_memory_port: int = 6379
+    short_term_memory_password: str = ""
+    short_term_memory_session_ttl: int = 3600
+
+    # ── Long-Term Memory Database ─────────────────────────────────────
     long_term_memory_db_host: str = "localhost"
     long_term_memory_db_port: int = 5433
     long_term_memory_db_name: str = "zenvyra"
     long_term_memory_db_user: str = "admin_user"
     long_term_memory_db_password: str = "admin_password"
-
-    # ── Redis (short-term memory) ─────────────────────────────────────
-    redis_url: str = "redis://localhost:6379"
-    redis_session_ttl: int = 3600
 
     # ── App Server ────────────────────────────────────────────────────
     app_host: str = "0.0.0.0"
@@ -88,7 +90,15 @@ class Settings(BaseSettings):
     def db_include_tables_list(self) -> list[str]:
         return [t.strip() for t in self.db_include_tables.split(",") if t.strip()]
 
-    # ── Memory DB properties ──────────────────────────────────────────
+    # ── Short-Term Memory properties ──────────────────────────────────
+
+    @property
+    def short_term_memory_url(self) -> str:
+        if self.short_term_memory_password:
+            return f"redis://:{self.short_term_memory_password}@{self.short_term_memory_host}:{self.short_term_memory_port}"
+        return f"redis://{self.short_term_memory_host}:{self.short_term_memory_port}"
+
+    # ── Long-Term Memory properties ───────────────────────────────────
 
     @property
     def long_term_memory_db_uri(self) -> str:

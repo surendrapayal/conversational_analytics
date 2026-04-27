@@ -1,4 +1,4 @@
-from conversational_analytics.memory.memory import get_checkpointer
+from conversational_analytics.memory.short_term_memory import get_checkpointer
 from conversational_analytics.memory.long_term_memory import (
     get_long_term_store,
     setup_schema,
