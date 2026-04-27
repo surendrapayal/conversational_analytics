@@ -20,7 +20,8 @@ def _should_continue(state: AgentState) -> Literal["tools", "response_formatter"
     return "response_formatter"
 
 
-def build_graph() -> StateGraph:
+async def build_graph():
+    """Builds and compiles the LangGraph graph with async checkpointer and store."""
     logger.info("Building LangGraph graph...")
     graph = StateGraph(AgentState)
 
@@ -33,13 +34,17 @@ def build_graph() -> StateGraph:
     graph.add_conditional_edges("agent", _should_continue)
     graph.add_edge("tools", "agent")
     graph.add_edge("response_formatter", END)
-    logger.debug("Graph edges configured: agent→(tools|response_formatter), tools→agent, response_formatter→END")
+    logger.debug("Graph edges configured")
 
-    logger.info("Attaching Redis checkpointer (short-term memory)...")
-    logger.info("Attaching PostgreSQL store (long-term memory)...")
+    logger.info("Attaching AsyncRedisSaver checkpointer (short-term memory)...")
+    checkpointer = await get_checkpointer()
+
+    logger.info("Attaching AsyncPostgresStore (long-term memory)...")
+    store = await get_long_term_store()
+
     compiled = graph.compile(
-        checkpointer=get_checkpointer(),
-        store=get_long_term_store(),
+        checkpointer=checkpointer,
+        store=store,
     )
-    logger.info("Graph compiled successfully with checkpointer and store")
+    logger.info("Graph compiled successfully with async checkpointer and store")
     return compiled

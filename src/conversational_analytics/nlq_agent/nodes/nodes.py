@@ -13,7 +13,7 @@ from conversational_analytics.llm import get_llm
 logger = logging.getLogger(__name__)
 
 
-def agent_node(state: AgentState, store: BaseStore) -> dict:
+async def agent_node(state: AgentState, store: BaseStore) -> dict:
     """Calls the LLM with tools bound. Reads long-term memory from store."""
     cfg = get_settings()
     tools_invoked = state.get("tools_invoked", [])
@@ -32,7 +32,7 @@ def agent_node(state: AgentState, store: BaseStore) -> dict:
         logger.debug(f"First agent call — semantic search for user={user_id}")
         try:
             from conversational_analytics.memory import search_similar_conversations
-            past = search_similar_conversations(
+            past = await search_similar_conversations(
                 user_id=user_id,
                 query=state.get("user_input", ""),
                 limit=3,

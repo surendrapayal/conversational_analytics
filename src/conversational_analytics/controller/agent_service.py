@@ -2,7 +2,7 @@ import logging
 import json
 import time
 from datetime import datetime, timezone
-from collections.abc import Generator
+from collections.abc import AsyncGenerator
 from langchain_core.messages import HumanMessage, AIMessage, ToolMessage
 from conversational_analytics.graph import build_graph
 from conversational_analytics.models import AgentRequest, AgentResponse, AgentMetadata
@@ -11,7 +11,14 @@ from conversational_analytics.memory import log_query, save_conversation_summary
 logger = logging.getLogger(__name__)
 logger.propagate = True
 
-_graph = build_graph()  # built once, checkpointer is attached
+_graph = None  # initialised once via lifespan
+
+
+async def init_graph():
+    """Initialises the graph — called once at app startup via lifespan."""
+    global _graph
+    _graph = await build_graph()
+    logger.info("Graph initialised and ready")
 
 
 def _build_input_state(request: AgentRequest) -> dict:
@@ -39,11 +46,7 @@ def _extract_step_token_usage(msg: AIMessage) -> dict | None:
     }
 
 
-def _process_chunk(
-    chunk: dict,
-    request: AgentRequest,
-    state: dict,
-) -> None:
+def _process_chunk(chunk: dict, request: AgentRequest, state: dict) -> None:
     """Processes a single graph stream chunk — updates state and logs agent steps."""
     for node_name, state_update in chunk.items():
         if node_name == "agent":
@@ -102,7 +105,7 @@ def _process_chunk(
                 state["has_vega"] = vega is not None
 
 
-def _persist_audit(request: AgentRequest, state: dict, execution_ms: int) -> None:
+async def _persist_audit(request: AgentRequest, state: dict, execution_ms: int) -> None:
     """Persists query log and conversation summary after graph completes."""
     try:
         log_query(
@@ -121,7 +124,7 @@ def _persist_audit(request: AgentRequest, state: dict, execution_ms: int) -> Non
             has_vega=state["has_vega"],
             execution_ms=execution_ms,
         )
-        save_conversation_summary(
+        await save_conversation_summary(
             user_id=request.user_id,
             session_id=request.session_id,
             conversation_id=request.conversation_id,
@@ -145,45 +148,38 @@ def _init_state() -> dict:
         "has_vega": False,
         "step_number": 0,
         "llm_call_start": time.time(),
-        "stream_events": [],   # collects all SSE events for query_log
+        "stream_events": [],
     }
 
 
-def run_agent(request: AgentRequest) -> AgentResponse:
+async def run_agent(request: AgentRequest) -> AgentResponse:
+    """Runs the agent asynchronously and returns a complete response."""
     start = time.time()
     config = {"configurable": {"thread_id": request.session_id}}
     state = _init_state()
 
-    logger.info(f"run_agent started for user_id={request.user_id} session_id={request.session_id} conversation_id={request.conversation_id}")
+    logger.info(f"run_agent started — user={request.user_id} session={request.session_id} conversation={request.conversation_id}")
 
-    for chunk in _graph.stream(_build_input_state(request), config=config, stream_mode="updates"):
+    async for chunk in _graph.astream(_build_input_state(request), config=config, stream_mode="updates"):
         _process_chunk(chunk, request, state)
 
     execution_ms = int((time.time() - start) * 1000)
-    logger.info(f"Agent completed for user_id={request.user_id} session_id={request.session_id} conversation_id={request.conversation_id} execution_time={execution_ms}ms")
-    _persist_audit(request, state, execution_ms)
+    logger.info(f"Agent completed — user={request.user_id} conversation={request.conversation_id} execution_ms={execution_ms}")
+    await _persist_audit(request, state, execution_ms)
 
     return AgentResponse(
         response_text=state["final_response"],
         vega_spec=state["vega_spec"],
         metadata=AgentMetadata(
             conversation_id=request.conversation_id,
-            # tools_invoked=state["tools_invoked"],
-            # token_usage=state["token_usage"],
+            tools_invoked=state["tools_invoked"],
+            token_usage=state["token_usage"],
         ),
     )
 
 
-def _sse(event: str, payload: dict, session_id: str = "", conversation_id: str = "") -> str:
-    """Formats a single SSE event with a JSON payload."""
-    payload["session_id"] = session_id
-    payload["conversation_id"] = conversation_id
-    payload["timestamp"] = datetime.now(timezone.utc).isoformat()
-    return f"event: {event}\ndata: {json.dumps(payload)}\n\n"
-
-
 def _sse_collect(event: str, payload: dict, session_id: str, conversation_id: str, state: dict) -> str:
-    """Formats SSE event, appends to state stream_events for audit log, and returns SSE string."""
+    """Formats SSE event, appends to state stream_events, and returns SSE string."""
     payload["session_id"] = session_id
     payload["conversation_id"] = conversation_id
     payload["timestamp"] = datetime.now(timezone.utc).isoformat()
@@ -199,25 +195,18 @@ _TOOL_STEP_LABELS = {
 }
 
 
-def stream_agent(request: AgentRequest, stream_mode: str = "standard") -> Generator[str, None, None]:
-    """Streams agent execution as Server-Sent Events.
-
-    stream_mode:
-      standard - business-friendly output: step progress + final response only
-      verbose  - full internal details: thinking, tool names, args, raw DB output
-    """
+async def stream_agent(request: AgentRequest, stream_mode: str = "standard") -> AsyncGenerator[str, None]:
+    """Streams agent execution as Server-Sent Events using async generator."""
     start = time.time()
+    state = _init_state()
     try:
-        logger.info(f"stream_agent started for user_id={request.user_id} session_id={request.session_id} conversation_id={request.conversation_id} stream_mode={stream_mode}")
+        logger.info(f"stream_agent started — user={request.user_id} session={request.session_id} conversation={request.conversation_id} mode={stream_mode}")
         config = {"configurable": {"thread_id": request.session_id}}
-        state = _init_state()
 
-        for chunk in _graph.stream(_build_input_state(request), config=config, stream_mode="updates"):
+        async for chunk in _graph.astream(_build_input_state(request), config=config, stream_mode="updates"):
             for node_name, state_update in chunk.items():
-                # process chunk for logging (shared logic)
                 _process_chunk({node_name: state_update}, request, state)
 
-                # SSE output
                 if node_name == "agent":
                     for msg in state_update.get("messages", []):
                         if not isinstance(msg, AIMessage):
@@ -245,8 +234,8 @@ def stream_agent(request: AgentRequest, stream_mode: str = "standard") -> Genera
 
         yield _sse_collect("done", {"status": "completed"}, request.session_id, request.conversation_id, state)
         execution_ms = int((time.time() - start) * 1000)
-        logger.info(f"Stream completed for user_id={request.user_id} session_id={request.session_id} conversation_id={request.conversation_id} execution_time={execution_ms}ms")
-        _persist_audit(request, state, execution_ms)
+        logger.info(f"Stream completed — user={request.user_id} conversation={request.conversation_id} execution_ms={execution_ms}")
+        await _persist_audit(request, state, execution_ms)
 
     except Exception as e:
         logger.error(f"Error in stream_agent: {str(e)}", exc_info=True)

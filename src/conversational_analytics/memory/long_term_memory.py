@@ -1,77 +1,72 @@
 import logging
+import asyncio
 import psycopg2
 import psycopg2.pool
 import psycopg2.extras
 from pathlib import Path
 from functools import lru_cache
 
-from psycopg_pool import ConnectionPool
-from psycopg.rows import dict_row
-from langgraph.store.postgres import PostgresStore
+from psycopg_pool import AsyncConnectionPool
+from langgraph.store.postgres.aio import AsyncPostgresStore
 
 from conversational_analytics.config import get_settings
 
 logger = logging.getLogger(__name__)
 
+_async_store: AsyncPostgresStore | None = None
+_store_lock: asyncio.Lock | None = None
 
-@lru_cache
-def get_long_term_store() -> PostgresStore:
-    """Returns PostgresStore with pgvector auto-embedding via store.put().
 
-    Passes GoogleGenerativeAIEmbeddings (Vertex AI, ADC) to the index config.
-    LangGraph automatically:
-    1. Extracts the 'summary' field from the value dict
-    2. Calls text-embedding-005 to generate a 768-dim vector
-    3. Stores JSONB value + VECTOR embedding in a single INSERT
-    """
-    from langchain_google_genai import GoogleGenerativeAIEmbeddings
+async def get_long_term_store() -> AsyncPostgresStore:
+    """Returns AsyncPostgresStore with pgvector auto-embedding — async singleton."""
+    global _async_store, _store_lock
+    if _store_lock is None:
+        _store_lock = asyncio.Lock()
+    async with _store_lock:
+        if _async_store is not None:
+            return _async_store
 
-    logger.info("Initialising long-term PostgresStore with pgvector auto-embedding...")
-    try:
-        cfg = get_settings()
+        from langchain_google_genai import GoogleGenerativeAIEmbeddings
+        logger.info("Initialising AsyncPostgresStore with pgvector auto-embedding...")
+        try:
+            cfg = get_settings()
 
-        # ── 1. Embedding model (ADC via Vertex AI — no API key needed) ─
-        embeddings = GoogleGenerativeAIEmbeddings(
-            model=f"models/{cfg.embedding_model}",
-            vertexai=True,
-            project=cfg.google_cloud_project,
-            location=cfg.llm_region,
-        )
-        logger.info(f"Embedding model: {cfg.embedding_model} ({cfg.embedding_dimension} dims)")
+            embeddings = GoogleGenerativeAIEmbeddings(
+                model=f"models/{cfg.embedding_model}",
+                vertexai=True,
+                project=cfg.google_cloud_project,
+                location=cfg.llm_region,
+            )
+            logger.info(f"Embedding model: {cfg.embedding_model} ({cfg.embedding_dimension} dims)")
 
-        # ── 2. Connection pool ────────────────────────────────────────
-        pool = ConnectionPool(
-            cfg.long_term_memory_db_uri,
-            min_size=1,
-            max_size=10,
-            kwargs={"autocommit": True, "prepare_threshold": 0, "row_factory": dict_row},
-            open=True,
-        )
+            pool = AsyncConnectionPool(
+                cfg.long_term_memory_db_uri,
+                min_size=1,
+                max_size=10,
+                kwargs={"autocommit": True, "prepare_threshold": 0},
+                open=False,
+            )
+            await pool.open()
 
-        # ── 3. Store with pgvector index config ───────────────────────
-        # 'fields' = which JSONB keys to embed — only meaningful text fields
-        # store.put() will concatenate these fields and call embed automatically
-        store = PostgresStore(
-            conn=pool,
-            index={
-                "embed": embeddings,
-                "dims": cfg.embedding_dimension,
-                "fields": ["summary"],  # embed the summary field only
-            },
-        )
-
-        # ── 4. Creates store table + vector column + HNSW index ───────
-        store.setup()
-        logger.info("Long-term memory store initialised (PostgresStore + pgvector auto-embedding)")
-        return store
-    except Exception as e:
-        logger.error(f"Failed to initialise long-term memory store: {e}")
-        raise
+            _async_store = AsyncPostgresStore(
+                conn=pool,
+                index={
+                    "embed": embeddings,
+                    "dims": cfg.embedding_dimension,
+                    "fields": ["summary"],
+                },
+            )
+            await _async_store.setup()
+            logger.info("AsyncPostgresStore initialised (pgvector auto-embedding)")
+            return _async_store
+        except Exception as e:
+            logger.error(f"Failed to initialise AsyncPostgresStore: {e}")
+            raise
 
 
 @lru_cache
 def _get_audit_pool() -> psycopg2.pool.ThreadedConnectionPool:
-    """Shared psycopg2 connection pool for audit log writes."""
+    """Shared psycopg2 connection pool for audit log writes (sync — fire-and-forget)."""
     logger.debug("Creating psycopg2 audit connection pool (min=1 max=5)...")
     try:
         cfg = get_settings()
@@ -101,7 +96,7 @@ def setup_schema() -> None:
         conn.close()
 
 
-def save_conversation_summary(
+async def save_conversation_summary(
     user_id: str,
     session_id: str,
     conversation_id: str,
@@ -109,24 +104,16 @@ def save_conversation_summary(
     response_text: str,
     role: str | None,
 ) -> None:
-    """Saves conversation summary using store.put() — LangGraph auto-generates
-    and stores the embedding for the 'summary' field in a single operation.
-
-    Flow:
-      store.put(value={"summary": "Q: ... | A: ..."})
-        → LangGraph extracts "summary" field (configured in index.fields)
-        → calls VertexAI text-embedding-005 → 768-dim vector
-        → INSERT INTO public.store (prefix, key, value, embedding) in one shot
-    """
+    """Saves conversation summary — AsyncPostgresStore auto-generates and stores embedding."""
     logger.debug(f"Saving conversation summary — user={user_id} conversation={conversation_id}")
-    store = get_long_term_store()
+    store = await get_long_term_store()
     summary = f"Q: {user_query[:150]} | A: {response_text[:300]}"
     try:
-        store.put(
+        await store.aput(
             ("conversation_summaries", user_id),
             conversation_id,
             {
-                "summary": summary,          # ← this field gets auto-embedded
+                "summary": summary,
                 "session_id": session_id,
                 "conversation_id": conversation_id,
                 "role": role,
@@ -137,22 +124,16 @@ def save_conversation_summary(
         logger.warning(f"Could not save conversation summary for user={user_id}: {e}")
 
 
-def search_similar_conversations(
+async def search_similar_conversations(
     user_id: str,
     query: str,
     limit: int = 3,
 ) -> list[dict]:
-    """Semantic search over past conversation summaries using pgvector.
-
-    LangGraph store.search() automatically:
-    1. Embeds the query string using the configured embedding model
-    2. Queries store_vectors table for cosine similarity
-    3. Returns results ordered by similarity score
-    """
+    """Semantic search over past conversation summaries using pgvector."""
     logger.debug(f"Semantic search for user={user_id} query='{query[:80]}' limit={limit}")
-    store = get_long_term_store()
+    store = await get_long_term_store()
     try:
-        results = store.search(
+        results = await store.asearch(
             ("conversation_summaries", user_id),
             query=query,
             limit=limit,
@@ -187,9 +168,9 @@ def log_agent_step(
     token_usage: dict | None = None,
     duration_ms: int | None = None,
 ) -> None:
-    """Logs a single ReAct agent step to memory.agent_steps."""
+    """Logs a single ReAct agent step (sync — uses thread pool)."""
     import json as _json
-    logger.debug(f"Logging agent step — conversation={conversation_id} step={step_number} type={step_type} tool={tool_name}")
+    logger.debug(f"Logging agent step — conversation={conversation_id} step={step_number} type={step_type}")
     pool = _get_audit_pool()
     conn = pool.getconn()
     try:
@@ -231,9 +212,9 @@ def log_query(
     has_vega: bool = False,
     execution_ms: int | None = None,
 ) -> None:
-    """Writes a query audit record to memory.query_log using the connection pool."""
+    """Writes a query audit record (sync — uses thread pool)."""
     import json as _json
-    logger.debug(f"Logging query — user={user_id} conversation={conversation_id} tools={tools_invoked} has_vega={has_vega} execution_ms={execution_ms}")
+    logger.debug(f"Logging query — user={user_id} conversation={conversation_id} has_vega={has_vega} execution_ms={execution_ms}")
     pool = _get_audit_pool()
     conn = pool.getconn()
     try:
@@ -253,7 +234,7 @@ def log_query(
                 has_vega, execution_ms,
             ))
         conn.commit()
-        logger.info(f"Query logged — user={user_id} conversation={conversation_id} execution_ms={execution_ms} has_vega={has_vega}")
+        logger.info(f"Query logged — user={user_id} conversation={conversation_id} execution_ms={execution_ms}")
         if token_usage:
             logger.info(f"Token usage — input={token_usage.get('input_tokens',0)} output={token_usage.get('output_tokens',0)} total={token_usage.get('total_tokens',0)}")
     except Exception as e:
