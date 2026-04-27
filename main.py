@@ -19,11 +19,10 @@ for noisy_logger in [
 ]:
     logging.getLogger(noisy_logger).setLevel(logging.WARNING)
 
-# All other imports after logging is configured
 import uvicorn
 from fastapi import FastAPI
 from conversational_analytics.controller import router
-from conversational_analytics.memory import setup_schema
+from conversational_analytics.memory import setup_schema, audit_writer
 from conversational_analytics.controller.agent_service import init_graph
 
 logger = logging.getLogger(__name__)
@@ -31,17 +30,14 @@ logger = logging.getLogger(__name__)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """Async startup and shutdown lifecycle."""
     # ── Startup ───────────────────────────────────────────────────────
     logger.info("Application starting up...")
-
-    # Run sync schema migration
     try:
         setup_schema()
     except Exception as e:
         logger.warning(f"Long-term memory schema setup failed: {e}")
 
-    # Initialise async graph (AsyncRedisSaver + AsyncPostgresStore)
+    await audit_writer.start()
     await init_graph()
     logger.info("Application ready")
 
@@ -49,6 +45,7 @@ async def lifespan(app: FastAPI):
 
     # ── Shutdown ──────────────────────────────────────────────────────
     logger.info("Application shutting down...")
+    await audit_writer.stop()
 
 
 app = FastAPI(

@@ -4,9 +4,8 @@ from conversational_analytics.memory.long_term_memory import (
     setup_schema,
     save_conversation_summary,
     search_similar_conversations,
-    log_agent_step,
-    log_query,
 )
+from conversational_analytics.memory.audit_writer import audit_writer
 
 __all__ = [
     "get_checkpointer",
@@ -14,6 +13,5 @@ __all__ = [
     "setup_schema",
     "save_conversation_summary",
     "search_similar_conversations",
-    "log_agent_step",
-    "log_query",
+    "audit_writer",
 ]

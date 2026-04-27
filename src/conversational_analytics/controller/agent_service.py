@@ -2,16 +2,12 @@ import asyncio
 import logging
 import json
 import time
-from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone
 from collections.abc import AsyncGenerator
-from functools import partial
 from langchain_core.messages import HumanMessage, AIMessage, ToolMessage
 from conversational_analytics.graph import build_graph
 from conversational_analytics.models import AgentRequest, AgentResponse, AgentMetadata
-from conversational_analytics.memory import log_query, save_conversation_summary, log_agent_step
-
-_audit_executor = ThreadPoolExecutor(max_workers=4, thread_name_prefix="audit")
+from conversational_analytics.memory import audit_writer, save_conversation_summary
 
 logger = logging.getLogger(__name__)
 logger.propagate = True
@@ -52,8 +48,8 @@ def _extract_step_token_usage(msg: AIMessage) -> dict | None:
 
 
 def _fire_log_agent_step(**kwargs) -> None:
-    """Submits log_agent_step to the audit thread pool — non-blocking."""
-    _audit_executor.submit(partial(log_agent_step, **kwargs))
+    """Enqueues agent step — non-blocking, microseconds."""
+    audit_writer.enqueue_agent_step(**kwargs)
 
 
 def _process_chunk(chunk: dict, request: AgentRequest, state: dict) -> None:
@@ -110,38 +106,31 @@ def _process_chunk(chunk: dict, request: AgentRequest, state: dict) -> None:
 
 
 async def _persist_audit(request: AgentRequest, state: dict, execution_ms: int) -> None:
-    """Persists query log (thread pool) and conversation summary (async) concurrently."""
+    """Enqueues query log (non-blocking) and saves conversation summary (async) concurrently."""
     try:
-        loop = asyncio.get_event_loop()
-        await asyncio.gather(
-            loop.run_in_executor(
-                _audit_executor,
-                partial(
-                    log_query,
-                    conversation_id=request.conversation_id,
-                    session_id=request.session_id,
-                    user_id=request.user_id,
-                    role=request.role,
-                    user_query=request.query,
-                    prompt=state["prompt"],
-                    sql_generated=state["sql_generated"],
-                    tools_invoked=state["tools_invoked"],
-                    agent_response=state["final_response"],
-                    vega_spec=state["vega_spec"],
-                    token_usage=state["token_usage"],
-                    stream_events=state.get("stream_events") or None,
-                    has_vega=state["has_vega"],
-                    execution_ms=execution_ms,
-                ),
-            ),
-            save_conversation_summary(
-                user_id=request.user_id,
-                session_id=request.session_id,
-                conversation_id=request.conversation_id,
-                user_query=request.query,
-                response_text=state["final_response"],
-                role=request.role,
-            ),
+        audit_writer.enqueue_query_log(
+            conversation_id=request.conversation_id,
+            session_id=request.session_id,
+            user_id=request.user_id,
+            role=request.role,
+            user_query=request.query,
+            prompt=state["prompt"],
+            sql_generated=state["sql_generated"],
+            tools_invoked=state["tools_invoked"],
+            agent_response=state["final_response"],
+            vega_spec=state["vega_spec"],
+            token_usage=state["token_usage"],
+            stream_events=state.get("stream_events") or None,
+            has_vega=state["has_vega"],
+            execution_ms=execution_ms,
+        )
+        await save_conversation_summary(
+            user_id=request.user_id,
+            session_id=request.session_id,
+            conversation_id=request.conversation_id,
+            user_query=request.query,
+            response_text=state["final_response"],
+            role=request.role,
         )
     except Exception as e:
         logger.warning(f"Failed to persist audit: {e}")

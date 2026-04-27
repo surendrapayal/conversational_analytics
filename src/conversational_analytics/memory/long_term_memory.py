@@ -1,10 +1,7 @@
 import logging
 import asyncio
 import psycopg2
-import psycopg2.pool
-import psycopg2.extras
 from pathlib import Path
-from functools import lru_cache
 
 from psycopg_pool import AsyncConnectionPool
 from langgraph.store.postgres.aio import AsyncPostgresStore
@@ -30,7 +27,6 @@ async def get_long_term_store() -> AsyncPostgresStore:
         logger.info("Initialising AsyncPostgresStore with pgvector auto-embedding...")
         try:
             cfg = get_settings()
-
             embeddings = GoogleGenerativeAIEmbeddings(
                 model=f"models/{cfg.embedding_model}",
                 vertexai=True,
@@ -38,7 +34,6 @@ async def get_long_term_store() -> AsyncPostgresStore:
                 location=cfg.llm_region,
             )
             logger.info(f"Embedding model: {cfg.embedding_model} ({cfg.embedding_dimension} dims)")
-
             pool = AsyncConnectionPool(
                 cfg.long_term_memory_db_uri,
                 min_size=1,
@@ -47,7 +42,6 @@ async def get_long_term_store() -> AsyncPostgresStore:
                 open=False,
             )
             await pool.open()
-
             _async_store = AsyncPostgresStore(
                 conn=pool,
                 index={
@@ -62,20 +56,6 @@ async def get_long_term_store() -> AsyncPostgresStore:
         except Exception as e:
             logger.error(f"Failed to initialise AsyncPostgresStore: {e}")
             raise
-
-
-@lru_cache
-def _get_audit_pool() -> psycopg2.pool.ThreadedConnectionPool:
-    """Shared psycopg2 connection pool for audit log writes (sync — fire-and-forget)."""
-    logger.debug("Creating psycopg2 audit connection pool (min=1 max=5)...")
-    try:
-        cfg = get_settings()
-        pool = psycopg2.pool.ThreadedConnectionPool(minconn=1, maxconn=5, **cfg.long_term_memory_db_dsn)
-        logger.info("Audit connection pool created")
-        return pool
-    except Exception as e:
-        logger.error(f"Failed to create audit connection pool: {e}")
-        raise
 
 
 def setup_schema() -> None:
@@ -154,92 +134,3 @@ async def search_similar_conversations(
     except Exception as e:
         logger.warning(f"Semantic search failed for user={user_id}: {e}")
         return []
-
-
-def log_agent_step(
-    conversation_id: str,
-    session_id: str,
-    user_id: str,
-    step_number: int,
-    step_type: str,
-    tool_name: str | None = None,
-    input: str | None = None,
-    output: str | None = None,
-    token_usage: dict | None = None,
-    duration_ms: int | None = None,
-) -> None:
-    """Logs a single ReAct agent step (sync — uses thread pool)."""
-    import json as _json
-    logger.debug(f"Logging agent step — conversation={conversation_id} step={step_number} type={step_type}")
-    pool = _get_audit_pool()
-    conn = pool.getconn()
-    try:
-        with conn.cursor() as cur:
-            cur.execute("""
-                INSERT INTO memory.agent_steps
-                    (conversation_id, session_id, user_id, step_number, step_type,
-                     tool_name, input, output, token_usage, duration_ms)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-            """, (
-                conversation_id, session_id, user_id, step_number, step_type,
-                tool_name, input, output,
-                _json.dumps(token_usage) if token_usage else None,
-                duration_ms,
-            ))
-        conn.commit()
-        logger.debug(f"Agent step logged — step={step_number} type={step_type} duration={duration_ms}ms")
-    except Exception as e:
-        conn.rollback()
-        logger.error(f"Failed to log agent step {step_number} for conversation={conversation_id}: {e}")
-        raise
-    finally:
-        pool.putconn(conn)
-
-
-def log_query(
-    session_id: str,
-    user_id: str,
-    conversation_id: str,
-    role: str | None,
-    user_query: str,
-    prompt: str | None,
-    sql_generated: str | None,
-    tools_invoked: list[str],
-    agent_response: str | None = None,
-    vega_spec: dict | None = None,
-    token_usage: dict | None = None,
-    stream_events: list[dict] | None = None,
-    has_vega: bool = False,
-    execution_ms: int | None = None,
-) -> None:
-    """Writes a query audit record (sync — uses thread pool)."""
-    import json as _json
-    logger.debug(f"Logging query — user={user_id} conversation={conversation_id} has_vega={has_vega} execution_ms={execution_ms}")
-    pool = _get_audit_pool()
-    conn = pool.getconn()
-    try:
-        with conn.cursor() as cur:
-            cur.execute("""
-                INSERT INTO memory.query_log
-                    (conversation_id, session_id, user_id, role, user_query, prompt,
-                     sql_generated, tools_invoked, agent_response, vega_spec,
-                     token_usage, stream_events, has_vega, execution_ms)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-            """, (
-                conversation_id, session_id, user_id, role, user_query, prompt,
-                sql_generated, tools_invoked, agent_response,
-                _json.dumps(vega_spec) if vega_spec else None,
-                _json.dumps(token_usage) if token_usage else None,
-                _json.dumps(stream_events) if stream_events else None,
-                has_vega, execution_ms,
-            ))
-        conn.commit()
-        logger.info(f"Query logged — user={user_id} conversation={conversation_id} execution_ms={execution_ms}")
-        if token_usage:
-            logger.info(f"Token usage — input={token_usage.get('input_tokens',0)} output={token_usage.get('output_tokens',0)} total={token_usage.get('total_tokens',0)}")
-    except Exception as e:
-        conn.rollback()
-        logger.error(f"Failed to log query for conversation={conversation_id}: {e}")
-        raise
-    finally:
-        pool.putconn(conn)
