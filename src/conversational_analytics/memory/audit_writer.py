@@ -168,48 +168,70 @@ class AuditWriter:
 
     @staticmethod
     async def _insert_query_logs(conn: psycopg.AsyncConnection, rows: list[dict]) -> None:
-        await conn.executemany(
-            """
-            INSERT INTO memory.query_log
-                (conversation_id, session_id, user_id, role, user_query, prompt,
-                 sql_generated, tools_invoked, agent_response, vega_spec,
-                 token_usage, stream_events, has_vega, execution_ms)
-            VALUES (%(conversation_id)s, %(session_id)s, %(user_id)s, %(role)s,
-                    %(user_query)s, %(prompt)s, %(sql_generated)s, %(tools_invoked)s,
-                    %(agent_response)s, %(vega_spec)s, %(token_usage)s,
-                    %(stream_events)s, %(has_vega)s, %(execution_ms)s)
-            """,
-            [_serialise_query_log(r) for r in rows],
-        )
+        async with conn.cursor() as cur:
+            await cur.executemany(
+                """
+                INSERT INTO memory.query_log
+                    (conversation_id, session_id, user_id, role, user_query, prompt,
+                     sql_generated, tools_invoked, agent_response, vega_spec,
+                     token_usage, stream_events, has_vega, execution_ms)
+                VALUES (%(conversation_id)s, %(session_id)s, %(user_id)s, %(role)s,
+                        %(user_query)s, %(prompt)s, %(sql_generated)s, %(tools_invoked)s,
+                        %(agent_response)s, %(vega_spec)s, %(token_usage)s,
+                        %(stream_events)s, %(has_vega)s, %(execution_ms)s)
+                """,
+                [_serialise_query_log(r) for r in rows],
+            )
 
     @staticmethod
     async def _insert_agent_steps(conn: psycopg.AsyncConnection, rows: list[dict]) -> None:
-        await conn.executemany(
-            """
-            INSERT INTO memory.agent_steps
-                (conversation_id, session_id, user_id, step_number, step_type,
-                 tool_name, input, output, token_usage, duration_ms)
-            VALUES (%(conversation_id)s, %(session_id)s, %(user_id)s, %(step_number)s,
-                    %(step_type)s, %(tool_name)s, %(input)s, %(output)s,
-                    %(token_usage)s, %(duration_ms)s)
-            """,
-            [_serialise_agent_step(r) for r in rows],
-        )
+        async with conn.cursor() as cur:
+            await cur.executemany(
+                """
+                INSERT INTO memory.agent_steps
+                    (conversation_id, session_id, user_id, step_number, step_type,
+                     tool_name, input, output, token_usage, duration_ms)
+                VALUES (%(conversation_id)s, %(session_id)s, %(user_id)s, %(step_number)s,
+                        %(step_type)s, %(tool_name)s, %(input)s, %(output)s,
+                        %(token_usage)s, %(duration_ms)s)
+                """,
+                [_serialise_agent_step(r) for r in rows],
+            )
 
 
 # ── Serialisers ───────────────────────────────────────────────────────────────
 
 def _serialise_query_log(r: dict) -> dict:
-    return {**r,
-        "vega_spec":     json.dumps(r["vega_spec"])     if r.get("vega_spec")     else None,
-        "token_usage":   json.dumps(r["token_usage"])   if r.get("token_usage")   else None,
-        "stream_events": json.dumps(r["stream_events"]) if r.get("stream_events") else None,
+    return {
+        "conversation_id": r["conversation_id"],
+        "session_id":      r["session_id"],
+        "user_id":         r["user_id"],
+        "role":            r.get("role"),
+        "user_query":      r["user_query"],
+        "prompt":          r.get("prompt"),
+        "sql_generated":   r.get("sql_generated"),
+        "tools_invoked":   r.get("tools_invoked"),
+        "agent_response":  r.get("agent_response"),
+        "vega_spec":       json.dumps(r["vega_spec"])     if r.get("vega_spec")     else None,
+        "token_usage":     json.dumps(r["token_usage"])   if r.get("token_usage")   else None,
+        "stream_events":   json.dumps(r["stream_events"]) if r.get("stream_events") else None,
+        "has_vega":        r.get("has_vega", False),
+        "execution_ms":    r.get("execution_ms"),
     }
 
 
 def _serialise_agent_step(r: dict) -> dict:
-    return {**r,
-        "token_usage": json.dumps(r["token_usage"]) if r.get("token_usage") else None,
+    return {
+        "conversation_id": r["conversation_id"],
+        "session_id":      r["session_id"],
+        "user_id":         r["user_id"],
+        "step_number":     r["step_number"],
+        "step_type":       r["step_type"],
+        "tool_name":       r.get("tool_name"),
+        "input":           r.get("input"),
+        "output":          r.get("output"),
+        "token_usage":     json.dumps(r["token_usage"]) if r.get("token_usage") else None,
+        "duration_ms":     r.get("duration_ms"),
     }
 
 

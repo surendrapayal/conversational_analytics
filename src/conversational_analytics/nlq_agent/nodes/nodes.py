@@ -179,14 +179,31 @@ def _extract_vega_spec(text: str) -> tuple[str, dict | None]:
         if isinstance(parsed, dict) and "vega_spec" in parsed and len(parsed) == 1:
             logger.debug("Unwrapping nested vega_spec key from LLM response")
             parsed = parsed["vega_spec"]
-        if not isinstance(parsed, dict) or "mark" not in parsed:
-            logger.warning("Parsed vega block does not look like a valid Vega-Lite spec — missing 'mark' property")
+        if not isinstance(parsed, dict) or not _is_valid_vega_spec(parsed):
+            logger.warning("Parsed vega block does not look like a valid Vega-Lite spec")
             return text, None
         clean_text = re.sub(pattern, "", text).strip()
         return clean_text, parsed
     except json.JSONDecodeError as e:
         logger.warning(f"Found vega block but failed to parse as JSON: {e}")
         return text, None
+
+
+def _is_valid_vega_spec(spec: dict) -> bool:
+    """Validates a Vega-Lite spec — handles all top-level composite structures."""
+    # simple mark at top level
+    if "mark" in spec:
+        return True
+    # layered chart: layer[0] has mark
+    if "layer" in spec and isinstance(spec["layer"], list) and spec["layer"]:
+        return True
+    # faceted / repeated chart: spec key contains the mark
+    if "spec" in spec and isinstance(spec["spec"], dict):
+        return True
+    # horizontal / vertical concat
+    if "hconcat" in spec or "vconcat" in spec or "concat" in spec:
+        return True
+    return False
 
 
 def _extract_text(content) -> str:
