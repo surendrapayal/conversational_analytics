@@ -40,7 +40,7 @@ async def agent_node(state: AgentState, store: BaseStore) -> dict:
                 search_similar_conversations(
                     user_id=user_id,
                     query=state.get("user_input", ""),
-                    limit=3,
+                    limit=cfg.memory_long_term_recall_limit,
                 ),
                 timeout=1.0,
             )
@@ -82,8 +82,12 @@ async def agent_node(state: AgentState, store: BaseStore) -> dict:
         )
     else:
         logger.debug(f"Invoking LLM with {len(tools)} tools bound (iteration {len(tools_invoked)+1})")
+        messages = state["messages"]
+        if cfg.memory_short_term_message_limit > 0 and len(messages) > cfg.memory_short_term_message_limit:
+            messages = messages[-cfg.memory_short_term_message_limit:]
+            logger.debug(f"Short-term history trimmed to last {cfg.memory_short_term_message_limit} messages (total={len(state['messages'])})")
         response: AIMessage = get_llm().bind_tools(tools).invoke(
-            [enriched_system] + state["messages"]
+            [enriched_system] + messages
         )
 
     thinking = response.additional_kwargs.get("thinking", "") if hasattr(response, "additional_kwargs") else ""

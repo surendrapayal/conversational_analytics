@@ -60,6 +60,8 @@ class Settings(BaseSettings):
     # ── Embedding (pgvector semantic search) ─────────────────────────
     embedding_model: str = "text-embedding-005"
     embedding_dimension: int = 768
+    memory_long_term_recall_limit: int = 3
+    memory_short_term_message_limit: int = 0  # 0 = unlimited
 
     # ── Analytics DB properties ───────────────────────────────────────
 
