@@ -1,104 +1,113 @@
--- Insert data into supplier_items
--- Generated at: 2026-04-21T14:16:56.354942
+-- ── supplier_items ────────────────────────────────────────────────────────────
+-- supplier 1 = Fresh Farms Co.        (produce, vegetables, fruits)
+-- supplier 2 = Pacific Seafood        (seafood)
+-- supplier 3 = Prime Meats Supply     (meat, poultry)
+-- supplier 4 = Golden Grain Wholesale (grains, flour, pasta, rice)
+-- supplier 5 = Dairy Direct Inc.      (dairy)
+-- supplier 6 = Organic Valley Produce (vegetables, herbs)
+-- supplier 7 = Spice World Trading    (spices, condiments)
+-- supplier 8 = Continental Beverage   (beverages)
+-- supplier 9 = Sunrise Bakery         (baking supplies)
+-- supplier 10 = Green Leaf Herbs      (herbs, seasonings)
 
-INSERT INTO supplier_items (supplier_id, ingredient_id, unit_cost) VALUES (61, 481, 24.8);
-INSERT INTO supplier_items (supplier_id, ingredient_id, unit_cost) VALUES (63, 481, 26.88);
-INSERT INTO supplier_items (supplier_id, ingredient_id, unit_cost) VALUES (65, 482, 30.34);
-INSERT INTO supplier_items (supplier_id, ingredient_id, unit_cost) VALUES (64, 482, 26.24);
-INSERT INTO supplier_items (supplier_id, ingredient_id, unit_cost) VALUES (62, 483, 7.24);
-INSERT INTO supplier_items (supplier_id, ingredient_id, unit_cost) VALUES (65, 483, 35.27);
-INSERT INTO supplier_items (supplier_id, ingredient_id, unit_cost) VALUES (61, 483, 3.85);
-INSERT INTO supplier_items (supplier_id, ingredient_id, unit_cost) VALUES (64, 484, 1.82);
-INSERT INTO supplier_items (supplier_id, ingredient_id, unit_cost) VALUES (65, 484, 31.13);
-INSERT INTO supplier_items (supplier_id, ingredient_id, unit_cost) VALUES (63, 484, 38.89);
-INSERT INTO supplier_items (supplier_id, ingredient_id, unit_cost) VALUES (62, 485, 11.26);
-INSERT INTO supplier_items (supplier_id, ingredient_id, unit_cost) VALUES (64, 485, 24.64);
-INSERT INTO supplier_items (supplier_id, ingredient_id, unit_cost) VALUES (63, 485, 37.89);
-INSERT INTO supplier_items (supplier_id, ingredient_id, unit_cost) VALUES (63, 486, 40.96);
-INSERT INTO supplier_items (supplier_id, ingredient_id, unit_cost) VALUES (62, 486, 14.44);
-INSERT INTO supplier_items (supplier_id, ingredient_id, unit_cost) VALUES (65, 486, 39.66);
-INSERT INTO supplier_items (supplier_id, ingredient_id, unit_cost) VALUES (64, 487, 26.08);
-INSERT INTO supplier_items (supplier_id, ingredient_id, unit_cost) VALUES (62, 487, 15.84);
-INSERT INTO supplier_items (supplier_id, ingredient_id, unit_cost) VALUES (63, 487, 35.95);
-INSERT INTO supplier_items (supplier_id, ingredient_id, unit_cost) VALUES (61, 488, 2.84);
-INSERT INTO supplier_items (supplier_id, ingredient_id, unit_cost) VALUES (65, 488, 14.06);
-INSERT INTO supplier_items (supplier_id, ingredient_id, unit_cost) VALUES (64, 488, 23.65);
-INSERT INTO supplier_items (supplier_id, ingredient_id, unit_cost) VALUES (62, 489, 4.3);
-INSERT INTO supplier_items (supplier_id, ingredient_id, unit_cost) VALUES (64, 489, 15.13);
-INSERT INTO supplier_items (supplier_id, ingredient_id, unit_cost) VALUES (63, 489, 6.42);
-INSERT INTO supplier_items (supplier_id, ingredient_id, unit_cost) VALUES (64, 490, 17.65);
-INSERT INTO supplier_items (supplier_id, ingredient_id, unit_cost) VALUES (61, 490, 28.17);
-INSERT INTO supplier_items (supplier_id, ingredient_id, unit_cost) VALUES (65, 490, 20.28);
-INSERT INTO supplier_items (supplier_id, ingredient_id, unit_cost) VALUES (65, 491, 43.16);
-INSERT INTO supplier_items (supplier_id, ingredient_id, unit_cost) VALUES (62, 491, 4.68);
-INSERT INTO supplier_items (supplier_id, ingredient_id, unit_cost) VALUES (64, 492, 42.98);
-INSERT INTO supplier_items (supplier_id, ingredient_id, unit_cost) VALUES (65, 492, 5.44);
-INSERT INTO supplier_items (supplier_id, ingredient_id, unit_cost) VALUES (61, 492, 20.13);
-INSERT INTO supplier_items (supplier_id, ingredient_id, unit_cost) VALUES (63, 493, 41.56);
-INSERT INTO supplier_items (supplier_id, ingredient_id, unit_cost) VALUES (64, 493, 34.81);
-INSERT INTO supplier_items (supplier_id, ingredient_id, unit_cost) VALUES (64, 494, 22.2);
-INSERT INTO supplier_items (supplier_id, ingredient_id, unit_cost) VALUES (65, 494, 36.33);
-INSERT INTO supplier_items (supplier_id, ingredient_id, unit_cost) VALUES (61, 494, 25.86);
-INSERT INTO supplier_items (supplier_id, ingredient_id, unit_cost) VALUES (64, 495, 41.9);
-INSERT INTO supplier_items (supplier_id, ingredient_id, unit_cost) VALUES (63, 495, 20.16);
-INSERT INTO supplier_items (supplier_id, ingredient_id, unit_cost) VALUES (62, 496, 37.4);
-INSERT INTO supplier_items (supplier_id, ingredient_id, unit_cost) VALUES (63, 496, 23.16);
-INSERT INTO supplier_items (supplier_id, ingredient_id, unit_cost) VALUES (65, 496, 24.51);
-INSERT INTO supplier_items (supplier_id, ingredient_id, unit_cost) VALUES (64, 497, 39.56);
-INSERT INTO supplier_items (supplier_id, ingredient_id, unit_cost) VALUES (62, 497, 49.13);
-INSERT INTO supplier_items (supplier_id, ingredient_id, unit_cost) VALUES (65, 497, 42.86);
-INSERT INTO supplier_items (supplier_id, ingredient_id, unit_cost) VALUES (64, 498, 39.5);
-INSERT INTO supplier_items (supplier_id, ingredient_id, unit_cost) VALUES (65, 498, 6.94);
-INSERT INTO supplier_items (supplier_id, ingredient_id, unit_cost) VALUES (61, 499, 18.16);
-INSERT INTO supplier_items (supplier_id, ingredient_id, unit_cost) VALUES (64, 499, 12.31);
-INSERT INTO supplier_items (supplier_id, ingredient_id, unit_cost) VALUES (62, 499, 6.23);
-INSERT INTO supplier_items (supplier_id, ingredient_id, unit_cost) VALUES (64, 500, 39.78);
-INSERT INTO supplier_items (supplier_id, ingredient_id, unit_cost) VALUES (65, 500, 43.9);
-INSERT INTO supplier_items (supplier_id, ingredient_id, unit_cost) VALUES (64, 501, 14.92);
-INSERT INTO supplier_items (supplier_id, ingredient_id, unit_cost) VALUES (62, 501, 35.75);
-INSERT INTO supplier_items (supplier_id, ingredient_id, unit_cost) VALUES (62, 502, 30.83);
-INSERT INTO supplier_items (supplier_id, ingredient_id, unit_cost) VALUES (63, 502, 49.2);
-INSERT INTO supplier_items (supplier_id, ingredient_id, unit_cost) VALUES (64, 502, 41.41);
-INSERT INTO supplier_items (supplier_id, ingredient_id, unit_cost) VALUES (65, 503, 27.92);
-INSERT INTO supplier_items (supplier_id, ingredient_id, unit_cost) VALUES (61, 503, 37.23);
-INSERT INTO supplier_items (supplier_id, ingredient_id, unit_cost) VALUES (61, 504, 48.51);
-INSERT INTO supplier_items (supplier_id, ingredient_id, unit_cost) VALUES (63, 504, 26.73);
-INSERT INTO supplier_items (supplier_id, ingredient_id, unit_cost) VALUES (63, 505, 9.82);
-INSERT INTO supplier_items (supplier_id, ingredient_id, unit_cost) VALUES (61, 505, 7.98);
-INSERT INTO supplier_items (supplier_id, ingredient_id, unit_cost) VALUES (62, 505, 22.19);
-INSERT INTO supplier_items (supplier_id, ingredient_id, unit_cost) VALUES (61, 506, 37.31);
-INSERT INTO supplier_items (supplier_id, ingredient_id, unit_cost) VALUES (65, 506, 45.25);
-INSERT INTO supplier_items (supplier_id, ingredient_id, unit_cost) VALUES (63, 507, 49.25);
-INSERT INTO supplier_items (supplier_id, ingredient_id, unit_cost) VALUES (62, 507, 19.62);
-INSERT INTO supplier_items (supplier_id, ingredient_id, unit_cost) VALUES (62, 508, 19.78);
-INSERT INTO supplier_items (supplier_id, ingredient_id, unit_cost) VALUES (65, 508, 17.76);
-INSERT INTO supplier_items (supplier_id, ingredient_id, unit_cost) VALUES (61, 508, 23.27);
-INSERT INTO supplier_items (supplier_id, ingredient_id, unit_cost) VALUES (63, 509, 18.22);
-INSERT INTO supplier_items (supplier_id, ingredient_id, unit_cost) VALUES (65, 509, 27.1);
-INSERT INTO supplier_items (supplier_id, ingredient_id, unit_cost) VALUES (64, 510, 38.51);
-INSERT INTO supplier_items (supplier_id, ingredient_id, unit_cost) VALUES (65, 510, 31.12);
-INSERT INTO supplier_items (supplier_id, ingredient_id, unit_cost) VALUES (64, 511, 23.67);
-INSERT INTO supplier_items (supplier_id, ingredient_id, unit_cost) VALUES (65, 511, 32.75);
-INSERT INTO supplier_items (supplier_id, ingredient_id, unit_cost) VALUES (61, 511, 30.16);
-INSERT INTO supplier_items (supplier_id, ingredient_id, unit_cost) VALUES (63, 512, 2.59);
-INSERT INTO supplier_items (supplier_id, ingredient_id, unit_cost) VALUES (65, 512, 22.22);
-INSERT INTO supplier_items (supplier_id, ingredient_id, unit_cost) VALUES (62, 512, 32.3);
-INSERT INTO supplier_items (supplier_id, ingredient_id, unit_cost) VALUES (61, 513, 27.43);
-INSERT INTO supplier_items (supplier_id, ingredient_id, unit_cost) VALUES (65, 513, 9.63);
-INSERT INTO supplier_items (supplier_id, ingredient_id, unit_cost) VALUES (63, 514, 5.95);
-INSERT INTO supplier_items (supplier_id, ingredient_id, unit_cost) VALUES (61, 514, 25.73);
-INSERT INTO supplier_items (supplier_id, ingredient_id, unit_cost) VALUES (64, 514, 39.76);
-INSERT INTO supplier_items (supplier_id, ingredient_id, unit_cost) VALUES (64, 515, 24.93);
-INSERT INTO supplier_items (supplier_id, ingredient_id, unit_cost) VALUES (65, 515, 48.51);
-INSERT INTO supplier_items (supplier_id, ingredient_id, unit_cost) VALUES (63, 516, 4.54);
-INSERT INTO supplier_items (supplier_id, ingredient_id, unit_cost) VALUES (64, 516, 49.68);
-INSERT INTO supplier_items (supplier_id, ingredient_id, unit_cost) VALUES (62, 516, 6.96);
-INSERT INTO supplier_items (supplier_id, ingredient_id, unit_cost) VALUES (65, 517, 42.4);
-INSERT INTO supplier_items (supplier_id, ingredient_id, unit_cost) VALUES (62, 517, 30.16);
-INSERT INTO supplier_items (supplier_id, ingredient_id, unit_cost) VALUES (63, 518, 38.14);
-INSERT INTO supplier_items (supplier_id, ingredient_id, unit_cost) VALUES (65, 518, 18.89);
-INSERT INTO supplier_items (supplier_id, ingredient_id, unit_cost) VALUES (61, 518, 46.34);
-INSERT INTO supplier_items (supplier_id, ingredient_id, unit_cost) VALUES (62, 519, 2.82);
-INSERT INTO supplier_items (supplier_id, ingredient_id, unit_cost) VALUES (65, 519, 18.2);
-INSERT INTO supplier_items (supplier_id, ingredient_id, unit_cost) VALUES (65, 520, 46.86);
-INSERT INTO supplier_items (supplier_id, ingredient_id, unit_cost) VALUES (63, 520, 33.89);
+-- Fresh Farms Co. — produce & fruits
+INSERT INTO supplier_items (supplier_id, ingredient_id, unit_cost) SELECT s.id, i.id, 1.20 FROM supplier s, ingredients i WHERE s.name='Fresh Farms Co.' AND i.name='Tomato';
+INSERT INTO supplier_items (supplier_id, ingredient_id, unit_cost) SELECT s.id, i.id, 0.80 FROM supplier s, ingredients i WHERE s.name='Fresh Farms Co.' AND i.name='Onion';
+INSERT INTO supplier_items (supplier_id, ingredient_id, unit_cost) SELECT s.id, i.id, 0.60 FROM supplier s, ingredients i WHERE s.name='Fresh Farms Co.' AND i.name='Garlic';
+INSERT INTO supplier_items (supplier_id, ingredient_id, unit_cost) SELECT s.id, i.id, 1.50 FROM supplier s, ingredients i WHERE s.name='Fresh Farms Co.' AND i.name='Spinach';
+INSERT INTO supplier_items (supplier_id, ingredient_id, unit_cost) SELECT s.id, i.id, 1.80 FROM supplier s, ingredients i WHERE s.name='Fresh Farms Co.' AND i.name='Broccoli';
+INSERT INTO supplier_items (supplier_id, ingredient_id, unit_cost) SELECT s.id, i.id, 0.90 FROM supplier s, ingredients i WHERE s.name='Fresh Farms Co.' AND i.name='Carrot';
+INSERT INTO supplier_items (supplier_id, ingredient_id, unit_cost) SELECT s.id, i.id, 1.10 FROM supplier s, ingredients i WHERE s.name='Fresh Farms Co.' AND i.name='Bell Pepper';
+INSERT INTO supplier_items (supplier_id, ingredient_id, unit_cost) SELECT s.id, i.id, 2.50 FROM supplier s, ingredients i WHERE s.name='Fresh Farms Co.' AND i.name='Mango';
+INSERT INTO supplier_items (supplier_id, ingredient_id, unit_cost) SELECT s.id, i.id, 1.20 FROM supplier s, ingredients i WHERE s.name='Fresh Farms Co.' AND i.name='Orange';
+INSERT INTO supplier_items (supplier_id, ingredient_id, unit_cost) SELECT s.id, i.id, 1.80 FROM supplier s, ingredients i WHERE s.name='Fresh Farms Co.' AND i.name='Apple';
+INSERT INTO supplier_items (supplier_id, ingredient_id, unit_cost) SELECT s.id, i.id, 2.20 FROM supplier s, ingredients i WHERE s.name='Fresh Farms Co.' AND i.name='Strawberry';
+INSERT INTO supplier_items (supplier_id, ingredient_id, unit_cost) SELECT s.id, i.id, 1.40 FROM supplier s, ingredients i WHERE s.name='Fresh Farms Co.' AND i.name='Banana';
+INSERT INTO supplier_items (supplier_id, ingredient_id, unit_cost) SELECT s.id, i.id, 1.60 FROM supplier s, ingredients i WHERE s.name='Fresh Farms Co.' AND i.name='Lemon Juice';
+INSERT INTO supplier_items (supplier_id, ingredient_id, unit_cost) SELECT s.id, i.id, 1.90 FROM supplier s, ingredients i WHERE s.name='Fresh Farms Co.' AND i.name='Zucchini';
+INSERT INTO supplier_items (supplier_id, ingredient_id, unit_cost) SELECT s.id, i.id, 1.30 FROM supplier s, ingredients i WHERE s.name='Fresh Farms Co.' AND i.name='Eggplant';
+INSERT INTO supplier_items (supplier_id, ingredient_id, unit_cost) SELECT s.id, i.id, 1.10 FROM supplier s, ingredients i WHERE s.name='Fresh Farms Co.' AND i.name='Cabbage';
+
+-- Pacific Seafood Distributors — seafood
+INSERT INTO supplier_items (supplier_id, ingredient_id, unit_cost) SELECT s.id, i.id, 12.50 FROM supplier s, ingredients i WHERE s.name='Pacific Seafood Distributors' AND i.name='Salmon';
+INSERT INTO supplier_items (supplier_id, ingredient_id, unit_cost) SELECT s.id, i.id, 18.00 FROM supplier s, ingredients i WHERE s.name='Pacific Seafood Distributors' AND i.name='Tuna';
+INSERT INTO supplier_items (supplier_id, ingredient_id, unit_cost) SELECT s.id, i.id, 14.00 FROM supplier s, ingredients i WHERE s.name='Pacific Seafood Distributors' AND i.name='Prawns';
+INSERT INTO supplier_items (supplier_id, ingredient_id, unit_cost) SELECT s.id, i.id, 16.00 FROM supplier s, ingredients i WHERE s.name='Pacific Seafood Distributors' AND i.name='Crab';
+
+-- Prime Meats Supply — meat & poultry
+INSERT INTO supplier_items (supplier_id, ingredient_id, unit_cost) SELECT s.id, i.id, 9.50 FROM supplier s, ingredients i WHERE s.name='Prime Meats Supply' AND i.name='Beef';
+INSERT INTO supplier_items (supplier_id, ingredient_id, unit_cost) SELECT s.id, i.id, 6.50 FROM supplier s, ingredients i WHERE s.name='Prime Meats Supply' AND i.name='Chicken';
+INSERT INTO supplier_items (supplier_id, ingredient_id, unit_cost) SELECT s.id, i.id, 11.00 FROM supplier s, ingredients i WHERE s.name='Prime Meats Supply' AND i.name='Lamb';
+INSERT INTO supplier_items (supplier_id, ingredient_id, unit_cost) SELECT s.id, i.id, 7.50 FROM supplier s, ingredients i WHERE s.name='Prime Meats Supply' AND i.name='Pork';
+INSERT INTO supplier_items (supplier_id, ingredient_id, unit_cost) SELECT s.id, i.id, 3.50 FROM supplier s, ingredients i WHERE s.name='Prime Meats Supply' AND i.name='Bacon';
+INSERT INTO supplier_items (supplier_id, ingredient_id, unit_cost) SELECT s.id, i.id, 8.00 FROM supplier s, ingredients i WHERE s.name='Prime Meats Supply' AND i.name='Turkey';
+
+-- Golden Grain Wholesale — grains
+INSERT INTO supplier_items (supplier_id, ingredient_id, unit_cost) SELECT s.id, i.id, 1.20 FROM supplier s, ingredients i WHERE s.name='Golden Grain Wholesale' AND i.name='Flour';
+INSERT INTO supplier_items (supplier_id, ingredient_id, unit_cost) SELECT s.id, i.id, 1.50 FROM supplier s, ingredients i WHERE s.name='Golden Grain Wholesale' AND i.name='Pasta';
+INSERT INTO supplier_items (supplier_id, ingredient_id, unit_cost) SELECT s.id, i.id, 1.30 FROM supplier s, ingredients i WHERE s.name='Golden Grain Wholesale' AND i.name='Rice';
+INSERT INTO supplier_items (supplier_id, ingredient_id, unit_cost) SELECT s.id, i.id, 0.80 FROM supplier s, ingredients i WHERE s.name='Golden Grain Wholesale' AND i.name='Sugar';
+INSERT INTO supplier_items (supplier_id, ingredient_id, unit_cost) SELECT s.id, i.id, 0.50 FROM supplier s, ingredients i WHERE s.name='Golden Grain Wholesale' AND i.name='Salt';
+INSERT INTO supplier_items (supplier_id, ingredient_id, unit_cost) SELECT s.id, i.id, 1.80 FROM supplier s, ingredients i WHERE s.name='Golden Grain Wholesale' AND i.name='Oats';
+INSERT INTO supplier_items (supplier_id, ingredient_id, unit_cost) SELECT s.id, i.id, 1.60 FROM supplier s, ingredients i WHERE s.name='Golden Grain Wholesale' AND i.name='Wheat';
+INSERT INTO supplier_items (supplier_id, ingredient_id, unit_cost) SELECT s.id, i.id, 2.20 FROM supplier s, ingredients i WHERE s.name='Golden Grain Wholesale' AND i.name='Quinoa';
+INSERT INTO supplier_items (supplier_id, ingredient_id, unit_cost) SELECT s.id, i.id, 1.10 FROM supplier s, ingredients i WHERE s.name='Golden Grain Wholesale' AND i.name='Baking Powder';
+INSERT INTO supplier_items (supplier_id, ingredient_id, unit_cost) SELECT s.id, i.id, 0.90 FROM supplier s, ingredients i WHERE s.name='Golden Grain Wholesale' AND i.name='Baking Soda';
+INSERT INTO supplier_items (supplier_id, ingredient_id, unit_cost) SELECT s.id, i.id, 2.50 FROM supplier s, ingredients i WHERE s.name='Golden Grain Wholesale' AND i.name='Yeast';
+
+-- Dairy Direct Inc. — dairy
+INSERT INTO supplier_items (supplier_id, ingredient_id, unit_cost) SELECT s.id, i.id, 1.20 FROM supplier s, ingredients i WHERE s.name='Dairy Direct Inc.' AND i.name='Milk';
+INSERT INTO supplier_items (supplier_id, ingredient_id, unit_cost) SELECT s.id, i.id, 3.50 FROM supplier s, ingredients i WHERE s.name='Dairy Direct Inc.' AND i.name='Cream';
+INSERT INTO supplier_items (supplier_id, ingredient_id, unit_cost) SELECT s.id, i.id, 4.50 FROM supplier s, ingredients i WHERE s.name='Dairy Direct Inc.' AND i.name='Butter';
+INSERT INTO supplier_items (supplier_id, ingredient_id, unit_cost) SELECT s.id, i.id, 5.00 FROM supplier s, ingredients i WHERE s.name='Dairy Direct Inc.' AND i.name='Cheese';
+INSERT INTO supplier_items (supplier_id, ingredient_id, unit_cost) SELECT s.id, i.id, 6.50 FROM supplier s, ingredients i WHERE s.name='Dairy Direct Inc.' AND i.name='Mozzarella';
+INSERT INTO supplier_items (supplier_id, ingredient_id, unit_cost) SELECT s.id, i.id, 7.00 FROM supplier s, ingredients i WHERE s.name='Dairy Direct Inc.' AND i.name='Parmesan';
+INSERT INTO supplier_items (supplier_id, ingredient_id, unit_cost) SELECT s.id, i.id, 2.80 FROM supplier s, ingredients i WHERE s.name='Dairy Direct Inc.' AND i.name='Yogurt';
+
+-- Organic Valley Produce — organic vegetables
+INSERT INTO supplier_items (supplier_id, ingredient_id, unit_cost) SELECT s.id, i.id, 1.80 FROM supplier s, ingredients i WHERE s.name='Organic Valley Produce' AND i.name='Tomato';
+INSERT INTO supplier_items (supplier_id, ingredient_id, unit_cost) SELECT s.id, i.id, 1.20 FROM supplier s, ingredients i WHERE s.name='Organic Valley Produce' AND i.name='Onion';
+INSERT INTO supplier_items (supplier_id, ingredient_id, unit_cost) SELECT s.id, i.id, 2.20 FROM supplier s, ingredients i WHERE s.name='Organic Valley Produce' AND i.name='Spinach';
+INSERT INTO supplier_items (supplier_id, ingredient_id, unit_cost) SELECT s.id, i.id, 2.50 FROM supplier s, ingredients i WHERE s.name='Organic Valley Produce' AND i.name='Broccoli';
+INSERT INTO supplier_items (supplier_id, ingredient_id, unit_cost) SELECT s.id, i.id, 1.40 FROM supplier s, ingredients i WHERE s.name='Organic Valley Produce' AND i.name='Carrot';
+INSERT INTO supplier_items (supplier_id, ingredient_id, unit_cost) SELECT s.id, i.id, 3.50 FROM supplier s, ingredients i WHERE s.name='Organic Valley Produce' AND i.name='Blueberry';
+
+-- Spice World Trading — spices & condiments
+INSERT INTO supplier_items (supplier_id, ingredient_id, unit_cost) SELECT s.id, i.id, 3.50 FROM supplier s, ingredients i WHERE s.name='Spice World Trading' AND i.name='Paprika';
+INSERT INTO supplier_items (supplier_id, ingredient_id, unit_cost) SELECT s.id, i.id, 4.00 FROM supplier s, ingredients i WHERE s.name='Spice World Trading' AND i.name='Cumin';
+INSERT INTO supplier_items (supplier_id, ingredient_id, unit_cost) SELECT s.id, i.id, 4.50 FROM supplier s, ingredients i WHERE s.name='Spice World Trading' AND i.name='Turmeric';
+INSERT INTO supplier_items (supplier_id, ingredient_id, unit_cost) SELECT s.id, i.id, 3.80 FROM supplier s, ingredients i WHERE s.name='Spice World Trading' AND i.name='Coriander';
+INSERT INTO supplier_items (supplier_id, ingredient_id, unit_cost) SELECT s.id, i.id, 5.00 FROM supplier s, ingredients i WHERE s.name='Spice World Trading' AND i.name='Garam Masala';
+INSERT INTO supplier_items (supplier_id, ingredient_id, unit_cost) SELECT s.id, i.id, 3.20 FROM supplier s, ingredients i WHERE s.name='Spice World Trading' AND i.name='Chili Powder';
+INSERT INTO supplier_items (supplier_id, ingredient_id, unit_cost) SELECT s.id, i.id, 2.80 FROM supplier s, ingredients i WHERE s.name='Spice World Trading' AND i.name='Pepper';
+INSERT INTO supplier_items (supplier_id, ingredient_id, unit_cost) SELECT s.id, i.id, 3.00 FROM supplier s, ingredients i WHERE s.name='Spice World Trading' AND i.name='Mustard Seeds';
+INSERT INTO supplier_items (supplier_id, ingredient_id, unit_cost) SELECT s.id, i.id, 2.50 FROM supplier s, ingredients i WHERE s.name='Spice World Trading' AND i.name='Oregano';
+INSERT INTO supplier_items (supplier_id, ingredient_id, unit_cost) SELECT s.id, i.id, 1.80 FROM supplier s, ingredients i WHERE s.name='Spice World Trading' AND i.name='Ketchup';
+INSERT INTO supplier_items (supplier_id, ingredient_id, unit_cost) SELECT s.id, i.id, 2.20 FROM supplier s, ingredients i WHERE s.name='Spice World Trading' AND i.name='Soy Sauce';
+INSERT INTO supplier_items (supplier_id, ingredient_id, unit_cost) SELECT s.id, i.id, 2.50 FROM supplier s, ingredients i WHERE s.name='Spice World Trading' AND i.name='Mustard';
+INSERT INTO supplier_items (supplier_id, ingredient_id, unit_cost) SELECT s.id, i.id, 3.50 FROM supplier s, ingredients i WHERE s.name='Spice World Trading' AND i.name='Sesame Oil';
+INSERT INTO supplier_items (supplier_id, ingredient_id, unit_cost) SELECT s.id, i.id, 4.50 FROM supplier s, ingredients i WHERE s.name='Spice World Trading' AND i.name='Honey';
+INSERT INTO supplier_items (supplier_id, ingredient_id, unit_cost) SELECT s.id, i.id, 2.00 FROM supplier s, ingredients i WHERE s.name='Spice World Trading' AND i.name='Vinegar';
+INSERT INTO supplier_items (supplier_id, ingredient_id, unit_cost) SELECT s.id, i.id, 2.80 FROM supplier s, ingredients i WHERE s.name='Spice World Trading' AND i.name='Mayonnaise';
+
+-- Continental Beverage Supply — beverages
+INSERT INTO supplier_items (supplier_id, ingredient_id, unit_cost) SELECT s.id, i.id, 0.50 FROM supplier s, ingredients i WHERE s.name='Continental Beverage Supply' AND i.name='Water';
+
+-- Sunrise Bakery Supplies — baking
+INSERT INTO supplier_items (supplier_id, ingredient_id, unit_cost) SELECT s.id, i.id, 5.50 FROM supplier s, ingredients i WHERE s.name='Sunrise Bakery Supplies' AND i.name='Vanilla';
+INSERT INTO supplier_items (supplier_id, ingredient_id, unit_cost) SELECT s.id, i.id, 8.00 FROM supplier s, ingredients i WHERE s.name='Sunrise Bakery Supplies' AND i.name='Chocolate';
+INSERT INTO supplier_items (supplier_id, ingredient_id, unit_cost) SELECT s.id, i.id, 1.00 FROM supplier s, ingredients i WHERE s.name='Sunrise Bakery Supplies' AND i.name='Flour';
+INSERT INTO supplier_items (supplier_id, ingredient_id, unit_cost) SELECT s.id, i.id, 0.70 FROM supplier s, ingredients i WHERE s.name='Sunrise Bakery Supplies' AND i.name='Sugar';
+INSERT INTO supplier_items (supplier_id, ingredient_id, unit_cost) SELECT s.id, i.id, 4.20 FROM supplier s, ingredients i WHERE s.name='Sunrise Bakery Supplies' AND i.name='Butter';
+INSERT INTO supplier_items (supplier_id, ingredient_id, unit_cost) SELECT s.id, i.id, 2.30 FROM supplier s, ingredients i WHERE s.name='Sunrise Bakery Supplies' AND i.name='Yeast';
+
+-- Green Leaf Herbs — herbs
+INSERT INTO supplier_items (supplier_id, ingredient_id, unit_cost) SELECT s.id, i.id, 2.50 FROM supplier s, ingredients i WHERE s.name='Green Leaf Herbs' AND i.name='Basil';
+INSERT INTO supplier_items (supplier_id, ingredient_id, unit_cost) SELECT s.id, i.id, 2.80 FROM supplier s, ingredients i WHERE s.name='Green Leaf Herbs' AND i.name='Thyme';
+INSERT INTO supplier_items (supplier_id, ingredient_id, unit_cost) SELECT s.id, i.id, 2.20 FROM supplier s, ingredients i WHERE s.name='Green Leaf Herbs' AND i.name='Parsley';
+INSERT INTO supplier_items (supplier_id, ingredient_id, unit_cost) SELECT s.id, i.id, 3.00 FROM supplier s, ingredients i WHERE s.name='Green Leaf Herbs' AND i.name='Coriander';
+INSERT INTO supplier_items (supplier_id, ingredient_id, unit_cost) SELECT s.id, i.id, 4.50 FROM supplier s, ingredients i WHERE s.name='Green Leaf Herbs' AND i.name='Walnuts';
+INSERT INTO supplier_items (supplier_id, ingredient_id, unit_cost) SELECT s.id, i.id, 5.50 FROM supplier s, ingredients i WHERE s.name='Green Leaf Herbs' AND i.name='Cashews';
+INSERT INTO supplier_items (supplier_id, ingredient_id, unit_cost) SELECT s.id, i.id, 6.00 FROM supplier s, ingredients i WHERE s.name='Green Leaf Herbs' AND i.name='Pistachios';
+INSERT INTO supplier_items (supplier_id, ingredient_id, unit_cost) SELECT s.id, i.id, 3.80 FROM supplier s, ingredients i WHERE s.name='Green Leaf Herbs' AND i.name='Vegetable Oil';
+INSERT INTO supplier_items (supplier_id, ingredient_id, unit_cost) SELECT s.id, i.id, 0.30 FROM supplier s, ingredients i WHERE s.name='Green Leaf Herbs' AND i.name='Stock';

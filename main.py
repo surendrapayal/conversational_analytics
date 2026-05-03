@@ -22,7 +22,7 @@ for noisy_logger in [
 import uvicorn
 from fastapi import FastAPI
 from conversational_analytics.controller import router
-from conversational_analytics.memory import setup_schema, audit_writer
+from conversational_analytics.memory import audit_writer
 from conversational_analytics.controller.agent_service import init_graph
 
 logger = logging.getLogger(__name__)
@@ -32,11 +32,6 @@ logger = logging.getLogger(__name__)
 async def lifespan(app: FastAPI):
     # ── Startup ───────────────────────────────────────────────────────
     logger.info("Application starting up...")
-    try:
-        setup_schema()
-    except Exception as e:
-        logger.warning(f"Long-term memory schema setup failed: {e}")
-
     await audit_writer.start()
     await init_graph()
     logger.info("Application ready")

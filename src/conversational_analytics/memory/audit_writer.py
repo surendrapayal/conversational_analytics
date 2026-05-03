@@ -171,7 +171,7 @@ class AuditWriter:
         async with conn.cursor() as cur:
             await cur.executemany(
                 """
-                INSERT INTO memory.query_log
+                INSERT INTO query_log
                     (conversation_id, session_id, user_id, role, user_query, prompt,
                      sql_generated, tools_invoked, agent_response, vega_spec,
                      token_usage, stream_events, has_vega, execution_ms)
@@ -188,7 +188,7 @@ class AuditWriter:
         async with conn.cursor() as cur:
             await cur.executemany(
                 """
-                INSERT INTO memory.agent_steps
+                INSERT INTO agent_steps
                     (conversation_id, session_id, user_id, step_number, step_type,
                      tool_name, input, output, token_usage, duration_ms)
                 VALUES (%(conversation_id)s, %(session_id)s, %(user_id)s, %(step_number)s,

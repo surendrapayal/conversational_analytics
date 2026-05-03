@@ -1,396 +1,162 @@
--- Insert data into shifts
--- Generated at: 2026-04-21T14:16:56.354032
+-- ── shifts ────────────────────────────────────────────────────────────────────
+-- Each employee gets 3 shifts across different dates
+-- Shift types: morning (07:00-15:00), afternoon (12:00-20:00), evening (16:00-00:00)
 
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (391, 65, '2026-04-15T08:44:17'::timestamp, '2026-04-15T13:44:17'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (391, 65, '2026-04-19T11:21:13'::timestamp, '2026-04-19T16:21:13'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (391, 63, '2026-04-20T08:50:38'::timestamp, '2026-04-20T13:50:38'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (391, 65, '2026-04-16T11:33:55'::timestamp, '2026-04-16T18:33:55'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (391, 69, '2026-04-21T15:36:09'::timestamp, '2026-04-21T19:36:09'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (392, 65, '2026-04-16T15:07:36'::timestamp, '2026-04-16T20:07:36'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (392, 65, '2026-04-15T08:30:08'::timestamp, '2026-04-15T15:30:08'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (392, 69, '2026-04-16T11:52:51'::timestamp, '2026-04-16T15:52:51'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (392, 67, '2026-04-17T08:16:25'::timestamp, '2026-04-17T12:16:25'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (392, 63, '2026-04-14T15:04:38'::timestamp, '2026-04-14T23:04:38'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (393, 63, '2026-04-21T15:21:41'::timestamp, '2026-04-21T23:21:41'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (393, 67, '2026-04-18T15:36:45'::timestamp, '2026-04-18T19:36:45'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (393, 67, '2026-04-19T11:05:23'::timestamp, '2026-04-19T16:05:23'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (394, 63, '2026-04-15T15:41:20'::timestamp, '2026-04-15T23:41:20'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (394, 65, '2026-04-18T11:29:24'::timestamp, '2026-04-18T18:29:24'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (394, 69, '2026-04-19T15:00:00'::timestamp, '2026-04-19T19:00:00'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (395, 68, '2026-04-16T08:32:03'::timestamp, '2026-04-16T13:32:03'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (395, 62, '2026-04-17T08:26:23'::timestamp, '2026-04-17T15:26:23'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (395, 69, '2026-04-17T08:01:32'::timestamp, '2026-04-17T13:01:32'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (396, 67, '2026-04-19T08:07:46'::timestamp, '2026-04-19T15:07:46'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (396, 67, '2026-04-15T11:50:58'::timestamp, '2026-04-15T19:50:58'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (396, 63, '2026-04-19T15:36:16'::timestamp, '2026-04-19T23:36:16'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (397, 68, '2026-04-19T08:46:18'::timestamp, '2026-04-19T13:46:18'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (397, 62, '2026-04-19T11:06:44'::timestamp, '2026-04-19T19:06:44'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (397, 69, '2026-04-15T11:37:12'::timestamp, '2026-04-15T19:37:12'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (397, 66, '2026-04-17T11:07:03'::timestamp, '2026-04-17T17:07:03'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (398, 69, '2026-04-16T11:31:18'::timestamp, '2026-04-16T18:31:18'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (398, 66, '2026-04-18T11:00:54'::timestamp, '2026-04-18T17:00:54'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (398, 65, '2026-04-21T15:05:18'::timestamp, '2026-04-21T19:05:18'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (399, 69, '2026-04-17T08:44:03'::timestamp, '2026-04-17T12:44:03'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (399, 67, '2026-04-17T15:53:39'::timestamp, '2026-04-17T22:53:39'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (399, 65, '2026-04-14T15:19:28'::timestamp, '2026-04-14T23:19:28'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (400, 63, '2026-04-15T08:04:42'::timestamp, '2026-04-15T12:04:42'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (400, 62, '2026-04-16T15:37:59'::timestamp, '2026-04-16T20:37:59'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (400, 68, '2026-04-18T11:29:20'::timestamp, '2026-04-18T15:29:20'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (401, 67, '2026-04-20T15:38:37'::timestamp, '2026-04-20T20:38:37'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (401, 64, '2026-04-18T11:24:05'::timestamp, '2026-04-18T15:24:05'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (401, 64, '2026-04-18T11:14:05'::timestamp, '2026-04-18T17:14:05'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (401, 67, '2026-04-18T11:45:32'::timestamp, '2026-04-18T19:45:32'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (402, 69, '2026-04-17T15:02:53'::timestamp, '2026-04-17T23:02:53'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (402, 65, '2026-04-21T15:21:20'::timestamp, '2026-04-21T19:21:20'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (402, 63, '2026-04-15T15:56:27'::timestamp, '2026-04-15T22:56:27'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (403, 63, '2026-04-17T11:07:31'::timestamp, '2026-04-17T15:07:31'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (403, 69, '2026-04-20T11:47:28'::timestamp, '2026-04-20T18:47:28'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (403, 68, '2026-04-15T08:45:13'::timestamp, '2026-04-15T16:45:13'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (403, 63, '2026-04-21T11:14:53'::timestamp, '2026-04-21T16:14:53'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (403, 67, '2026-04-14T15:36:14'::timestamp, '2026-04-14T21:36:14'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (404, 62, '2026-04-16T15:09:46'::timestamp, '2026-04-16T21:09:46'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (404, 62, '2026-04-18T08:50:55'::timestamp, '2026-04-18T16:50:55'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (404, 66, '2026-04-20T11:06:49'::timestamp, '2026-04-20T18:06:49'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (405, 69, '2026-04-19T11:08:36'::timestamp, '2026-04-19T19:08:36'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (405, 63, '2026-04-20T11:36:22'::timestamp, '2026-04-20T18:36:22'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (405, 66, '2026-04-14T15:41:58'::timestamp, '2026-04-14T19:41:58'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (406, 62, '2026-04-20T08:21:23'::timestamp, '2026-04-20T15:21:23'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (406, 64, '2026-04-20T15:38:10'::timestamp, '2026-04-20T19:38:10'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (406, 63, '2026-04-17T15:23:40'::timestamp, '2026-04-17T20:23:40'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (406, 68, '2026-04-18T08:48:53'::timestamp, '2026-04-18T15:48:53'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (407, 68, '2026-04-17T15:43:22'::timestamp, '2026-04-17T22:43:22'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (407, 67, '2026-04-15T08:58:19'::timestamp, '2026-04-15T15:58:19'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (407, 62, '2026-04-15T15:51:12'::timestamp, '2026-04-15T22:51:12'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (407, 64, '2026-04-20T11:32:42'::timestamp, '2026-04-20T15:32:42'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (407, 65, '2026-04-16T08:41:31'::timestamp, '2026-04-16T15:41:31'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (408, 64, '2026-04-17T08:19:57'::timestamp, '2026-04-17T12:19:57'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (408, 66, '2026-04-17T11:35:06'::timestamp, '2026-04-17T18:35:06'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (408, 69, '2026-04-16T08:16:37'::timestamp, '2026-04-16T13:16:37'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (408, 63, '2026-04-14T15:54:23'::timestamp, '2026-04-14T23:54:23'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (408, 64, '2026-04-14T11:09:06'::timestamp, '2026-04-14T19:09:06'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (409, 69, '2026-04-17T08:34:59'::timestamp, '2026-04-17T16:34:59'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (409, 65, '2026-04-20T15:41:06'::timestamp, '2026-04-20T22:41:06'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (409, 62, '2026-04-18T08:44:30'::timestamp, '2026-04-18T13:44:30'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (409, 66, '2026-04-18T08:47:15'::timestamp, '2026-04-18T16:47:15'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (410, 62, '2026-04-21T08:11:13'::timestamp, '2026-04-21T14:11:13'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (410, 65, '2026-04-15T08:29:36'::timestamp, '2026-04-15T16:29:36'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (410, 65, '2026-04-14T08:56:20'::timestamp, '2026-04-14T12:56:20'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (411, 65, '2026-04-15T08:54:37'::timestamp, '2026-04-15T15:54:37'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (411, 64, '2026-04-16T08:25:40'::timestamp, '2026-04-16T12:25:40'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (411, 63, '2026-04-18T11:40:18'::timestamp, '2026-04-18T15:40:18'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (412, 62, '2026-04-18T11:48:24'::timestamp, '2026-04-18T16:48:24'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (412, 62, '2026-04-15T11:57:32'::timestamp, '2026-04-15T17:57:32'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (412, 68, '2026-04-18T08:49:30'::timestamp, '2026-04-18T15:49:30'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (413, 64, '2026-04-15T08:47:35'::timestamp, '2026-04-15T13:47:35'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (413, 66, '2026-04-17T11:06:23'::timestamp, '2026-04-17T15:06:23'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (413, 67, '2026-04-16T08:00:34'::timestamp, '2026-04-16T13:00:34'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (413, 69, '2026-04-17T08:41:42'::timestamp, '2026-04-17T16:41:42'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (413, 68, '2026-04-21T11:55:40'::timestamp, '2026-04-21T18:55:40'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (414, 64, '2026-04-20T11:13:42'::timestamp, '2026-04-20T15:13:42'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (414, 67, '2026-04-17T15:09:08'::timestamp, '2026-04-17T23:09:08'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (414, 67, '2026-04-14T11:10:25'::timestamp, '2026-04-14T18:10:25'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (415, 64, '2026-04-16T08:50:10'::timestamp, '2026-04-16T16:50:10'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (415, 65, '2026-04-15T08:00:35'::timestamp, '2026-04-15T13:00:35'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (415, 67, '2026-04-20T11:27:21'::timestamp, '2026-04-20T19:27:21'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (415, 66, '2026-04-18T15:56:19'::timestamp, '2026-04-18T22:56:19'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (416, 64, '2026-04-18T11:20:56'::timestamp, '2026-04-18T17:20:56'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (416, 63, '2026-04-17T15:14:02'::timestamp, '2026-04-17T21:14:02'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (416, 68, '2026-04-16T11:34:11'::timestamp, '2026-04-16T19:34:11'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (416, 62, '2026-04-15T08:28:13'::timestamp, '2026-04-15T16:28:13'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (416, 62, '2026-04-16T15:59:19'::timestamp, '2026-04-16T19:59:19'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (417, 66, '2026-04-15T15:53:24'::timestamp, '2026-04-15T22:53:24'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (417, 68, '2026-04-15T08:51:52'::timestamp, '2026-04-15T14:51:52'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (417, 68, '2026-04-21T08:26:02'::timestamp, '2026-04-21T14:26:02'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (417, 69, '2026-04-19T08:15:02'::timestamp, '2026-04-19T15:15:02'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (418, 66, '2026-04-15T15:33:35'::timestamp, '2026-04-15T21:33:35'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (418, 65, '2026-04-15T11:17:01'::timestamp, '2026-04-15T19:17:01'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (418, 68, '2026-04-18T15:18:25'::timestamp, '2026-04-18T19:18:25'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (418, 63, '2026-04-18T15:21:46'::timestamp, '2026-04-18T20:21:46'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (418, 65, '2026-04-15T08:39:54'::timestamp, '2026-04-15T14:39:54'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (419, 66, '2026-04-20T08:52:48'::timestamp, '2026-04-20T13:52:48'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (419, 69, '2026-04-14T11:13:14'::timestamp, '2026-04-14T17:13:14'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (419, 69, '2026-04-17T11:54:28'::timestamp, '2026-04-17T16:54:28'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (420, 62, '2026-04-15T08:13:51'::timestamp, '2026-04-15T14:13:51'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (420, 64, '2026-04-17T08:28:27'::timestamp, '2026-04-17T13:28:27'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (420, 67, '2026-04-18T11:05:11'::timestamp, '2026-04-18T16:05:11'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (420, 68, '2026-04-16T08:22:05'::timestamp, '2026-04-16T14:22:05'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (420, 66, '2026-04-15T11:54:16'::timestamp, '2026-04-15T19:54:16'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (421, 67, '2026-04-17T08:10:34'::timestamp, '2026-04-17T12:10:34'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (421, 63, '2026-04-14T08:14:01'::timestamp, '2026-04-14T12:14:01'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (421, 63, '2026-04-14T11:46:29'::timestamp, '2026-04-14T15:46:29'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (421, 64, '2026-04-19T11:59:51'::timestamp, '2026-04-19T18:59:51'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (421, 69, '2026-04-19T11:56:25'::timestamp, '2026-04-19T15:56:25'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (422, 62, '2026-04-18T08:54:02'::timestamp, '2026-04-18T15:54:02'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (422, 65, '2026-04-15T11:37:20'::timestamp, '2026-04-15T18:37:20'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (422, 68, '2026-04-18T15:40:08'::timestamp, '2026-04-18T22:40:08'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (423, 68, '2026-04-15T11:11:36'::timestamp, '2026-04-15T16:11:36'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (423, 65, '2026-04-17T11:09:44'::timestamp, '2026-04-17T18:09:44'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (423, 65, '2026-04-17T08:44:53'::timestamp, '2026-04-17T15:44:53'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (423, 62, '2026-04-17T08:02:17'::timestamp, '2026-04-17T14:02:17'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (424, 68, '2026-04-16T08:04:20'::timestamp, '2026-04-16T14:04:20'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (424, 62, '2026-04-19T08:02:45'::timestamp, '2026-04-19T14:02:45'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (424, 67, '2026-04-16T08:15:22'::timestamp, '2026-04-16T13:15:22'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (425, 65, '2026-04-17T08:02:12'::timestamp, '2026-04-17T13:02:12'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (425, 63, '2026-04-17T11:28:34'::timestamp, '2026-04-17T18:28:34'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (425, 66, '2026-04-15T11:56:24'::timestamp, '2026-04-15T17:56:24'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (426, 63, '2026-04-15T15:16:37'::timestamp, '2026-04-15T21:16:37'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (426, 67, '2026-04-21T08:08:41'::timestamp, '2026-04-21T12:08:41'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (426, 65, '2026-04-18T11:00:02'::timestamp, '2026-04-18T19:00:02'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (426, 67, '2026-04-19T15:48:26'::timestamp, '2026-04-19T21:48:26'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (427, 64, '2026-04-14T08:57:40'::timestamp, '2026-04-14T16:57:40'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (427, 67, '2026-04-16T15:42:30'::timestamp, '2026-04-16T23:42:30'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (427, 69, '2026-04-16T15:43:40'::timestamp, '2026-04-16T19:43:40'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (428, 65, '2026-04-16T08:19:02'::timestamp, '2026-04-16T14:19:02'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (428, 69, '2026-04-20T08:07:45'::timestamp, '2026-04-20T15:07:45'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (428, 67, '2026-04-17T08:05:43'::timestamp, '2026-04-17T14:05:43'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (429, 63, '2026-04-16T08:01:25'::timestamp, '2026-04-16T16:01:25'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (429, 67, '2026-04-18T11:09:01'::timestamp, '2026-04-18T17:09:01'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (429, 69, '2026-04-18T15:42:49'::timestamp, '2026-04-18T22:42:49'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (430, 65, '2026-04-15T11:03:56'::timestamp, '2026-04-15T18:03:56'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (430, 69, '2026-04-17T11:46:17'::timestamp, '2026-04-17T16:46:17'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (430, 69, '2026-04-20T08:58:45'::timestamp, '2026-04-20T16:58:45'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (431, 64, '2026-04-17T08:05:29'::timestamp, '2026-04-17T14:05:29'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (431, 64, '2026-04-19T15:16:24'::timestamp, '2026-04-19T22:16:24'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (431, 63, '2026-04-20T15:17:08'::timestamp, '2026-04-20T19:17:08'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (431, 65, '2026-04-20T08:29:50'::timestamp, '2026-04-20T13:29:50'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (431, 69, '2026-04-17T08:49:14'::timestamp, '2026-04-17T14:49:14'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (432, 63, '2026-04-15T15:53:22'::timestamp, '2026-04-15T23:53:22'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (432, 68, '2026-04-17T11:28:59'::timestamp, '2026-04-17T16:28:59'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (432, 67, '2026-04-16T08:27:16'::timestamp, '2026-04-16T15:27:16'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (432, 68, '2026-04-18T08:28:34'::timestamp, '2026-04-18T14:28:34'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (433, 67, '2026-04-17T15:43:25'::timestamp, '2026-04-17T22:43:25'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (433, 68, '2026-04-16T11:06:40'::timestamp, '2026-04-16T17:06:40'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (433, 67, '2026-04-16T08:33:29'::timestamp, '2026-04-16T13:33:29'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (433, 67, '2026-04-15T15:20:17'::timestamp, '2026-04-15T23:20:17'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (433, 68, '2026-04-16T11:09:06'::timestamp, '2026-04-16T16:09:06'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (434, 62, '2026-04-20T08:29:34'::timestamp, '2026-04-20T15:29:34'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (434, 67, '2026-04-21T15:59:47'::timestamp, '2026-04-21T20:59:47'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (434, 67, '2026-04-21T08:29:45'::timestamp, '2026-04-21T15:29:45'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (434, 63, '2026-04-17T15:47:28'::timestamp, '2026-04-17T19:47:28'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (434, 69, '2026-04-21T11:49:23'::timestamp, '2026-04-21T17:49:23'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (435, 65, '2026-04-17T15:31:01'::timestamp, '2026-04-17T19:31:01'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (435, 64, '2026-04-19T15:18:45'::timestamp, '2026-04-19T22:18:45'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (435, 63, '2026-04-21T15:42:11'::timestamp, '2026-04-21T21:42:11'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (435, 67, '2026-04-19T15:43:57'::timestamp, '2026-04-19T19:43:57'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (435, 68, '2026-04-16T15:33:40'::timestamp, '2026-04-16T19:33:40'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (436, 68, '2026-04-15T08:21:15'::timestamp, '2026-04-15T12:21:15'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (436, 68, '2026-04-21T11:22:18'::timestamp, '2026-04-21T17:22:18'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (436, 65, '2026-04-18T15:54:27'::timestamp, '2026-04-18T19:54:27'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (437, 65, '2026-04-21T15:24:21'::timestamp, '2026-04-21T21:24:21'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (437, 63, '2026-04-21T15:56:22'::timestamp, '2026-04-21T21:56:22'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (437, 63, '2026-04-16T15:02:46'::timestamp, '2026-04-16T19:02:46'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (437, 64, '2026-04-14T08:54:52'::timestamp, '2026-04-14T15:54:52'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (438, 67, '2026-04-18T08:19:58'::timestamp, '2026-04-18T16:19:58'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (438, 63, '2026-04-16T08:13:04'::timestamp, '2026-04-16T14:13:04'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (438, 65, '2026-04-19T11:23:27'::timestamp, '2026-04-19T15:23:27'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (438, 67, '2026-04-14T15:39:20'::timestamp, '2026-04-14T19:39:20'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (438, 66, '2026-04-18T15:13:01'::timestamp, '2026-04-18T21:13:01'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (439, 65, '2026-04-16T08:29:14'::timestamp, '2026-04-16T16:29:14'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (439, 69, '2026-04-17T11:59:50'::timestamp, '2026-04-17T15:59:50'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (439, 67, '2026-04-14T08:28:16'::timestamp, '2026-04-14T15:28:16'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (440, 63, '2026-04-16T08:36:52'::timestamp, '2026-04-16T15:36:52'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (440, 69, '2026-04-15T08:34:54'::timestamp, '2026-04-15T14:34:54'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (440, 63, '2026-04-20T15:58:51'::timestamp, '2026-04-20T20:58:51'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (440, 66, '2026-04-19T11:18:09'::timestamp, '2026-04-19T16:18:09'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (441, 72, '2026-04-18T15:12:30'::timestamp, '2026-04-18T21:12:30'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (441, 72, '2026-04-14T08:11:39'::timestamp, '2026-04-14T14:11:39'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (441, 75, '2026-04-17T11:45:47'::timestamp, '2026-04-17T19:45:47'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (442, 76, '2026-04-21T08:37:27'::timestamp, '2026-04-21T16:37:27'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (442, 73, '2026-04-19T11:19:58'::timestamp, '2026-04-19T15:19:58'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (442, 70, '2026-04-16T15:38:32'::timestamp, '2026-04-16T21:38:32'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (442, 71, '2026-04-17T11:38:26'::timestamp, '2026-04-17T17:38:26'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (442, 70, '2026-04-15T15:32:47'::timestamp, '2026-04-15T22:32:47'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (443, 70, '2026-04-21T11:13:26'::timestamp, '2026-04-21T18:13:26'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (443, 71, '2026-04-17T15:36:13'::timestamp, '2026-04-17T20:36:13'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (443, 73, '2026-04-18T15:33:49'::timestamp, '2026-04-18T20:33:49'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (444, 71, '2026-04-19T15:52:13'::timestamp, '2026-04-19T23:52:13'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (444, 70, '2026-04-18T08:29:38'::timestamp, '2026-04-18T12:29:38'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (444, 72, '2026-04-14T15:38:11'::timestamp, '2026-04-14T22:38:11'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (444, 77, '2026-04-15T08:25:58'::timestamp, '2026-04-15T15:25:58'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (444, 74, '2026-04-16T15:35:18'::timestamp, '2026-04-16T21:35:18'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (445, 76, '2026-04-17T15:13:07'::timestamp, '2026-04-17T21:13:07'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (445, 75, '2026-04-17T11:03:21'::timestamp, '2026-04-17T15:03:21'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (445, 77, '2026-04-17T15:16:05'::timestamp, '2026-04-17T23:16:05'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (445, 71, '2026-04-20T15:42:01'::timestamp, '2026-04-20T23:42:01'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (445, 73, '2026-04-18T15:13:10'::timestamp, '2026-04-18T23:13:10'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (446, 70, '2026-04-19T15:50:04'::timestamp, '2026-04-19T23:50:04'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (446, 77, '2026-04-18T15:36:20'::timestamp, '2026-04-18T22:36:20'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (446, 74, '2026-04-19T08:58:15'::timestamp, '2026-04-19T15:58:15'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (446, 71, '2026-04-15T15:48:40'::timestamp, '2026-04-15T19:48:40'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (447, 74, '2026-04-21T11:44:23'::timestamp, '2026-04-21T16:44:23'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (447, 77, '2026-04-20T15:14:24'::timestamp, '2026-04-20T23:14:24'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (447, 74, '2026-04-16T15:43:46'::timestamp, '2026-04-16T23:43:46'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (447, 71, '2026-04-15T15:09:21'::timestamp, '2026-04-15T23:09:21'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (447, 73, '2026-04-19T15:50:19'::timestamp, '2026-04-19T19:50:19'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (448, 74, '2026-04-19T08:24:25'::timestamp, '2026-04-19T15:24:25'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (448, 71, '2026-04-20T11:45:31'::timestamp, '2026-04-20T17:45:31'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (448, 77, '2026-04-18T15:07:15'::timestamp, '2026-04-18T22:07:15'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (448, 75, '2026-04-16T08:01:23'::timestamp, '2026-04-16T15:01:23'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (448, 72, '2026-04-17T11:34:54'::timestamp, '2026-04-17T15:34:54'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (449, 70, '2026-04-14T11:42:54'::timestamp, '2026-04-14T16:42:54'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (449, 73, '2026-04-18T11:50:23'::timestamp, '2026-04-18T18:50:23'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (449, 70, '2026-04-15T15:42:20'::timestamp, '2026-04-15T21:42:20'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (450, 71, '2026-04-16T08:52:27'::timestamp, '2026-04-16T12:52:27'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (450, 71, '2026-04-17T15:38:31'::timestamp, '2026-04-17T21:38:31'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (450, 70, '2026-04-20T15:55:54'::timestamp, '2026-04-20T20:55:54'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (450, 75, '2026-04-21T11:40:04'::timestamp, '2026-04-21T18:40:04'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (451, 71, '2026-04-15T15:50:21'::timestamp, '2026-04-15T21:50:21'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (451, 75, '2026-04-16T08:22:07'::timestamp, '2026-04-16T12:22:07'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (451, 76, '2026-04-18T11:21:21'::timestamp, '2026-04-18T18:21:21'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (451, 75, '2026-04-18T11:02:35'::timestamp, '2026-04-18T17:02:35'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (451, 74, '2026-04-16T11:19:35'::timestamp, '2026-04-16T19:19:35'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (452, 77, '2026-04-17T15:40:35'::timestamp, '2026-04-17T22:40:35'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (452, 77, '2026-04-20T11:32:58'::timestamp, '2026-04-20T15:32:58'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (452, 70, '2026-04-16T11:30:25'::timestamp, '2026-04-16T19:30:25'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (453, 74, '2026-04-15T08:47:57'::timestamp, '2026-04-15T13:47:57'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (453, 73, '2026-04-19T11:08:24'::timestamp, '2026-04-19T16:08:24'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (453, 75, '2026-04-19T08:19:10'::timestamp, '2026-04-19T15:19:10'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (453, 75, '2026-04-19T15:51:43'::timestamp, '2026-04-19T22:51:43'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (454, 71, '2026-04-20T11:26:09'::timestamp, '2026-04-20T19:26:09'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (454, 74, '2026-04-19T15:56:43'::timestamp, '2026-04-19T23:56:43'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (454, 73, '2026-04-17T11:00:56'::timestamp, '2026-04-17T18:00:56'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (454, 72, '2026-04-17T11:54:50'::timestamp, '2026-04-17T15:54:50'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (455, 77, '2026-04-16T11:09:05'::timestamp, '2026-04-16T19:09:05'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (455, 71, '2026-04-16T08:27:34'::timestamp, '2026-04-16T16:27:34'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (455, 70, '2026-04-17T11:33:41'::timestamp, '2026-04-17T17:33:41'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (456, 74, '2026-04-18T15:41:46'::timestamp, '2026-04-18T22:41:46'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (456, 74, '2026-04-18T11:01:48'::timestamp, '2026-04-18T15:01:48'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (456, 73, '2026-04-14T15:38:14'::timestamp, '2026-04-14T23:38:14'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (456, 75, '2026-04-19T15:07:10'::timestamp, '2026-04-19T23:07:10'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (457, 76, '2026-04-14T11:49:23'::timestamp, '2026-04-14T15:49:23'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (457, 77, '2026-04-17T11:12:01'::timestamp, '2026-04-17T18:12:01'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (457, 76, '2026-04-14T15:01:58'::timestamp, '2026-04-14T19:01:58'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (457, 75, '2026-04-20T15:19:45'::timestamp, '2026-04-20T23:19:45'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (457, 75, '2026-04-19T15:46:01'::timestamp, '2026-04-19T20:46:01'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (458, 77, '2026-04-15T08:38:50'::timestamp, '2026-04-15T14:38:50'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (458, 73, '2026-04-16T15:32:02'::timestamp, '2026-04-16T21:32:02'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (458, 76, '2026-04-18T15:19:37'::timestamp, '2026-04-18T21:19:37'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (458, 75, '2026-04-21T11:00:11'::timestamp, '2026-04-21T17:00:11'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (458, 77, '2026-04-18T15:47:48'::timestamp, '2026-04-18T20:47:48'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (459, 75, '2026-04-16T11:55:06'::timestamp, '2026-04-16T17:55:06'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (459, 77, '2026-04-16T11:48:52'::timestamp, '2026-04-16T16:48:52'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (459, 72, '2026-04-21T15:44:01'::timestamp, '2026-04-21T21:44:01'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (460, 74, '2026-04-15T15:49:59'::timestamp, '2026-04-15T19:49:59'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (460, 70, '2026-04-20T08:54:22'::timestamp, '2026-04-20T15:54:22'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (460, 73, '2026-04-17T08:32:33'::timestamp, '2026-04-17T12:32:33'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (460, 76, '2026-04-15T15:01:05'::timestamp, '2026-04-15T23:01:05'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (460, 72, '2026-04-17T08:21:42'::timestamp, '2026-04-17T16:21:42'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (461, 76, '2026-04-16T11:13:48'::timestamp, '2026-04-16T17:13:48'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (461, 71, '2026-04-19T11:05:54'::timestamp, '2026-04-19T15:05:54'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (461, 77, '2026-04-15T08:43:59'::timestamp, '2026-04-15T16:43:59'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (461, 73, '2026-04-20T08:09:52'::timestamp, '2026-04-20T15:09:52'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (462, 74, '2026-04-15T11:30:40'::timestamp, '2026-04-15T17:30:40'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (462, 70, '2026-04-15T15:29:57'::timestamp, '2026-04-15T23:29:57'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (462, 77, '2026-04-19T08:17:36'::timestamp, '2026-04-19T15:17:36'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (462, 73, '2026-04-15T15:15:42'::timestamp, '2026-04-15T22:15:42'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (463, 74, '2026-04-20T15:14:49'::timestamp, '2026-04-20T20:14:49'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (463, 75, '2026-04-18T08:04:25'::timestamp, '2026-04-18T14:04:25'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (463, 77, '2026-04-16T08:22:59'::timestamp, '2026-04-16T13:22:59'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (464, 70, '2026-04-21T11:31:37'::timestamp, '2026-04-21T17:31:37'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (464, 76, '2026-04-19T11:12:55'::timestamp, '2026-04-19T16:12:55'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (464, 73, '2026-04-16T11:25:27'::timestamp, '2026-04-16T18:25:27'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (465, 76, '2026-04-17T08:08:18'::timestamp, '2026-04-17T15:08:18'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (465, 71, '2026-04-17T11:30:18'::timestamp, '2026-04-17T17:30:18'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (465, 77, '2026-04-19T11:54:52'::timestamp, '2026-04-19T17:54:52'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (465, 77, '2026-04-20T11:45:48'::timestamp, '2026-04-20T15:45:48'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (466, 70, '2026-04-19T15:15:20'::timestamp, '2026-04-19T20:15:20'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (466, 77, '2026-04-15T15:40:13'::timestamp, '2026-04-15T23:40:13'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (466, 76, '2026-04-18T08:25:41'::timestamp, '2026-04-18T13:25:41'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (466, 70, '2026-04-16T08:00:59'::timestamp, '2026-04-16T15:00:59'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (466, 71, '2026-04-18T15:59:43'::timestamp, '2026-04-18T19:59:43'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (467, 71, '2026-04-20T08:46:13'::timestamp, '2026-04-20T14:46:13'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (467, 70, '2026-04-15T15:22:14'::timestamp, '2026-04-15T22:22:14'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (467, 74, '2026-04-17T15:25:17'::timestamp, '2026-04-17T23:25:17'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (467, 76, '2026-04-20T11:09:11'::timestamp, '2026-04-20T15:09:11'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (467, 70, '2026-04-18T15:26:09'::timestamp, '2026-04-18T22:26:09'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (468, 72, '2026-04-21T15:24:57'::timestamp, '2026-04-21T23:24:57'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (468, 71, '2026-04-19T11:14:08'::timestamp, '2026-04-19T15:14:08'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (468, 74, '2026-04-19T08:44:00'::timestamp, '2026-04-19T13:44:00'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (468, 73, '2026-04-20T11:48:05'::timestamp, '2026-04-20T15:48:05'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (469, 76, '2026-04-20T08:49:10'::timestamp, '2026-04-20T12:49:10'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (469, 70, '2026-04-18T11:33:37'::timestamp, '2026-04-18T15:33:37'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (469, 76, '2026-04-21T11:07:15'::timestamp, '2026-04-21T15:07:15'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (470, 77, '2026-04-15T15:13:22'::timestamp, '2026-04-15T22:13:22'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (470, 77, '2026-04-18T11:54:55'::timestamp, '2026-04-18T18:54:55'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (470, 71, '2026-04-20T11:27:09'::timestamp, '2026-04-20T15:27:09'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (471, 76, '2026-04-21T15:15:26'::timestamp, '2026-04-21T20:15:26'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (471, 76, '2026-04-14T08:25:56'::timestamp, '2026-04-14T13:25:56'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (471, 72, '2026-04-18T08:21:11'::timestamp, '2026-04-18T14:21:11'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (471, 72, '2026-04-15T15:33:44'::timestamp, '2026-04-15T20:33:44'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (472, 73, '2026-04-17T15:26:50'::timestamp, '2026-04-17T20:26:50'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (472, 72, '2026-04-17T11:50:29'::timestamp, '2026-04-17T16:50:29'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (472, 75, '2026-04-18T15:46:32'::timestamp, '2026-04-18T23:46:32'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (473, 76, '2026-04-18T08:43:39'::timestamp, '2026-04-18T13:43:39'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (473, 72, '2026-04-15T11:31:57'::timestamp, '2026-04-15T17:31:57'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (473, 75, '2026-04-21T08:52:57'::timestamp, '2026-04-21T15:52:57'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (473, 75, '2026-04-21T15:26:31'::timestamp, '2026-04-21T22:26:31'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (474, 76, '2026-04-21T15:51:36'::timestamp, '2026-04-21T20:51:36'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (474, 75, '2026-04-16T15:20:47'::timestamp, '2026-04-16T23:20:47'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (474, 77, '2026-04-17T11:17:03'::timestamp, '2026-04-17T18:17:03'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (474, 76, '2026-04-16T11:21:47'::timestamp, '2026-04-16T18:21:47'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (475, 70, '2026-04-18T08:30:44'::timestamp, '2026-04-18T13:30:44'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (475, 73, '2026-04-16T15:32:50'::timestamp, '2026-04-16T19:32:50'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (475, 72, '2026-04-18T08:46:07'::timestamp, '2026-04-18T13:46:07'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (475, 75, '2026-04-20T08:07:35'::timestamp, '2026-04-20T14:07:35'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (476, 71, '2026-04-15T11:25:07'::timestamp, '2026-04-15T17:25:07'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (476, 71, '2026-04-14T11:11:34'::timestamp, '2026-04-14T16:11:34'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (476, 73, '2026-04-17T08:28:46'::timestamp, '2026-04-17T12:28:46'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (476, 72, '2026-04-17T08:40:39'::timestamp, '2026-04-17T14:40:39'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (476, 77, '2026-04-19T11:34:54'::timestamp, '2026-04-19T17:34:54'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (477, 77, '2026-04-18T11:17:28'::timestamp, '2026-04-18T15:17:28'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (477, 76, '2026-04-20T11:50:55'::timestamp, '2026-04-20T16:50:55'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (477, 76, '2026-04-16T08:21:15'::timestamp, '2026-04-16T16:21:15'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (477, 73, '2026-04-16T15:04:53'::timestamp, '2026-04-16T23:04:53'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (478, 74, '2026-04-15T11:50:01'::timestamp, '2026-04-15T19:50:01'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (478, 76, '2026-04-20T11:00:59'::timestamp, '2026-04-20T16:00:59'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (478, 73, '2026-04-16T15:00:30'::timestamp, '2026-04-16T23:00:30'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (478, 74, '2026-04-18T15:58:04'::timestamp, '2026-04-18T23:58:04'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (478, 74, '2026-04-17T08:56:22'::timestamp, '2026-04-17T13:56:22'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (479, 72, '2026-04-15T08:23:13'::timestamp, '2026-04-15T14:23:13'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (479, 70, '2026-04-19T08:59:41'::timestamp, '2026-04-19T13:59:41'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (479, 77, '2026-04-15T08:55:13'::timestamp, '2026-04-15T15:55:13'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (479, 73, '2026-04-17T11:50:02'::timestamp, '2026-04-17T17:50:02'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (479, 76, '2026-04-19T08:29:26'::timestamp, '2026-04-19T15:29:26'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (480, 76, '2026-04-18T11:12:00'::timestamp, '2026-04-18T19:12:00'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (480, 71, '2026-04-17T11:56:19'::timestamp, '2026-04-17T15:56:19'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (480, 75, '2026-04-14T11:24:55'::timestamp, '2026-04-14T15:24:55'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (480, 72, '2026-04-17T15:40:07'::timestamp, '2026-04-17T20:40:07'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (481, 77, '2026-04-19T08:47:15'::timestamp, '2026-04-19T13:47:15'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (481, 71, '2026-04-16T11:02:36'::timestamp, '2026-04-16T18:02:36'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (481, 73, '2026-04-16T11:35:29'::timestamp, '2026-04-16T19:35:29'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (481, 75, '2026-04-18T11:08:11'::timestamp, '2026-04-18T17:08:11'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (481, 75, '2026-04-19T08:05:49'::timestamp, '2026-04-19T12:05:49'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (482, 70, '2026-04-16T11:28:34'::timestamp, '2026-04-16T15:28:34'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (482, 74, '2026-04-15T08:13:06'::timestamp, '2026-04-15T14:13:06'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (482, 70, '2026-04-21T15:09:41'::timestamp, '2026-04-21T23:09:41'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (483, 71, '2026-04-18T15:55:06'::timestamp, '2026-04-18T19:55:06'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (483, 73, '2026-04-21T15:58:01'::timestamp, '2026-04-21T22:58:01'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (483, 72, '2026-04-16T11:50:49'::timestamp, '2026-04-16T17:50:49'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (484, 77, '2026-04-21T08:08:24'::timestamp, '2026-04-21T16:08:24'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (484, 70, '2026-04-17T11:37:36'::timestamp, '2026-04-17T17:37:36'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (484, 76, '2026-04-16T08:49:53'::timestamp, '2026-04-16T13:49:53'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (484, 77, '2026-04-15T11:32:25'::timestamp, '2026-04-15T16:32:25'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (484, 73, '2026-04-15T08:21:58'::timestamp, '2026-04-15T14:21:58'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (485, 70, '2026-04-15T11:57:19'::timestamp, '2026-04-15T17:57:19'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (485, 71, '2026-04-14T11:25:40'::timestamp, '2026-04-14T18:25:40'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (485, 70, '2026-04-20T08:22:42'::timestamp, '2026-04-20T12:22:42'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (486, 70, '2026-04-16T08:21:10'::timestamp, '2026-04-16T13:21:10'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (486, 77, '2026-04-16T11:17:52'::timestamp, '2026-04-16T15:17:52'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (486, 76, '2026-04-16T11:14:05'::timestamp, '2026-04-16T16:14:05'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (486, 70, '2026-04-20T08:53:03'::timestamp, '2026-04-20T12:53:03'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (486, 76, '2026-04-20T11:40:53'::timestamp, '2026-04-20T18:40:53'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (487, 72, '2026-04-18T11:04:56'::timestamp, '2026-04-18T15:04:56'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (487, 77, '2026-04-17T11:31:24'::timestamp, '2026-04-17T16:31:24'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (487, 77, '2026-04-14T08:24:53'::timestamp, '2026-04-14T16:24:53'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (487, 70, '2026-04-20T15:09:48'::timestamp, '2026-04-20T20:09:48'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (488, 72, '2026-04-20T15:09:28'::timestamp, '2026-04-20T22:09:28'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (488, 75, '2026-04-19T11:05:01'::timestamp, '2026-04-19T17:05:01'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (488, 73, '2026-04-15T15:47:51'::timestamp, '2026-04-15T21:47:51'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (488, 73, '2026-04-21T15:31:44'::timestamp, '2026-04-21T23:31:44'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (489, 70, '2026-04-15T08:43:08'::timestamp, '2026-04-15T16:43:08'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (489, 71, '2026-04-17T08:42:24'::timestamp, '2026-04-17T16:42:24'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (489, 71, '2026-04-21T08:39:39'::timestamp, '2026-04-21T13:39:39'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (489, 72, '2026-04-16T15:34:59'::timestamp, '2026-04-16T19:34:59'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (490, 72, '2026-04-19T11:09:34'::timestamp, '2026-04-19T16:09:34'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (490, 74, '2026-04-19T11:14:51'::timestamp, '2026-04-19T17:14:51'::timestamp);
-INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES (490, 70, '2026-04-20T15:49:17'::timestamp, '2026-04-20T23:49:17'::timestamp);
+INSERT INTO shifts (employee_id, location_id, shift_start, shift_end) VALUES
+(4,  14, '2026-04-19 07:00:00', '2026-04-19 15:00:00'),
+(5,   8, '2026-04-19 12:00:00', '2026-04-19 20:00:00'),
+(6,  16, '2026-04-19 16:00:00', '2026-04-20 00:00:00'),
+(7,   6, '2026-04-19 07:00:00', '2026-04-19 15:00:00'),
+(8,  19, '2026-04-19 12:00:00', '2026-04-19 20:00:00'),
+(9,  10, '2026-04-19 16:00:00', '2026-04-20 00:00:00'),
+(10, 16, '2026-04-19 07:00:00', '2026-04-19 15:00:00'),
+(11,  6, '2026-04-19 12:00:00', '2026-04-19 20:00:00'),
+(12, 19, '2026-04-19 16:00:00', '2026-04-20 00:00:00'),
+(13, 16, '2026-04-19 07:00:00', '2026-04-19 15:00:00'),
+(14,  3, '2026-04-19 12:00:00', '2026-04-19 20:00:00'),
+(15, 20, '2026-04-19 16:00:00', '2026-04-20 00:00:00'),
+(16, 20, '2026-04-19 07:00:00', '2026-04-19 15:00:00'),
+(17, 12, '2026-04-19 12:00:00', '2026-04-19 20:00:00'),
+(18, 14, '2026-04-19 16:00:00', '2026-04-20 00:00:00'),
+(19, 16, '2026-04-19 07:00:00', '2026-04-19 15:00:00'),
+(20, 10, '2026-04-19 12:00:00', '2026-04-19 20:00:00'),
+(21, 16, '2026-04-19 16:00:00', '2026-04-20 00:00:00'),
+(22,  4, '2026-04-19 07:00:00', '2026-04-19 15:00:00'),
+(23, 16, '2026-04-19 12:00:00', '2026-04-19 20:00:00'),
+(24,  1, '2026-04-19 16:00:00', '2026-04-20 00:00:00'),
+(25, 19, '2026-04-19 07:00:00', '2026-04-19 15:00:00'),
+(26,  7, '2026-04-19 12:00:00', '2026-04-19 20:00:00'),
+(27,  9, '2026-04-19 16:00:00', '2026-04-20 00:00:00'),
+(28,  7, '2026-04-19 07:00:00', '2026-04-19 15:00:00'),
+(29, 14, '2026-04-19 12:00:00', '2026-04-19 20:00:00'),
+(30,  9, '2026-04-19 16:00:00', '2026-04-20 00:00:00'),
+(31, 14, '2026-04-19 07:00:00', '2026-04-19 15:00:00'),
+(32,  8, '2026-04-19 12:00:00', '2026-04-19 20:00:00'),
+(33,  3, '2026-04-19 16:00:00', '2026-04-20 00:00:00'),
+(34,  8, '2026-04-19 07:00:00', '2026-04-19 15:00:00'),
+(35, 12, '2026-04-19 12:00:00', '2026-04-19 20:00:00'),
+(36,  2, '2026-04-19 16:00:00', '2026-04-20 00:00:00'),
+(37, 16, '2026-04-19 07:00:00', '2026-04-19 15:00:00'),
+(38, 11, '2026-04-19 12:00:00', '2026-04-19 20:00:00'),
+(39,  6, '2026-04-19 16:00:00', '2026-04-20 00:00:00'),
+(40,  6, '2026-04-19 07:00:00', '2026-04-19 15:00:00'),
+(41, 15, '2026-04-19 12:00:00', '2026-04-19 20:00:00'),
+(42, 17, '2026-04-19 16:00:00', '2026-04-20 00:00:00'),
+(43, 11, '2026-04-19 07:00:00', '2026-04-19 15:00:00'),
+(44,  6, '2026-04-19 12:00:00', '2026-04-19 20:00:00'),
+(45, 17, '2026-04-19 16:00:00', '2026-04-20 00:00:00'),
+(46, 19, '2026-04-19 07:00:00', '2026-04-19 15:00:00'),
+(47,  8, '2026-04-19 12:00:00', '2026-04-19 20:00:00'),
+(48, 14, '2026-04-19 16:00:00', '2026-04-20 00:00:00'),
+(49,  9, '2026-04-19 07:00:00', '2026-04-19 15:00:00'),
+(50,  4, '2026-04-19 12:00:00', '2026-04-19 20:00:00'),
+(51, 14, '2026-04-19 16:00:00', '2026-04-20 00:00:00'),
+(52,  9, '2026-04-19 07:00:00', '2026-04-19 15:00:00'),
+(53, 12, '2026-04-19 12:00:00', '2026-04-19 20:00:00'),
+(54,  7, '2026-04-19 16:00:00', '2026-04-20 00:00:00'),
+-- 2026-04-20
+(4,  14, '2026-04-20 07:00:00', '2026-04-20 15:00:00'),
+(5,   8, '2026-04-20 16:00:00', '2026-04-21 00:00:00'),
+(6,  16, '2026-04-20 12:00:00', '2026-04-20 20:00:00'),
+(7,   6, '2026-04-20 16:00:00', '2026-04-21 00:00:00'),
+(8,  19, '2026-04-20 07:00:00', '2026-04-20 15:00:00'),
+(9,  10, '2026-04-20 12:00:00', '2026-04-20 20:00:00'),
+(10, 16, '2026-04-20 16:00:00', '2026-04-21 00:00:00'),
+(11,  6, '2026-04-20 07:00:00', '2026-04-20 15:00:00'),
+(12, 19, '2026-04-20 12:00:00', '2026-04-20 20:00:00'),
+(13, 16, '2026-04-20 16:00:00', '2026-04-21 00:00:00'),
+(14,  3, '2026-04-20 07:00:00', '2026-04-20 15:00:00'),
+(15, 20, '2026-04-20 12:00:00', '2026-04-20 20:00:00'),
+(16, 20, '2026-04-20 16:00:00', '2026-04-21 00:00:00'),
+(17, 12, '2026-04-20 07:00:00', '2026-04-20 15:00:00'),
+(18, 14, '2026-04-20 12:00:00', '2026-04-20 20:00:00'),
+(19, 16, '2026-04-20 16:00:00', '2026-04-21 00:00:00'),
+(20, 10, '2026-04-20 07:00:00', '2026-04-20 15:00:00'),
+(21, 16, '2026-04-20 12:00:00', '2026-04-20 20:00:00'),
+(22,  4, '2026-04-20 16:00:00', '2026-04-21 00:00:00'),
+(23, 16, '2026-04-20 07:00:00', '2026-04-20 15:00:00'),
+(24,  1, '2026-04-20 12:00:00', '2026-04-20 20:00:00'),
+(25, 19, '2026-04-20 16:00:00', '2026-04-21 00:00:00'),
+(26,  7, '2026-04-20 07:00:00', '2026-04-20 15:00:00'),
+(27,  9, '2026-04-20 12:00:00', '2026-04-20 20:00:00'),
+(28,  7, '2026-04-20 16:00:00', '2026-04-21 00:00:00'),
+-- 2026-04-21
+(29, 14, '2026-04-21 07:00:00', '2026-04-21 15:00:00'),
+(30,  9, '2026-04-21 12:00:00', '2026-04-21 20:00:00'),
+(31, 14, '2026-04-21 16:00:00', '2026-04-22 00:00:00'),
+(32,  8, '2026-04-21 07:00:00', '2026-04-21 15:00:00'),
+(33,  3, '2026-04-21 12:00:00', '2026-04-21 20:00:00'),
+(34,  8, '2026-04-21 16:00:00', '2026-04-22 00:00:00'),
+(35, 12, '2026-04-21 07:00:00', '2026-04-21 15:00:00'),
+(36,  2, '2026-04-21 12:00:00', '2026-04-21 20:00:00'),
+(37, 16, '2026-04-21 16:00:00', '2026-04-22 00:00:00'),
+(38, 11, '2026-04-21 07:00:00', '2026-04-21 15:00:00'),
+(39,  6, '2026-04-21 12:00:00', '2026-04-21 20:00:00'),
+(40,  6, '2026-04-21 16:00:00', '2026-04-22 00:00:00'),
+(41, 15, '2026-04-21 07:00:00', '2026-04-21 15:00:00'),
+(42, 17, '2026-04-21 12:00:00', '2026-04-21 20:00:00'),
+(43, 11, '2026-04-21 16:00:00', '2026-04-22 00:00:00'),
+(44,  6, '2026-04-21 07:00:00', '2026-04-21 15:00:00'),
+(45, 17, '2026-04-21 12:00:00', '2026-04-21 20:00:00'),
+(46, 19, '2026-04-21 16:00:00', '2026-04-22 00:00:00'),
+(47,  8, '2026-04-21 07:00:00', '2026-04-21 15:00:00'),
+(48, 14, '2026-04-21 12:00:00', '2026-04-21 20:00:00'),
+(49,  9, '2026-04-21 16:00:00', '2026-04-22 00:00:00'),
+(50,  4, '2026-04-21 07:00:00', '2026-04-21 15:00:00'),
+(51, 14, '2026-04-21 12:00:00', '2026-04-21 20:00:00'),
+(52,  9, '2026-04-21 16:00:00', '2026-04-22 00:00:00'),
+(53, 12, '2026-04-21 07:00:00', '2026-04-21 15:00:00'),
+(54,  7, '2026-04-21 12:00:00', '2026-04-21 20:00:00'),
+-- 2026-04-22
+(4,  14, '2026-04-22 07:00:00', '2026-04-22 15:00:00'),
+(5,   8, '2026-04-22 12:00:00', '2026-04-22 20:00:00'),
+(6,  16, '2026-04-22 16:00:00', '2026-04-23 00:00:00'),
+(7,   6, '2026-04-22 07:00:00', '2026-04-22 15:00:00'),
+(8,  19, '2026-04-22 12:00:00', '2026-04-22 20:00:00'),
+(9,  10, '2026-04-22 16:00:00', '2026-04-23 00:00:00'),
+(10, 16, '2026-04-22 07:00:00', '2026-04-22 15:00:00'),
+(11,  6, '2026-04-22 12:00:00', '2026-04-22 20:00:00'),
+(12, 19, '2026-04-22 16:00:00', '2026-04-23 00:00:00'),
+(13, 16, '2026-04-22 07:00:00', '2026-04-22 15:00:00'),
+(14,  3, '2026-04-22 12:00:00', '2026-04-22 20:00:00'),
+(15, 20, '2026-04-22 16:00:00', '2026-04-23 00:00:00'),
+-- 2026-04-25
+(16, 20, '2026-04-25 07:00:00', '2026-04-25 15:00:00'),
+(17, 12, '2026-04-25 12:00:00', '2026-04-25 20:00:00'),
+(18, 14, '2026-04-25 16:00:00', '2026-04-26 00:00:00'),
+(19, 16, '2026-04-25 07:00:00', '2026-04-25 15:00:00'),
+(20, 10, '2026-04-25 12:00:00', '2026-04-25 20:00:00'),
+(21, 16, '2026-04-25 16:00:00', '2026-04-26 00:00:00'),
+(22,  4, '2026-04-25 07:00:00', '2026-04-25 15:00:00'),
+(23, 16, '2026-04-25 12:00:00', '2026-04-25 20:00:00'),
+(24,  1, '2026-04-25 16:00:00', '2026-04-26 00:00:00'),
+(25, 19, '2026-04-25 07:00:00', '2026-04-25 15:00:00'),
+(26,  7, '2026-04-25 12:00:00', '2026-04-25 20:00:00'),
+(27,  9, '2026-04-25 16:00:00', '2026-04-26 00:00:00'),
+(28,  7, '2026-04-25 07:00:00', '2026-04-25 15:00:00'),
+(29, 14, '2026-04-25 12:00:00', '2026-04-25 20:00:00'),
+(30,  9, '2026-04-25 16:00:00', '2026-04-26 00:00:00'),
+(31, 14, '2026-04-25 07:00:00', '2026-04-25 15:00:00'),
+(32,  8, '2026-04-25 12:00:00', '2026-04-25 20:00:00'),
+(33,  3, '2026-04-25 16:00:00', '2026-04-26 00:00:00'),
+(34,  8, '2026-04-25 07:00:00', '2026-04-25 15:00:00'),
+(35, 12, '2026-04-25 12:00:00', '2026-04-25 20:00:00'),
+(36,  2, '2026-04-25 16:00:00', '2026-04-26 00:00:00'),
+(37, 16, '2026-04-25 07:00:00', '2026-04-25 15:00:00'),
+(38, 11, '2026-04-25 12:00:00', '2026-04-25 20:00:00'),
+(39,  6, '2026-04-25 16:00:00', '2026-04-26 00:00:00'),
+(40,  6, '2026-04-25 07:00:00', '2026-04-25 15:00:00'),
+(41, 15, '2026-04-25 12:00:00', '2026-04-25 20:00:00'),
+(42, 17, '2026-04-25 16:00:00', '2026-04-26 00:00:00'),
+(43, 11, '2026-04-25 07:00:00', '2026-04-25 15:00:00'),
+(44,  6, '2026-04-25 12:00:00', '2026-04-25 20:00:00'),
+(45, 17, '2026-04-25 16:00:00', '2026-04-26 00:00:00'),
+(46, 19, '2026-04-25 07:00:00', '2026-04-25 15:00:00'),
+(47,  8, '2026-04-25 12:00:00', '2026-04-25 20:00:00'),
+(48, 14, '2026-04-25 16:00:00', '2026-04-26 00:00:00'),
+(49,  9, '2026-04-25 07:00:00', '2026-04-25 15:00:00'),
+(50,  4, '2026-04-25 12:00:00', '2026-04-25 20:00:00'),
+(51, 14, '2026-04-25 16:00:00', '2026-04-26 00:00:00'),
+(52,  9, '2026-04-25 07:00:00', '2026-04-25 15:00:00'),
+(53, 12, '2026-04-25 12:00:00', '2026-04-25 20:00:00'),
+(54,  7, '2026-04-25 16:00:00', '2026-04-26 00:00:00');

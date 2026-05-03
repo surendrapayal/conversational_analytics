@@ -1,17 +1,3 @@
--- Enable pgvector extension
-CREATE EXTENSION IF NOT EXISTS vector;
-
--- VECTOR TABLE
---CREATE TABLE IF NOT EXISTS embeddings (
---    id SERIAL PRIMARY KEY,
---    message_id INTEGER REFERENCES messages(id) ON DELETE CASCADE,
---    embedding vector(1536),
---    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
---);
-
--- Create index for faster similarity search
---CREATE INDEX ON embeddings USING ivfflat (embedding vector_cosine_ops);
-
 -- RELATIONAL TABLES FOR RESTAURANT MANAGEMENT SYSTEM
 -- ============================================================================
 -- CORE MASTER DATA TABLES
@@ -363,3 +349,11 @@ COMMENT ON COLUMN reservations.customer_id IS 'Foreign key referencing customers
 COMMENT ON COLUMN reservations.start_time IS 'Reservation start time';
 COMMENT ON COLUMN reservations.end_time IS 'Reservation end time';
 COMMENT ON COLUMN reservations.status IS 'Reservation status (booked, checked_in, no_show, cancelled)';
+
+-- ============================================================================
+-- ACCESS CONTROL
+-- ============================================================================
+
+-- Read-only user for the SQL agent
+CREATE USER ca_agent_user WITH PASSWORD 'ca_agent_password';
+GRANT pg_read_all_data TO ca_agent_user;

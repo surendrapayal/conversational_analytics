@@ -90,7 +90,7 @@ class TestDataGenerator:
         tables = [
             'loyalty_txn', 'order_discounts', 'order_items', 'payments', 'reservations',
             'shifts', 'orders', 'recipe_items', 'supplier_items', 'inventory',
-            'loyalty_accounts', 'menu_items', 'menu_categories', 'ingredients', 'supplier',
+            'loyalty_accounts', 'discounts', 'menu_items', 'menu_categories', 'ingredients', 'supplier',
             'employee', 'roles', 'tables', 'customers', 'location'
         ]
         for table in tables:
@@ -697,11 +697,11 @@ if __name__ == "__main__":
     import sys
     
     generator = TestDataGenerator(
-        db_host=os.getenv("DB_HOST", "localhost"),
-        db_port=int(os.getenv("DB_PORT", "5433")),
-        db_name=os.getenv("DB_NAME", "zenvyra"),
-        db_user=os.getenv("DB_USER", "admin_user"),
-        db_password=os.getenv("DB_PASSWORD", "admin_password"),
+        db_host=os.getenv("ANALYTICS_DB_HOST", "localhost"),
+        db_port=int(os.getenv("ANALYTICS_DB_PORT", "5433")),
+        db_name=os.getenv("ANALYTICS_DB_NAME", "zenvyra"),
+        db_user="admin_user",
+        db_password="admin_password",
         sql_output_dir="sql_data"
     )
     

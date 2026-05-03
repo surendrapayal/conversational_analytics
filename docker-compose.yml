@@ -1,0 +1,51 @@
+services:
+
+  my-redis:
+    image: redis:latest
+    container_name: my-redis
+    ports:
+      - "6379:6379"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  zenvyra-analytics-db:
+    image: pgvector/pgvector:pg18
+    container_name: zenvyra-analytics-db
+    environment:
+      POSTGRES_USER: admin_user
+      POSTGRES_PASSWORD: admin_password
+      POSTGRES_DB: zenvyra
+    ports:
+      - "5433:5432"
+    volumes:
+      - C:/MyData/personal-learning/zenvyra-analytics-data:/var/lib/postgresql
+      - C:/MyData/personal-learning/conversational-analytics/pgscript/zenvyra-analytics-db-init.sql:/docker-entrypoint-initdb.d/01_init.sql
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin_user -d zenvyra"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  agent-memory-db:
+    image: pgvector/pgvector:pg18
+    container_name: agent-memory-db
+    environment:
+      POSTGRES_USER: admin_user
+      POSTGRES_PASSWORD: admin_password
+      POSTGRES_DB: agent_memory
+    ports:
+      - "5434:5432"
+    volumes:
+      - C:/MyData/personal-learning/agent-memory-data:/var/lib/postgresql
+      - C:/MyData/personal-learning/conversational-analytics/pgscript/agent-memory-db-init.sql:/docker-entrypoint-initdb.d/01_init_memory.sql
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin_user -d agent_memory"]
+      interval: 10s
+      timeout: 5s
+      retries: 5

@@ -1,7 +1,5 @@
 import logging
 import asyncio
-import psycopg2
-from pathlib import Path
 
 from psycopg_pool import AsyncConnectionPool
 from langgraph.store.postgres.aio import AsyncPostgresStore
@@ -56,24 +54,6 @@ async def get_long_term_store() -> AsyncPostgresStore:
         except Exception as e:
             logger.error(f"Failed to initialise AsyncPostgresStore: {e}")
             raise
-
-
-def setup_schema() -> None:
-    """Creates the memory schema, views and audit tables if they do not exist."""
-    sql_file = Path(__file__).parent / "migrations" / "001_long_term_memory.sql"
-    logger.info(f"Running memory schema migration from {sql_file}")
-    cfg = get_settings()
-    conn = psycopg2.connect(**cfg.long_term_memory_db_dsn)
-    try:
-        conn.autocommit = True
-        with conn.cursor() as cur:
-            cur.execute(sql_file.read_text(encoding="utf-8"))
-        logger.info("Long-term memory schema initialised successfully")
-    except Exception as e:
-        logger.error(f"Memory schema migration failed: {e}")
-        raise
-    finally:
-        conn.close()
 
 
 async def save_conversation_summary(

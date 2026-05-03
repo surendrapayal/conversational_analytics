@@ -1,118 +1,28 @@
--- Insert data into reservations
--- Generated at: 2026-04-21T14:16:56.353288
+-- ── reservations ─────────────────────────────────────────────────────────────
+-- ~2 reservations per location per date across 5 dates
+-- Run AFTER tables_inserts.sql
 
-INSERT INTO reservations (table_id, customer_id, start_time, end_time, status) VALUES (901, 1136, '2026-04-25T23:55:19'::timestamp, '2026-04-26T00:55:19'::timestamp, 'no_show');
-INSERT INTO reservations (table_id, customer_id, start_time, end_time, status) VALUES (974, 1110, '2026-04-26T18:30:14'::timestamp, '2026-04-26T19:30:14'::timestamp, 'cancelled');
-INSERT INTO reservations (table_id, customer_id, start_time, end_time, status) VALUES (992, 1104, '2026-05-04T03:27:11'::timestamp, '2026-05-04T04:27:11'::timestamp, 'cancelled');
-INSERT INTO reservations (table_id, customer_id, start_time, end_time, status) VALUES (995, 1118, '2026-05-10T07:25:51'::timestamp, '2026-05-10T09:25:51'::timestamp, 'checked_in');
-INSERT INTO reservations (table_id, customer_id, start_time, end_time, status) VALUES (979, 1163, '2026-04-21T18:22:58'::timestamp, '2026-04-21T19:22:58'::timestamp, 'no_show');
-INSERT INTO reservations (table_id, customer_id, start_time, end_time, status) VALUES (933, 1149, '2026-05-18T10:55:17'::timestamp, '2026-05-18T13:55:17'::timestamp, 'checked_in');
-INSERT INTO reservations (table_id, customer_id, start_time, end_time, status) VALUES (924, 1055, '2026-05-13T07:51:46'::timestamp, '2026-05-13T09:51:46'::timestamp, 'no_show');
-INSERT INTO reservations (table_id, customer_id, start_time, end_time, status) VALUES (969, 1075, '2026-05-02T05:10:36'::timestamp, '2026-05-02T06:10:36'::timestamp, 'no_show');
-INSERT INTO reservations (table_id, customer_id, start_time, end_time, status) VALUES (1011, 1098, '2026-04-25T11:53:37'::timestamp, '2026-04-25T13:53:37'::timestamp, 'booked');
-INSERT INTO reservations (table_id, customer_id, start_time, end_time, status) VALUES (937, 1054, '2026-04-30T10:48:51'::timestamp, '2026-04-30T11:48:51'::timestamp, 'no_show');
-INSERT INTO reservations (table_id, customer_id, start_time, end_time, status) VALUES (930, 1109, '2026-04-26T10:09:51'::timestamp, '2026-04-26T13:09:51'::timestamp, 'checked_in');
-INSERT INTO reservations (table_id, customer_id, start_time, end_time, status) VALUES (938, 1076, '2026-05-19T14:04:41'::timestamp, '2026-05-19T15:04:41'::timestamp, 'booked');
-INSERT INTO reservations (table_id, customer_id, start_time, end_time, status) VALUES (945, 1116, '2026-04-29T09:54:10'::timestamp, '2026-04-29T10:54:10'::timestamp, 'checked_in');
-INSERT INTO reservations (table_id, customer_id, start_time, end_time, status) VALUES (1005, 1088, '2026-05-20T09:42:19'::timestamp, '2026-05-20T12:42:19'::timestamp, 'cancelled');
-INSERT INTO reservations (table_id, customer_id, start_time, end_time, status) VALUES (925, 1175, '2026-04-26T17:43:03'::timestamp, '2026-04-26T18:43:03'::timestamp, 'checked_in');
-INSERT INTO reservations (table_id, customer_id, start_time, end_time, status) VALUES (1045, 1342, '2026-05-03T22:53:02'::timestamp, '2026-05-04T01:53:02'::timestamp, 'no_show');
-INSERT INTO reservations (table_id, customer_id, start_time, end_time, status) VALUES (1066, 1282, '2026-05-06T11:24:13'::timestamp, '2026-05-06T12:24:13'::timestamp, 'no_show');
-INSERT INTO reservations (table_id, customer_id, start_time, end_time, status) VALUES (1088, 1336, '2026-04-26T16:43:54'::timestamp, '2026-04-26T18:43:54'::timestamp, 'cancelled');
-INSERT INTO reservations (table_id, customer_id, start_time, end_time, status) VALUES (1023, 1207, '2026-04-23T19:01:40'::timestamp, '2026-04-23T22:01:40'::timestamp, 'no_show');
-INSERT INTO reservations (table_id, customer_id, start_time, end_time, status) VALUES (1033, 1298, '2026-05-08T11:24:40'::timestamp, '2026-05-08T12:24:40'::timestamp, 'no_show');
-INSERT INTO reservations (table_id, customer_id, start_time, end_time, status) VALUES (1030, 1256, '2026-05-08T14:36:15'::timestamp, '2026-05-08T15:36:15'::timestamp, 'booked');
-INSERT INTO reservations (table_id, customer_id, start_time, end_time, status) VALUES (1060, 1255, '2026-04-23T02:39:29'::timestamp, '2026-04-23T05:39:29'::timestamp, 'checked_in');
-INSERT INTO reservations (table_id, customer_id, start_time, end_time, status) VALUES (1092, 1321, '2026-05-08T22:39:23'::timestamp, '2026-05-08T23:39:23'::timestamp, 'cancelled');
-INSERT INTO reservations (table_id, customer_id, start_time, end_time, status) VALUES (1108, 1226, '2026-05-02T09:00:51'::timestamp, '2026-05-02T11:00:51'::timestamp, 'booked');
-INSERT INTO reservations (table_id, customer_id, start_time, end_time, status) VALUES (1023, 1286, '2026-04-24T04:30:25'::timestamp, '2026-04-24T06:30:25'::timestamp, 'checked_in');
-INSERT INTO reservations (table_id, customer_id, start_time, end_time, status) VALUES (1022, 1277, '2026-05-05T09:00:56'::timestamp, '2026-05-05T11:00:56'::timestamp, 'booked');
-INSERT INTO reservations (table_id, customer_id, start_time, end_time, status) VALUES (1082, 1337, '2026-05-06T10:49:24'::timestamp, '2026-05-06T12:49:24'::timestamp, 'cancelled');
-INSERT INTO reservations (table_id, customer_id, start_time, end_time, status) VALUES (1100, 1318, '2026-05-18T08:04:41'::timestamp, '2026-05-18T11:04:41'::timestamp, 'cancelled');
-INSERT INTO reservations (table_id, customer_id, start_time, end_time, status) VALUES (1076, 1214, '2026-04-25T21:27:20'::timestamp, '2026-04-26T00:27:20'::timestamp, 'checked_in');
-INSERT INTO reservations (table_id, customer_id, start_time, end_time, status) VALUES (1073, 1257, '2026-05-16T20:32:13'::timestamp, '2026-05-16T23:32:13'::timestamp, 'checked_in');
-INSERT INTO reservations (table_id, customer_id, start_time, end_time, status) VALUES (1105, 1258, '2026-05-08T04:18:38'::timestamp, '2026-05-08T05:18:38'::timestamp, 'checked_in');
-INSERT INTO reservations (table_id, customer_id, start_time, end_time, status) VALUES (1071, 1210, '2026-04-28T20:42:01'::timestamp, '2026-04-28T21:42:01'::timestamp, 'cancelled');
-INSERT INTO reservations (table_id, customer_id, start_time, end_time, status) VALUES (1077, 1314, '2026-05-06T16:28:01'::timestamp, '2026-05-06T18:28:01'::timestamp, 'no_show');
-INSERT INTO reservations (table_id, customer_id, start_time, end_time, status) VALUES (1042, 1207, '2026-04-26T20:06:48'::timestamp, '2026-04-26T21:06:48'::timestamp, 'no_show');
-INSERT INTO reservations (table_id, customer_id, start_time, end_time, status) VALUES (1086, 1328, '2026-05-06T22:40:27'::timestamp, '2026-05-07T00:40:27'::timestamp, 'cancelled');
-INSERT INTO reservations (table_id, customer_id, start_time, end_time, status) VALUES (1114, 1217, '2026-05-03T11:04:45'::timestamp, '2026-05-03T12:04:45'::timestamp, 'no_show');
-INSERT INTO reservations (table_id, customer_id, start_time, end_time, status) VALUES (1113, 1228, '2026-04-30T04:39:04'::timestamp, '2026-04-30T06:39:04'::timestamp, 'booked');
-INSERT INTO reservations (table_id, customer_id, start_time, end_time, status) VALUES (1063, 1265, '2026-05-07T06:49:22'::timestamp, '2026-05-07T08:49:22'::timestamp, 'cancelled');
-INSERT INTO reservations (table_id, customer_id, start_time, end_time, status) VALUES (1029, 1348, '2026-04-24T14:17:23'::timestamp, '2026-04-24T16:17:23'::timestamp, 'checked_in');
-INSERT INTO reservations (table_id, customer_id, start_time, end_time, status) VALUES (1084, 1310, '2026-05-21T06:39:50'::timestamp, '2026-05-21T09:39:50'::timestamp, 'cancelled');
-INSERT INTO reservations (table_id, customer_id, start_time, end_time, status) VALUES (1051, 1341, '2026-04-27T06:51:03'::timestamp, '2026-04-27T09:51:03'::timestamp, 'cancelled');
-INSERT INTO reservations (table_id, customer_id, start_time, end_time, status) VALUES (1025, 1258, '2026-04-25T18:41:37'::timestamp, '2026-04-25T19:41:37'::timestamp, 'checked_in');
-INSERT INTO reservations (table_id, customer_id, start_time, end_time, status) VALUES (1070, 1349, '2026-05-05T16:33:06'::timestamp, '2026-05-05T17:33:06'::timestamp, 'checked_in');
-INSERT INTO reservations (table_id, customer_id, start_time, end_time, status) VALUES (1080, 1335, '2026-05-17T17:43:33'::timestamp, '2026-05-17T19:43:33'::timestamp, 'cancelled');
-INSERT INTO reservations (table_id, customer_id, start_time, end_time, status) VALUES (1047, 1315, '2026-05-01T07:27:43'::timestamp, '2026-05-01T08:27:43'::timestamp, 'booked');
-INSERT INTO reservations (table_id, customer_id, start_time, end_time, status) VALUES (1076, 1246, '2026-05-15T04:20:48'::timestamp, '2026-05-15T06:20:48'::timestamp, 'cancelled');
-INSERT INTO reservations (table_id, customer_id, start_time, end_time, status) VALUES (1061, 1205, '2026-05-14T17:20:27'::timestamp, '2026-05-14T19:20:27'::timestamp, 'booked');
-INSERT INTO reservations (table_id, customer_id, start_time, end_time, status) VALUES (1106, 1321, '2026-05-02T01:42:10'::timestamp, '2026-05-02T03:42:10'::timestamp, 'checked_in');
-INSERT INTO reservations (table_id, customer_id, start_time, end_time, status) VALUES (1023, 1259, '2026-05-08T05:25:05'::timestamp, '2026-05-08T07:25:05'::timestamp, 'cancelled');
-INSERT INTO reservations (table_id, customer_id, start_time, end_time, status) VALUES (1024, 1293, '2026-05-17T10:33:27'::timestamp, '2026-05-17T12:33:27'::timestamp, 'no_show');
-INSERT INTO reservations (table_id, customer_id, start_time, end_time, status) VALUES (1111, 1303, '2026-04-25T21:59:43'::timestamp, '2026-04-25T22:59:43'::timestamp, 'cancelled');
-INSERT INTO reservations (table_id, customer_id, start_time, end_time, status) VALUES (1088, 1348, '2026-05-20T18:45:10'::timestamp, '2026-05-20T20:45:10'::timestamp, 'booked');
-INSERT INTO reservations (table_id, customer_id, start_time, end_time, status) VALUES (1023, 1350, '2026-05-19T01:23:59'::timestamp, '2026-05-19T02:23:59'::timestamp, 'cancelled');
-INSERT INTO reservations (table_id, customer_id, start_time, end_time, status) VALUES (1041, 1264, '2026-05-18T20:56:24'::timestamp, '2026-05-18T23:56:24'::timestamp, 'no_show');
-INSERT INTO reservations (table_id, customer_id, start_time, end_time, status) VALUES (1069, 1279, '2026-05-10T01:11:19'::timestamp, '2026-05-10T04:11:19'::timestamp, 'cancelled');
-INSERT INTO reservations (table_id, customer_id, start_time, end_time, status) VALUES (1109, 1277, '2026-04-25T17:32:57'::timestamp, '2026-04-25T18:32:57'::timestamp, 'no_show');
-INSERT INTO reservations (table_id, customer_id, start_time, end_time, status) VALUES (1055, 1270, '2026-05-20T12:28:28'::timestamp, '2026-05-20T15:28:28'::timestamp, 'cancelled');
-INSERT INTO reservations (table_id, customer_id, start_time, end_time, status) VALUES (1035, 1267, '2026-05-16T16:10:47'::timestamp, '2026-05-16T17:10:47'::timestamp, 'booked');
-INSERT INTO reservations (table_id, customer_id, start_time, end_time, status) VALUES (1021, 1343, '2026-05-03T20:32:53'::timestamp, '2026-05-03T21:32:53'::timestamp, 'no_show');
-INSERT INTO reservations (table_id, customer_id, start_time, end_time, status) VALUES (1022, 1262, '2026-05-04T05:46:35'::timestamp, '2026-05-04T06:46:35'::timestamp, 'cancelled');
-INSERT INTO reservations (table_id, customer_id, start_time, end_time, status) VALUES (1061, 1332, '2026-04-30T11:17:01'::timestamp, '2026-04-30T14:17:01'::timestamp, 'cancelled');
-INSERT INTO reservations (table_id, customer_id, start_time, end_time, status) VALUES (1033, 1347, '2026-04-26T14:31:31'::timestamp, '2026-04-26T17:31:31'::timestamp, 'booked');
-INSERT INTO reservations (table_id, customer_id, start_time, end_time, status) VALUES (1030, 1249, '2026-05-12T19:54:29'::timestamp, '2026-05-12T20:54:29'::timestamp, 'checked_in');
-INSERT INTO reservations (table_id, customer_id, start_time, end_time, status) VALUES (1058, 1301, '2026-05-08T22:55:52'::timestamp, '2026-05-08T23:55:52'::timestamp, 'checked_in');
-INSERT INTO reservations (table_id, customer_id, start_time, end_time, status) VALUES (1076, 1335, '2026-05-19T15:34:09'::timestamp, '2026-05-19T17:34:09'::timestamp, 'no_show');
-INSERT INTO reservations (table_id, customer_id, start_time, end_time, status) VALUES (1118, 1341, '2026-05-13T15:26:29'::timestamp, '2026-05-13T17:26:29'::timestamp, 'checked_in');
-INSERT INTO reservations (table_id, customer_id, start_time, end_time, status) VALUES (1061, 1247, '2026-05-02T20:26:09'::timestamp, '2026-05-02T23:26:09'::timestamp, 'cancelled');
-INSERT INTO reservations (table_id, customer_id, start_time, end_time, status) VALUES (1035, 1203, '2026-05-16T14:35:34'::timestamp, '2026-05-16T16:35:34'::timestamp, 'no_show');
-INSERT INTO reservations (table_id, customer_id, start_time, end_time, status) VALUES (1090, 1260, '2026-04-30T10:12:24'::timestamp, '2026-04-30T11:12:24'::timestamp, 'booked');
-INSERT INTO reservations (table_id, customer_id, start_time, end_time, status) VALUES (1054, 1275, '2026-05-09T16:15:54'::timestamp, '2026-05-09T18:15:54'::timestamp, 'cancelled');
-INSERT INTO reservations (table_id, customer_id, start_time, end_time, status) VALUES (1030, 1287, '2026-05-06T00:59:45'::timestamp, '2026-05-06T03:59:45'::timestamp, 'no_show');
-INSERT INTO reservations (table_id, customer_id, start_time, end_time, status) VALUES (1018, 1347, '2026-05-08T03:03:09'::timestamp, '2026-05-08T04:03:09'::timestamp, 'booked');
-INSERT INTO reservations (table_id, customer_id, start_time, end_time, status) VALUES (1089, 1324, '2026-04-24T23:55:35'::timestamp, '2026-04-25T02:55:35'::timestamp, 'cancelled');
-INSERT INTO reservations (table_id, customer_id, start_time, end_time, status) VALUES (1023, 1322, '2026-05-02T19:58:14'::timestamp, '2026-05-02T21:58:14'::timestamp, 'no_show');
-INSERT INTO reservations (table_id, customer_id, start_time, end_time, status) VALUES (1121, 1274, '2026-04-29T10:40:19'::timestamp, '2026-04-29T11:40:19'::timestamp, 'cancelled');
-INSERT INTO reservations (table_id, customer_id, start_time, end_time, status) VALUES (1120, 1280, '2026-05-04T17:03:56'::timestamp, '2026-05-04T18:03:56'::timestamp, 'cancelled');
-INSERT INTO reservations (table_id, customer_id, start_time, end_time, status) VALUES (1072, 1345, '2026-05-04T21:22:19'::timestamp, '2026-05-04T23:22:19'::timestamp, 'checked_in');
-INSERT INTO reservations (table_id, customer_id, start_time, end_time, status) VALUES (1036, 1269, '2026-04-30T02:14:36'::timestamp, '2026-04-30T04:14:36'::timestamp, 'booked');
-INSERT INTO reservations (table_id, customer_id, start_time, end_time, status) VALUES (1043, 1239, '2026-05-12T03:42:05'::timestamp, '2026-05-12T04:42:05'::timestamp, 'no_show');
-INSERT INTO reservations (table_id, customer_id, start_time, end_time, status) VALUES (1064, 1202, '2026-04-29T04:31:50'::timestamp, '2026-04-29T06:31:50'::timestamp, 'booked');
-INSERT INTO reservations (table_id, customer_id, start_time, end_time, status) VALUES (1023, 1255, '2026-05-12T22:25:23'::timestamp, '2026-05-12T23:25:23'::timestamp, 'booked');
-INSERT INTO reservations (table_id, customer_id, start_time, end_time, status) VALUES (1057, 1326, '2026-05-13T22:18:45'::timestamp, '2026-05-14T00:18:45'::timestamp, 'checked_in');
-INSERT INTO reservations (table_id, customer_id, start_time, end_time, status) VALUES (1021, 1264, '2026-04-30T00:17:48'::timestamp, '2026-04-30T03:17:48'::timestamp, 'booked');
-INSERT INTO reservations (table_id, customer_id, start_time, end_time, status) VALUES (1071, 1276, '2026-04-28T21:04:59'::timestamp, '2026-04-28T23:04:59'::timestamp, 'cancelled');
-INSERT INTO reservations (table_id, customer_id, start_time, end_time, status) VALUES (1056, 1307, '2026-05-18T13:47:33'::timestamp, '2026-05-18T15:47:33'::timestamp, 'booked');
-INSERT INTO reservations (table_id, customer_id, start_time, end_time, status) VALUES (1107, 1349, '2026-05-18T03:40:27'::timestamp, '2026-05-18T04:40:27'::timestamp, 'no_show');
-INSERT INTO reservations (table_id, customer_id, start_time, end_time, status) VALUES (1094, 1333, '2026-04-29T10:01:18'::timestamp, '2026-04-29T12:01:18'::timestamp, 'cancelled');
-INSERT INTO reservations (table_id, customer_id, start_time, end_time, status) VALUES (1113, 1313, '2026-05-14T07:21:18'::timestamp, '2026-05-14T08:21:18'::timestamp, 'cancelled');
-INSERT INTO reservations (table_id, customer_id, start_time, end_time, status) VALUES (1037, 1321, '2026-05-09T09:01:56'::timestamp, '2026-05-09T10:01:56'::timestamp, 'booked');
-INSERT INTO reservations (table_id, customer_id, start_time, end_time, status) VALUES (1112, 1223, '2026-04-24T08:56:02'::timestamp, '2026-04-24T09:56:02'::timestamp, 'booked');
-INSERT INTO reservations (table_id, customer_id, start_time, end_time, status) VALUES (1057, 1249, '2026-05-01T20:52:31'::timestamp, '2026-05-01T23:52:31'::timestamp, 'no_show');
-INSERT INTO reservations (table_id, customer_id, start_time, end_time, status) VALUES (1037, 1349, '2026-05-04T10:23:28'::timestamp, '2026-05-04T11:23:28'::timestamp, 'booked');
-INSERT INTO reservations (table_id, customer_id, start_time, end_time, status) VALUES (1121, 1214, '2026-04-23T01:37:39'::timestamp, '2026-04-23T04:37:39'::timestamp, 'booked');
-INSERT INTO reservations (table_id, customer_id, start_time, end_time, status) VALUES (1018, 1247, '2026-05-03T18:21:02'::timestamp, '2026-05-03T20:21:02'::timestamp, 'no_show');
-INSERT INTO reservations (table_id, customer_id, start_time, end_time, status) VALUES (1090, 1241, '2026-05-10T10:18:49'::timestamp, '2026-05-10T11:18:49'::timestamp, 'checked_in');
-INSERT INTO reservations (table_id, customer_id, start_time, end_time, status) VALUES (1105, 1271, '2026-04-27T02:02:03'::timestamp, '2026-04-27T04:02:03'::timestamp, 'checked_in');
-INSERT INTO reservations (table_id, customer_id, start_time, end_time, status) VALUES (1064, 1284, '2026-05-08T18:45:54'::timestamp, '2026-05-08T21:45:54'::timestamp, 'checked_in');
-INSERT INTO reservations (table_id, customer_id, start_time, end_time, status) VALUES (1081, 1252, '2026-05-06T12:01:56'::timestamp, '2026-05-06T14:01:56'::timestamp, 'booked');
-INSERT INTO reservations (table_id, customer_id, start_time, end_time, status) VALUES (1016, 1216, '2026-05-14T20:24:34'::timestamp, '2026-05-14T22:24:34'::timestamp, 'booked');
-INSERT INTO reservations (table_id, customer_id, start_time, end_time, status) VALUES (1077, 1220, '2026-04-26T01:41:31'::timestamp, '2026-04-26T02:41:31'::timestamp, 'no_show');
-INSERT INTO reservations (table_id, customer_id, start_time, end_time, status) VALUES (1100, 1279, '2026-05-17T21:57:32'::timestamp, '2026-05-17T22:57:32'::timestamp, 'cancelled');
-INSERT INTO reservations (table_id, customer_id, start_time, end_time, status) VALUES (1049, 1231, '2026-05-02T02:17:52'::timestamp, '2026-05-02T05:17:52'::timestamp, 'booked');
-INSERT INTO reservations (table_id, customer_id, start_time, end_time, status) VALUES (1034, 1309, '2026-05-05T23:54:08'::timestamp, '2026-05-06T00:54:08'::timestamp, 'cancelled');
-INSERT INTO reservations (table_id, customer_id, start_time, end_time, status) VALUES (1120, 1208, '2026-05-09T15:54:02'::timestamp, '2026-05-09T18:54:02'::timestamp, 'no_show');
-INSERT INTO reservations (table_id, customer_id, start_time, end_time, status) VALUES (1092, 1205, '2026-04-23T07:19:54'::timestamp, '2026-04-23T09:19:54'::timestamp, 'no_show');
-INSERT INTO reservations (table_id, customer_id, start_time, end_time, status) VALUES (1027, 1316, '2026-05-16T13:30:41'::timestamp, '2026-05-16T14:30:41'::timestamp, 'booked');
-INSERT INTO reservations (table_id, customer_id, start_time, end_time, status) VALUES (1067, 1219, '2026-04-27T18:31:46'::timestamp, '2026-04-27T19:31:46'::timestamp, 'checked_in');
-INSERT INTO reservations (table_id, customer_id, start_time, end_time, status) VALUES (1039, 1214, '2026-05-04T20:37:49'::timestamp, '2026-05-04T23:37:49'::timestamp, 'checked_in');
-INSERT INTO reservations (table_id, customer_id, start_time, end_time, status) VALUES (1113, 1219, '2026-05-10T11:03:57'::timestamp, '2026-05-10T12:03:57'::timestamp, 'no_show');
-INSERT INTO reservations (table_id, customer_id, start_time, end_time, status) VALUES (1079, 1293, '2026-05-08T16:26:01'::timestamp, '2026-05-08T19:26:01'::timestamp, 'booked');
-INSERT INTO reservations (table_id, customer_id, start_time, end_time, status) VALUES (1051, 1211, '2026-04-24T16:14:28'::timestamp, '2026-04-24T17:14:28'::timestamp, 'cancelled');
-INSERT INTO reservations (table_id, customer_id, start_time, end_time, status) VALUES (1116, 1261, '2026-05-08T08:24:26'::timestamp, '2026-05-08T11:24:26'::timestamp, 'cancelled');
-INSERT INTO reservations (table_id, customer_id, start_time, end_time, status) VALUES (1072, 1251, '2026-05-17T19:06:20'::timestamp, '2026-05-17T20:06:20'::timestamp, 'cancelled');
-INSERT INTO reservations (table_id, customer_id, start_time, end_time, status) VALUES (1099, 1273, '2026-05-10T17:55:26'::timestamp, '2026-05-10T20:55:26'::timestamp, 'checked_in');
-INSERT INTO reservations (table_id, customer_id, start_time, end_time, status) VALUES (1082, 1218, '2026-04-27T11:45:47'::timestamp, '2026-04-27T13:45:47'::timestamp, 'booked');
+INSERT INTO reservations (table_id, customer_id, start_time, end_time, status)
+SELECT
+    t.id                                                                AS table_id,
+    (SELECT id FROM customers ORDER BY RANDOM() LIMIT 1)               AS customer_id,
+    res_date + (INTERVAL '1 hour' * (17 + FLOOR(RANDOM() * 4)::int))   AS start_time,
+    res_date + (INTERVAL '1 hour' * (19 + FLOOR(RANDOM() * 4)::int))   AS end_time,
+    CASE WHEN RANDOM() < 0.70 THEN 'checked_in'
+         WHEN RANDOM() < 0.50 THEN 'booked'
+         WHEN RANDOM() < 0.50 THEN 'no_show'
+         ELSE 'cancelled' END                                           AS status
+FROM
+    (VALUES
+        ('2026-04-19'::date),
+        ('2026-04-20'::date),
+        ('2026-04-21'::date),
+        ('2026-04-22'::date),
+        ('2026-04-25'::date)
+    ) AS dates(res_date),
+    LATERAL (
+        SELECT t.id
+        FROM tables t
+        ORDER BY RANDOM()
+        LIMIT 8
+    ) t;
