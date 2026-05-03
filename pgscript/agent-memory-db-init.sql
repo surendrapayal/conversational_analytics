@@ -2,17 +2,41 @@
 -- Agent Memory Database Initialisation
 --
 -- Tables created here (in public schema):
+--   store        — LangGraph AsyncPostgresStore documents (pre-created to avoid setup() DDL lock)
+--   store_vectors — pgvector embeddings for semantic search
 --   query_log    — audit trail of every conversation
 --   agent_steps  — audit trail of every ReAct step
---
--- Tables created automatically by LangGraph AsyncPostgresStore.setup():
---   public.store         — conversation summary documents
---   public.store_vectors — pgvector embeddings
 -- ─────────────────────────────────────────────────────────────────────────────
 
 CREATE EXTENSION IF NOT EXISTS vector;
 
--- ── 1. Query audit log ────────────────────────────────────────────────────────
+-- ── 1. LangGraph AsyncPostgresStore tables ────────────────────────────────────
+-- Pre-created so AsyncPostgresStore.setup() is a no-op and never blocks on DDL.
+CREATE TABLE IF NOT EXISTS store (
+    prefix      TEXT             NOT NULL,
+    key         TEXT             NOT NULL,
+    value       JSONB            NOT NULL,
+    created_at  TIMESTAMPTZ      NOT NULL DEFAULT NOW(),
+    updated_at  TIMESTAMPTZ      NOT NULL DEFAULT NOW(),
+    expires_at  TIMESTAMPTZ,
+    ttl_minutes DOUBLE PRECISION,
+    PRIMARY KEY (prefix, key)
+);
+
+CREATE TABLE IF NOT EXISTS store_vectors (
+    prefix      TEXT        NOT NULL,
+    key         TEXT        NOT NULL,
+    field_name  TEXT        NOT NULL,
+    embedding   vector(768),
+    created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    PRIMARY KEY (prefix, key, field_name)
+);
+
+CREATE INDEX IF NOT EXISTS idx_store_vectors_embedding
+    ON store_vectors USING hnsw (embedding vector_cosine_ops);
+
+-- ── 2. Query audit log ────────────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS query_log (
     id              BIGSERIAL   PRIMARY KEY,
     conversation_id UUID        NOT NULL,
@@ -38,7 +62,7 @@ CREATE INDEX IF NOT EXISTS idx_query_log_user_id
 CREATE INDEX IF NOT EXISTS idx_query_log_session_id
     ON query_log(session_id, created_at DESC);
 
--- ── 2. Agent steps log ────────────────────────────────────────────────────────
+-- ── 3. Agent steps log ────────────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS agent_steps (
     id              BIGSERIAL   PRIMARY KEY,
     conversation_id UUID        NOT NULL,
@@ -51,6 +75,7 @@ CREATE TABLE IF NOT EXISTS agent_steps (
     output          TEXT,
     token_usage     JSONB,
     duration_ms     INT,
+    prompt          TEXT,
     created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 

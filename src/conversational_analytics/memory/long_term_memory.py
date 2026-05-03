@@ -32,6 +32,7 @@ async def get_long_term_store() -> AsyncPostgresStore:
                 location=cfg.llm_region,
             )
             logger.info(f"Embedding model: {cfg.embedding_model} ({cfg.embedding_dimension} dims)")
+
             pool = AsyncConnectionPool(
                 cfg.long_term_memory_db_uri,
                 min_size=1,
@@ -39,7 +40,9 @@ async def get_long_term_store() -> AsyncPostgresStore:
                 kwargs={"autocommit": True, "prepare_threshold": 0},
                 open=False,
             )
-            await pool.open()
+            # open=False — pool connects lazily on first use, avoids Windows event loop hang
+            await asyncio.wait_for(pool.open(wait=False), timeout=15.0)
+
             _async_store = AsyncPostgresStore(
                 conn=pool,
                 index={
@@ -48,11 +51,11 @@ async def get_long_term_store() -> AsyncPostgresStore:
                     "fields": ["summary"],
                 },
             )
-            await _async_store.setup()
+            # Tables are pre-created by agent-memory-db-init.sql — skip setup() to avoid DDL lock.
             logger.info("AsyncPostgresStore initialised (pgvector auto-embedding)")
             return _async_store
         except Exception as e:
-            logger.error(f"Failed to initialise AsyncPostgresStore: {e}")
+            logger.error(f"Failed to initialise AsyncPostgresStore: {e}", exc_info=True)
             raise
 
 
@@ -81,7 +84,7 @@ async def save_conversation_summary(
         )
         logger.info(f"Conversation summary + embedding saved — user={user_id} conversation={conversation_id}")
     except Exception as e:
-        logger.warning(f"Could not save conversation summary for user={user_id}: {e}")
+        logger.error(f"Could not save conversation summary for user={user_id}: {e}", exc_info=True)
 
 
 async def search_similar_conversations(
@@ -98,6 +101,9 @@ async def search_similar_conversations(
             query=query,
             limit=limit,
         )
+        logger.debug(f"Raw asearch results count={len(results)} for user={user_id}")
+        for r in results:
+            logger.debug(f"  key={r.key} score={r.score} has_summary={bool(r.value.get('summary'))}")
         formatted = [
             {
                 "conversation_id": r.key,
@@ -112,5 +118,5 @@ async def search_similar_conversations(
         logger.info(f"Semantic search returned {len(formatted)} results for user={user_id}")
         return formatted
     except Exception as e:
-        logger.warning(f"Semantic search failed for user={user_id}: {e}")
+        logger.warning(f"Semantic search failed for user={user_id}: {e}", exc_info=True)
         return []
