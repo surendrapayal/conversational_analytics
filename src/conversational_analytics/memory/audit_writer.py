@@ -190,10 +190,10 @@ class AuditWriter:
                 """
                 INSERT INTO agent_steps
                     (conversation_id, session_id, user_id, step_number, step_type,
-                     tool_name, input, output, token_usage, duration_ms)
+                     tool_name, input, output, token_usage, duration_ms, prompt)
                 VALUES (%(conversation_id)s, %(session_id)s, %(user_id)s, %(step_number)s,
                         %(step_type)s, %(tool_name)s, %(input)s, %(output)s,
-                        %(token_usage)s, %(duration_ms)s)
+                        %(token_usage)s, %(duration_ms)s, %(prompt)s)
                 """,
                 [_serialise_agent_step(r) for r in rows],
             )
@@ -232,6 +232,7 @@ def _serialise_agent_step(r: dict) -> dict:
         "output":          r.get("output"),
         "token_usage":     json.dumps(r["token_usage"]) if r.get("token_usage") else None,
         "duration_ms":     r.get("duration_ms"),
+        "prompt":          r.get("prompt"),
     }
 
 

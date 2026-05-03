@@ -1,7 +1,13 @@
 import asyncio
 import logging
 import sys
+import selectors
 from contextlib import asynccontextmanager
+
+# psycopg async requires SelectorEventLoop on Windows (ProactorEventLoop is not supported)
+if sys.platform == "win32":
+    asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+
 from conversational_analytics.config import get_settings
 
 cfg = get_settings()

@@ -40,8 +40,7 @@ async def get_long_term_store() -> AsyncPostgresStore:
                 kwargs={"autocommit": True, "prepare_threshold": 0},
                 open=False,
             )
-            # open=False — pool connects lazily on first use, avoids Windows event loop hang
-            await asyncio.wait_for(pool.open(wait=False), timeout=15.0)
+            await asyncio.wait_for(pool.open(wait=True), timeout=15.0)
 
             _async_store = AsyncPostgresStore(
                 conn=pool,

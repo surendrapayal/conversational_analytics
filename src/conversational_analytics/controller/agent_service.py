@@ -81,6 +81,7 @@ def _process_chunk(chunk: dict, request: AgentRequest, state: dict) -> None:
                     output=llm_output,
                     token_usage=_extract_step_token_usage(msg),
                     duration_ms=int((time.time() - state["llm_call_start"]) * 1000),
+                    prompt=state["prompt"],
                 )
 
         elif node_name == "tools":

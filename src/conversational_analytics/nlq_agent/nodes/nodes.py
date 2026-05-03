@@ -28,22 +28,28 @@ async def agent_node(state: AgentState, store: BaseStore) -> dict:
     system_msg = get_system_message(role)
 
     # ── Long-term recall: semantic search over past conversation summaries ──
-    # Only on the first turn of a session (messages has exactly 1 entry — the new HumanMessage).
-    # Subsequent turns already have Redis short-term context, so the embedding call is skipped.
-    is_first_session_turn = len(state.get("messages", [])) <= 1
+    # Only on the first agent invocation of a request (tools_invoked is empty).
+    # ReAct loop iterations already have tool results in context, so the embedding call is skipped.
     memory_context = ""
-    if cfg.long_term_memory_enabled and user_id and store and not tools_invoked and is_first_session_turn:
+    if cfg.long_term_memory_enabled and user_id and store and not tools_invoked:
         logger.debug(f"First session turn — semantic search for user={user_id}")
         try:
             from conversational_analytics.memory import search_similar_conversations
+            # need to log the time taken by sematic search to identify if it's a bottleneck and consider strategies like async pre-fetching in future iterations
+            start_time = time.time()
             past = await asyncio.wait_for(
                 search_similar_conversations(
                     user_id=user_id,
                     query=state.get("user_input", ""),
                     limit=cfg.memory_long_term_recall_limit,
                 ),
-                timeout=1.0,
+                timeout=30.0,
             )
+            elapsed = time.time() - start_time
+            logger.info(f"Semantic search completed in {elapsed:.2f}s for user={user_id} — {len(past)} similar conversations found")
+            # save to temp file to inspect structure during development
+            with open(f"semantic_search_results_123_{user_id}_{conversation_id}.json", "w") as f:
+                json.dump(f"Semantic search completed in {elapsed:.2f}s for user={user_id} — {len(past)} similar conversations found", f, indent=2)
             if past:
                 summaries = "\n".join(
                     f"- {r['summary']} (similarity: {r['similarity']:.2f})"
@@ -53,16 +59,24 @@ async def agent_node(state: AgentState, store: BaseStore) -> dict:
                 if summaries:
                     memory_context = f"\n\nRelevant past conversations (semantic search):\n{summaries}"
                     logger.info(f"Recalled {len(past)} semantically similar conversations for user={user_id}")
+                    # save to temp file to inspect structure during development
+                    with open(f"semantic_search_results_{user_id}_{conversation_id}.json", "w") as f:
+                        json.dump(memory_context, f, indent=2)
             else:
                 logger.debug(f"No similar past conversations found for user={user_id}")
+                # save to temp file to inspect structure during development
+                with open(f"semantic_search_results_{user_id}_{conversation_id}.json", "w") as f:
+                    json.dump(f"No similar past conversations found for user={user_id}", f, indent=2)
         except asyncio.TimeoutError:
-            logger.warning(f"Semantic search timed out (>1s) for user={user_id} — proceeding without memory context")
+            logger.warning(f"Semantic search timed out (>30s) for user={user_id} — proceeding without memory context")
+            with open(f"semantic_search_results_{user_id}_{conversation_id}.json", "w") as f:
+                    json.dump(f"Semantic search timed out (>30s) for user={user_id} — proceeding without memory context", f, indent=2)
         except Exception as e:
             logger.warning(f"Semantic search failed for user={user_id}: {e}")
+            with open(f"semantic_search_results_{user_id}_{conversation_id}.json", "w") as f:
+                    json.dump(f"Semantic search failed for user={user_id}: {e}", f, indent=2)
     elif tools_invoked:
         logger.debug(f"ReAct loop — skipping memory recall (tools_invoked={tools_invoked})")
-    elif not is_first_session_turn:
-        logger.debug(f"Subsequent session turn — skipping long-term recall, Redis has context")
 
     enriched_system = SystemMessage(
         content=system_msg.content + memory_context
