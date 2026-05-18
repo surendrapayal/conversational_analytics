@@ -76,7 +76,7 @@ async def agent_node(state: AgentState, store: BaseStore) -> dict:
             # with open(f"semantic_search_results_{user_id}_{conversation_id}.json", "w") as f:
             #         json.dump(f"Semantic search failed for user={user_id}: {e}", f, indent=2)
     elif tools_invoked:
-        logger.debug(f"ReAct loop — skipping memory recall (tools_invoked={toolklos_invoked})")
+        logger.debug(f"ReAct loop — skipping memory recall (tools_invoked={tools_invoked})")
 
     enriched_system = SystemMessage(
         content=system_msg.content + memory_context
