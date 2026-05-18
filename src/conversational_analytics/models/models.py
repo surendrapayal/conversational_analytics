@@ -15,7 +15,8 @@ class AgentState(TypedDict):
     intermediate_steps: list[str]
     tool_results: list[str]
     final_response: str
-    vega_spec: dict | None
+    vega_spec: dict | None        # primary chart (first in vega_specs, kept for backward compat)
+    vega_specs: list[dict] | None # all chart variants [{chart_type, spec}, ...]
     thinking: str
     tools_invoked: list[str]
     role: str | None
@@ -43,5 +44,6 @@ class AgentMetadata(BaseModel):
 
 class AgentResponse(BaseModel):
     response_text: str
-    vega_spec: dict | None = None
+    vega_spec: dict | None = None         # primary chart (backward compat)
+    vega_specs: list[dict] | None = None  # all chart variants [{chart_type, spec}, ...]
     metadata: AgentMetadata = Field(default_factory=AgentMetadata)

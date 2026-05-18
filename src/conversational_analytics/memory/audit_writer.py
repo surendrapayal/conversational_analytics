@@ -173,11 +173,11 @@ class AuditWriter:
                 """
                 INSERT INTO query_log
                     (conversation_id, session_id, user_id, role, user_query, prompt,
-                     sql_generated, tools_invoked, agent_response, vega_spec,
+                     sql_generated, tools_invoked, agent_response, vega_spec, vega_specs,
                      token_usage, stream_events, has_vega, execution_ms)
                 VALUES (%(conversation_id)s, %(session_id)s, %(user_id)s, %(role)s,
                         %(user_query)s, %(prompt)s, %(sql_generated)s, %(tools_invoked)s,
-                        %(agent_response)s, %(vega_spec)s, %(token_usage)s,
+                        %(agent_response)s, %(vega_spec)s, %(vega_specs)s, %(token_usage)s,
                         %(stream_events)s, %(has_vega)s, %(execution_ms)s)
                 """,
                 [_serialise_query_log(r) for r in rows],
@@ -212,8 +212,9 @@ def _serialise_query_log(r: dict) -> dict:
         "sql_generated":   r.get("sql_generated"),
         "tools_invoked":   r.get("tools_invoked"),
         "agent_response":  r.get("agent_response"),
-        "vega_spec":       json.dumps(r["vega_spec"])     if r.get("vega_spec")     else None,
-        "token_usage":     json.dumps(r["token_usage"])   if r.get("token_usage")   else None,
+        "vega_spec":       json.dumps(r["vega_spec"])      if r.get("vega_spec")      else None,
+        "vega_specs":      json.dumps(r["vega_specs"])     if r.get("vega_specs")     else None,
+        "token_usage":     json.dumps(r["token_usage"])    if r.get("token_usage")    else None,
         "stream_events":   json.dumps(r["stream_events"]) if r.get("stream_events") else None,
         "has_vega":        r.get("has_vega", False),
         "execution_ms":    r.get("execution_ms"),

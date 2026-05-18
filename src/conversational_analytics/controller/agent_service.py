@@ -103,9 +103,11 @@ def _process_chunk(chunk: dict, request: AgentRequest, state: dict) -> None:
         elif node_name == "response_formatter":
             final = state_update.get("final_response", "")
             vega = state_update.get("vega_spec")
+            vega_specs = state_update.get("vega_specs")
             if final:
                 state["final_response"] = final
                 state["vega_spec"] = vega
+                state["vega_specs"] = vega_specs
                 state["has_vega"] = vega is not None
 
 
@@ -127,6 +129,7 @@ async def _persist_audit(request: AgentRequest, state: dict, execution_ms: int) 
                 tools_invoked=state["tools_invoked"],
                 agent_response=state["final_response"],
                 vega_spec=state["vega_spec"],
+                vega_specs=state["vega_specs"],
                 token_usage=state["token_usage"],
                 stream_events=state.get("stream_events") or None,
                 has_vega=state["has_vega"],
@@ -153,6 +156,7 @@ def _init_state() -> dict:
         "tools_invoked": [],
         "final_response": "",
         "vega_spec": None,
+        "vega_specs": None,
         "token_usage": None,
         "prompt": None,
         "sql_generated": None,
@@ -181,6 +185,7 @@ async def run_agent(request: AgentRequest) -> AgentResponse:
     return AgentResponse(
         response_text=state["final_response"],
         vega_spec=state["vega_spec"],
+        vega_specs=state["vega_specs"],
         metadata=AgentMetadata(
             session_id=request.session_id,
             conversation_id=request.conversation_id
@@ -240,7 +245,7 @@ async def stream_agent(request: AgentRequest, stream_mode: str = "standard") -> 
 
                 elif node_name == "response_formatter":
                     if state["final_response"]:
-                        yield _sse_collect("response", {"text": state["final_response"], "vega_spec": state["vega_spec"]}, request.session_id, request.conversation_id, state)
+                        yield _sse_collect("response", {"text": state["final_response"], "vega_spec": state["vega_spec"], "vega_specs": state["vega_specs"]}, request.session_id, request.conversation_id, state)
 
         yield _sse_collect("done", {"status": "completed"}, request.session_id, request.conversation_id, state)
         execution_ms = int((time.time() - start) * 1000)

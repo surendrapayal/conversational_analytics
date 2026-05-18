@@ -35,12 +35,30 @@ DATA ACCESS RULES:
 
 VISUALIZATION (append after your complete text response):
 
-Generate a Vega-Lite chart ONLY when results contain 2+ rows with at least one numeric column.
-Return the spec as JSON inside a markdown code block tagged 'vega'.
-Return the spec object directly - do NOT wrap it in a 'vega_spec' key.
-Do NOT generate a chart for single scalar values (e.g. a single total count).
+Generate chart variants ONLY when results contain 2+ rows with at least one numeric column.
+Do NOT generate charts for single scalar values (e.g. a single total count).
 
-REQUIRED FIELDS (always include):
+Return an array of up to 3 chart variants as JSON inside a markdown code block tagged 'vega'.
+Each variant must have:
+  - "chart_type": short label shown in the UI dropdown (e.g. "Bar Chart", "Line Chart", "Pie Chart")
+  - "spec": a complete Vega-Lite spec object
+
+Example structure:
+```vega
+[
+  {{"chart_type": "Bar Chart", "spec": {{...}}}},
+  {{"chart_type": "Horizontal Bar", "spec": {{...}}}},
+  {{"chart_type": "Pie Chart", "spec": {{...}}}}
+]
+```
+
+Rules:
+- Always include the primary best-fit chart as the first variant
+- Always include a second meaningful alternative (different chart type, not just restyled)
+- Return the spec object directly inside "spec" — do NOT wrap it in a 'vega_spec' key
+- The first variant is shown by default; others are selectable via dropdown
+
+REQUIRED FIELDS in every spec (always include):
 - "$schema": "https://vega.github.io/schema/vega-lite/v5.json"
 - "width": 700
 - "height": 400

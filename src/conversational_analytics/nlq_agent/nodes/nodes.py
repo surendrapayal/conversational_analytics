@@ -76,7 +76,7 @@ async def agent_node(state: AgentState, store: BaseStore) -> dict:
             # with open(f"semantic_search_results_{user_id}_{conversation_id}.json", "w") as f:
             #         json.dump(f"Semantic search failed for user={user_id}: {e}", f, indent=2)
     elif tools_invoked:
-        logger.debug(f"ReAct loop — skipping memory recall (tools_invoked={toolklos_invoked})")
+        logger.debug(f"ReAct loop — skipping memory recall (tools_invoked={tools_invoked})")
 
     enriched_system = SystemMessage(
         content=system_msg.content + memory_context
@@ -171,36 +171,71 @@ def response_formatter_node(state: AgentState) -> dict:
         if not isinstance(msg, AIMessage) or not msg.content:
             continue
         extracted = _extract_text(msg.content)
-        text, vega_spec = _extract_vega_spec(extracted)
-        if text or vega_spec:
-            logger.info(f"Final response extracted: {len(text)} chars, has_vega={vega_spec is not None} (conversation={conversation_id})")
-            if vega_spec:
-                logger.debug(f"Vega spec extracted: mark={vega_spec.get('mark')}, title={vega_spec.get('title')}")
-            return {"final_response": text, "vega_spec": vega_spec}
+        text, vega_specs = _extract_vega_specs(extracted)
+        if text or vega_specs:
+            primary = vega_specs[0]["spec"] if vega_specs else None
+            logger.info(f"Final response extracted: {len(text)} chars, has_vega={bool(vega_specs)} variants={len(vega_specs) if vega_specs else 0} (conversation={conversation_id})")
+            if vega_specs:
+                logger.debug(f"Chart variants: {[v['chart_type'] for v in vega_specs]}")
+            return {"final_response": text, "vega_spec": primary, "vega_specs": vega_specs}
 
     logger.warning(f"No final response found in messages for conversation={conversation_id}")
-    return {"final_response": "I could not generate a response.", "vega_spec": None}
+    return {"final_response": "I could not generate a response.", "vega_spec": None, "vega_specs": None}
 
 
-def _extract_vega_spec(text: str) -> tuple[str, dict | None]:
-    """Extracts a vega code block from the response text."""
+def _extract_vega_specs(text: str) -> tuple[str, list[dict] | None]:
+    """Extracts a vega code block and parses it as an array of chart variants."""
     pattern = r"```vega\s*([\s\S]*?)```"
     match = re.search(pattern, text)
     if not match:
         return text, None
     try:
         parsed = json.loads(match.group(1).strip())
-        if isinstance(parsed, dict) and "vega_spec" in parsed and len(parsed) == 1:
-            logger.debug("Unwrapping nested vega_spec key from LLM response")
-            parsed = parsed["vega_spec"]
-        if not isinstance(parsed, dict) or not _is_valid_vega_spec(parsed):
-            logger.warning("Parsed vega block does not look like a valid Vega-Lite spec")
-            return text, None
         clean_text = re.sub(pattern, "", text).strip()
-        return clean_text, parsed
+        # Array of variants: [{chart_type, spec}, ...]
+        if isinstance(parsed, list):
+            valid = [
+                v for v in parsed
+                if isinstance(v, dict)
+                and isinstance(v.get("spec"), dict)
+                and _is_valid_vega_spec(v["spec"])
+                and v.get("chart_type")
+            ]
+            if valid:
+                logger.debug(f"Extracted {len(valid)} chart variants: {[v['chart_type'] for v in valid]}")
+                return clean_text, valid
+            logger.warning("Vega array found but no valid variants — falling back to single spec")
+        # Fallback: single spec (backward compat)
+        if isinstance(parsed, dict):
+            if "vega_spec" in parsed and len(parsed) == 1:
+                parsed = parsed["vega_spec"]
+            if _is_valid_vega_spec(parsed):
+                chart_type = _infer_chart_type(parsed)
+                logger.debug(f"Single vega spec extracted, wrapped as variant: {chart_type}")
+                return clean_text, [{"chart_type": chart_type, "spec": parsed}]
+        logger.warning("Vega block found but could not parse as valid spec or variants")
+        return text, None
     except json.JSONDecodeError as e:
         logger.warning(f"Found vega block but failed to parse as JSON: {e}")
         return text, None
+
+
+def _infer_chart_type(spec: dict) -> str:
+    """Infers a human-readable chart type label from a single Vega-Lite spec."""
+    mark = spec.get("mark")
+    if isinstance(mark, dict):
+        mark = mark.get("type", "")
+    mark = (mark or "").lower()
+    if mark == "bar":
+        return "Horizontal Bar" if "y" in spec.get("encoding", {}) and "x" not in spec.get("encoding", {}) else "Bar Chart"
+    if mark == "line":  return "Line Chart"
+    if mark == "area":  return "Area Chart"
+    if mark == "arc":   return "Pie Chart"
+    if mark == "point": return "Scatter Plot"
+    if mark == "rect":  return "Heatmap"
+    if mark == "boxplot": return "Box Plot"
+    if "layer" in spec: return "Layered Chart"
+    return "Chart"
 
 
 def _is_valid_vega_spec(spec: dict) -> bool:

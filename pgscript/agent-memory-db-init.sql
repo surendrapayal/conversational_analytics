@@ -49,6 +49,7 @@ CREATE TABLE IF NOT EXISTS query_log (
     tools_invoked   TEXT[],
     agent_response  TEXT,
     vega_spec       JSONB,
+    vega_specs      JSONB,
     token_usage     JSONB,
     stream_events   JSONB,
     has_vega        BOOLEAN     NOT NULL DEFAULT FALSE,
