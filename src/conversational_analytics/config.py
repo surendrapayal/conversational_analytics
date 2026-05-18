@@ -66,6 +66,7 @@ class Settings(BaseSettings):
     memory_long_term_recall_limit: int = 3
     memory_short_term_message_limit: int = 0  # 0 = unlimited
     long_term_memory_enabled: bool = True
+    memory_semantic_search_enabled: bool = True
 
     # ── Analytics DB properties ───────────────────────────────────────
 
