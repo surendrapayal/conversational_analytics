@@ -27,7 +27,8 @@ for noisy_logger in [
 
 import uvicorn
 from fastapi import FastAPI
-from conversational_analytics.controller import router
+from fastapi.middleware.cors import CORSMiddleware
+from conversational_analytics.controller import router, history_router
 from conversational_analytics.memory import audit_writer
 from conversational_analytics.controller.agent_service import init_graph
 
@@ -54,7 +55,15 @@ app = FastAPI(
     version="1.0.0",
     lifespan=lifespan,
 )
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000"],
+    allow_methods=["*"],
+    allow_headers=["Content-Type", "role", "x-session-id", "X-Session-Id"],
+    expose_headers=["X-Session-Id"],
+)
 app.include_router(router)
+app.include_router(history_router)
 
 
 if __name__ == "__main__":
