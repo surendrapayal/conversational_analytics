@@ -1,0 +1,30 @@
+-- Daily inserts into order_discounts (2026-05-20T10:00:00)
+
+INSERT INTO order_discounts (order_id, discount_id) VALUES (806, 50);
+INSERT INTO order_discounts (order_id, discount_id) VALUES (806, 51);
+INSERT INTO order_discounts (order_id, discount_id) VALUES (808, 51);
+INSERT INTO order_discounts (order_id, discount_id) VALUES (808, 50);
+INSERT INTO order_discounts (order_id, discount_id) VALUES (809, 51);
+INSERT INTO order_discounts (order_id, discount_id) VALUES (809, 50);
+INSERT INTO order_discounts (order_id, discount_id) VALUES (810, 50);
+INSERT INTO order_discounts (order_id, discount_id) VALUES (813, 49);
+INSERT INTO order_discounts (order_id, discount_id) VALUES (816, 50);
+INSERT INTO order_discounts (order_id, discount_id) VALUES (816, 51);
+INSERT INTO order_discounts (order_id, discount_id) VALUES (817, 50);
+INSERT INTO order_discounts (order_id, discount_id) VALUES (821, 50);
+INSERT INTO order_discounts (order_id, discount_id) VALUES (824, 49);
+INSERT INTO order_discounts (order_id, discount_id) VALUES (829, 50);
+INSERT INTO order_discounts (order_id, discount_id) VALUES (832, 51);
+INSERT INTO order_discounts (order_id, discount_id) VALUES (832, 49);
+INSERT INTO order_discounts (order_id, discount_id) VALUES (835, 51);
+INSERT INTO order_discounts (order_id, discount_id) VALUES (836, 51);
+INSERT INTO order_discounts (order_id, discount_id) VALUES (842, 51);
+INSERT INTO order_discounts (order_id, discount_id) VALUES (842, 50);
+INSERT INTO order_discounts (order_id, discount_id) VALUES (843, 49);
+INSERT INTO order_discounts (order_id, discount_id) VALUES (848, 50);
+INSERT INTO order_discounts (order_id, discount_id) VALUES (848, 51);
+INSERT INTO order_discounts (order_id, discount_id) VALUES (849, 50);
+INSERT INTO order_discounts (order_id, discount_id) VALUES (849, 51);
+INSERT INTO order_discounts (order_id, discount_id) VALUES (851, 49);
+INSERT INTO order_discounts (order_id, discount_id) VALUES (853, 50);
+INSERT INTO order_discounts (order_id, discount_id) VALUES (855, 51);
