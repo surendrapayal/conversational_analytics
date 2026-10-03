@@ -11,3 +11,28 @@ wheels/
 .env
 
 .idea/
+
+# ── Frontend: conversational-analytics-ui (React/Vite) ──────────────
+# Dependencies
+conversational-analytics-ui/node_modules/
+
+# Build output
+conversational-analytics-ui/dist/
+conversational-analytics-ui/dist-ssr/
+
+# Local env files
+conversational-analytics-ui/.env
+conversational-analytics-ui/.env.local
+conversational-analytics-ui/.env.*.local
+conversational-analytics-ui/*.local
+
+# Logs
+conversational-analytics-ui/logs/
+conversational-analytics-ui/*.log
+conversational-analytics-ui/npm-debug.log*
+conversational-analytics-ui/yarn-debug.log*
+conversational-analytics-ui/yarn-error.log*
+conversational-analytics-ui/pnpm-debug.log*
+
+# OS / editor files
+conversational-analytics-ui/.DS_Store

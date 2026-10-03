@@ -33,6 +33,7 @@ dependencies = [
     "psycopg[binary]>=3.3.3",
     "nh3>= 0.3.5",
     "langchain-google-vertexai>=3.2.2",
+    "boto3>=1.43.107",
 ]
 
 [project.optional-dependencies]
