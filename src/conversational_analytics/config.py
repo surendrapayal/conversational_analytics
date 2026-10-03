@@ -17,14 +17,25 @@ class Settings(BaseSettings):
     )
 
     # ── LLM ──────────────────────────────────────────────────────────
-    google_cloud_project: str
+    # Provider selection: "vertexai" (Google Gemini via Vertex AI) or "bedrock" (AWS Bedrock)
+    llm_provider: str = "vertexai"
+    llm_temperature: float = 0.7
+    llm_top_p: float = 0.9
+
+    # ── LLM: Vertex AI (Google Gemini) ───────────────────────────────
+    google_cloud_project: str = ""
     llm_model: str = "gemini-2.0-flash"
     llm_region: str = "us-east1"
-    llm_temperature: float = 0.7
     llm_max_output_tokens: int = 2048
-    llm_top_p: float = 0.9
     thinking_level: str = "medium"
     include_thoughts: bool = True
+
+    # ── LLM: AWS Bedrock ─────────────────────────────────────────────
+    # Auth uses the AWS_BEARER_TOKEN_BEDROCK env var (short-term Bedrock API key),
+    # read automatically by langchain-aws / boto3. Standard AWS credentials also work.
+    bedrock_model: str = "anthropic.claude-3-haiku-20240307-v1:0"
+    bedrock_region: str = "us-east-1"
+    bedrock_max_tokens: int = 2048
 
     # ── Analytics Database ────────────────────────────────────────────
     analytics_db_host: str = "localhost"
@@ -176,6 +187,15 @@ class Settings(BaseSettings):
         if self.short_term_memory_type not in ("redis", "inmemory"):
             raise ValueError(
                 f"SHORT_TERM_MEMORY_TYPE must be 'redis' or 'inmemory', got '{self.short_term_memory_type}'"
+            )
+        provider = self.llm_provider.lower()
+        if provider not in ("vertexai", "bedrock"):
+            raise ValueError(
+                f"LLM_PROVIDER must be 'vertexai' or 'bedrock', got '{self.llm_provider}'"
+            )
+        if provider == "vertexai" and not self.google_cloud_project:
+            raise ValueError(
+                "GOOGLE_CLOUD_PROJECT is required when LLM_PROVIDER=vertexai."
             )
         return self
 

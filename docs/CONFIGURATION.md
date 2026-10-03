@@ -6,16 +6,51 @@ All configuration is loaded from the `.env` file at the project root via `pydant
 
 ## LLM Settings
 
+The application supports two LLM providers, selected via `LLM_PROVIDER`. The app exposes a single `get_llm()` factory, so switching providers requires no code changes — only env configuration.
+
+### Provider selection
+
 | Variable | Default | Description |
 |---|---|---|
-| `GOOGLE_CLOUD_PROJECT` | *(required)* | GCP project ID for Vertex AI |
+| `LLM_PROVIDER` | `vertexai` | Backend to use: `vertexai` (Google Gemini) or `bedrock` (AWS Bedrock) |
+
+> `LLM_PROVIDER` is read from `.env`. Because the app loads `.env` with `override=True`, a value in `.env` takes precedence over a shell environment variable of the same name. To switch providers, change it in `.env`.
+
+### Shared (both providers)
+
+| Variable | Default | Description |
+|---|---|---|
+| `LLM_TEMPERATURE` | `0.7` | Sampling temperature (0.0–1.0) |
+| `LLM_TOP_P` | `0.9` | Nucleus sampling parameter |
+
+### Vertex AI (`LLM_PROVIDER=vertexai`)
+
+Authenticates with Application Default Credentials (ADC).
+
+| Variable | Default | Description |
+|---|---|---|
+| `GOOGLE_CLOUD_PROJECT` | *(required for vertexai)* | GCP project ID for Vertex AI |
 | `LLM_MODEL` | `gemini-2.0-flash` | Gemini model name |
 | `LLM_REGION` | `us-east1` | Vertex AI region |
-| `LLM_TEMPERATURE` | `0.7` | Sampling temperature (0.0–1.0) |
 | `LLM_MAX_OUTPUT_TOKENS` | `2048` | Maximum tokens in LLM response |
-| `LLM_TOP_P` | `0.9` | Nucleus sampling parameter |
-| `THINKING_LEVEL` | `medium` | Gemini thinking depth: `none`, `low`, `medium`, `high` |
+| `THINKING_LEVEL` | `medium` | Gemini thinking depth: `minimal`, `low`, `medium`, `high` |
 | `INCLUDE_THOUGHTS` | `true` | Whether to capture chain-of-thought reasoning |
+
+> `GOOGLE_CLOUD_PROJECT` is only required when `LLM_PROVIDER=vertexai`; a startup error is raised if it is missing in that case.
+
+### AWS Bedrock (`LLM_PROVIDER=bedrock`)
+
+Uses the Bedrock Converse API via `langchain-aws`. Authentication is handled by `langchain-aws` / `boto3`, which read the `AWS_BEARER_TOKEN_BEDROCK` environment variable (short-term Bedrock API key) automatically. Standard AWS credentials (`AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY`) also work.
+
+| Variable | Default | Description |
+|---|---|---|
+| `BEDROCK_MODEL` | `anthropic.claude-3-haiku-20240307-v1:0` | Bedrock model ID or inference profile ID |
+| `BEDROCK_REGION` | `us-east-1` | AWS region hosting the model |
+| `BEDROCK_MAX_TOKENS` | `2048` | Maximum tokens in LLM response |
+
+> `AWS_BEARER_TOKEN_BEDROCK` is read directly from the process environment, not from `.env`. On Windows, avoid `setx` for this value — it truncates strings longer than 1024 characters, which corrupts the token. Set it for the session with `$env:AWS_BEARER_TOKEN_BEDROCK = "..."`, or persist it via `[Environment]::SetEnvironmentVariable("AWS_BEARER_TOKEN_BEDROCK", "...", "User")`.
+
+> `THINKING_LEVEL`, `INCLUDE_THOUGHTS`, and Gemini safety settings do not apply to Bedrock models.
 
 ---
 
@@ -114,8 +149,16 @@ ROLE_LOCATION_MANAGER_ROW_FILTERS=orders:location_id=5|employees:location_id=5|s
 ## Minimal `.env` Example
 
 ```env
-# Required
+# LLM provider: vertexai | bedrock
+LLM_PROVIDER=vertexai
+
+# Vertex AI (required when LLM_PROVIDER=vertexai)
 GOOGLE_CLOUD_PROJECT=my-gcp-project
+
+# AWS Bedrock (used when LLM_PROVIDER=bedrock)
+# BEDROCK_MODEL=anthropic.claude-3-haiku-20240307-v1:0
+# BEDROCK_REGION=us-east-1
+# Auth: export AWS_BEARER_TOKEN_BEDROCK in your shell (not in .env)
 
 # Analytics DB
 ANALYTICS_DB_HOST=localhost
