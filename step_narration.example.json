@@ -1,0 +1,51 @@
+{
+  "_comment": "Optional overrides for standard-mode progress narration. Only include keys you want to customise — omitted keys keep their built-in defaults. Set STEP_NARRATION_PATH=step_narration.json in .env to activate.",
+
+  "_comment_table_domains": "table_domains is EMPTY by default (schema-specific). The entries below are EXAMPLES for the restaurant schema — replace them with your own table->domain mapping. Without this mapping, tool labels use generic phrasing (no domain words).",
+
+  "table_domains": {
+    "orders": "sales",
+    "order_items": "sales",
+    "payments": "payments",
+    "discounts": "discounts",
+    "order_discounts": "discounts",
+    "menu_items": "menu",
+    "menu_categories": "menu",
+    "recipe_items": "recipes",
+    "ingredients": "ingredients",
+    "supplier": "suppliers",
+    "supplier_items": "suppliers",
+    "inventory": "inventory",
+    "customers": "customers",
+    "loyalty_accounts": "loyalty",
+    "loyalty_txn": "loyalty",
+    "reservations": "reservations",
+    "tables": "seating",
+    "location": "locations",
+    "employee": "staff",
+    "shifts": "staff scheduling",
+    "roles": "staff"
+  },
+
+  "tool_labels": {
+    "sql_db_list_tables": "Identifying available data sources",
+    "sql_db_schema": "Reviewing the structure of {domains} data",
+    "sql_db_query_checker": "Validating the query for {domains} data",
+    "sql_db_query": "Querying {domains} data"
+  },
+
+  "tool_labels_generic": {
+    "sql_db_list_tables": "Identifying available data sources",
+    "sql_db_schema": "Reviewing the data structure",
+    "sql_db_query_checker": "Validating the query",
+    "sql_db_query": "Retrieving the data"
+  },
+
+  "default_tool_step": "Working on your request",
+
+  "phases": {
+    "understanding": "Understanding your question",
+    "reasoning": "Planning how to answer your question",
+    "formatting": "Preparing your answer"
+  }
+}

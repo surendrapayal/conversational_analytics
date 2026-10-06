@@ -8,6 +8,7 @@ from langchain_core.messages import HumanMessage, AIMessage, ToolMessage
 from conversational_analytics.graph import build_graph
 from conversational_analytics.models import AgentRequest, AgentResponse, AgentMetadata
 from conversational_analytics.memory import audit_writer, save_conversation_summary
+from conversational_analytics.narration import get_safe_step_label, get_phase
 
 logger = logging.getLogger(__name__)
 logger.propagate = True
@@ -209,38 +210,6 @@ def _sse_collect(event: str, payload: dict, session_id: str, conversation_id: st
     return f"event: {event}\ndata: {json.dumps(payload)}\n\n"
 
 
-# ── Standard-mode progress narration (SAFE) ──────────────────────────
-# These are the ONLY strings ever emitted as standard-mode progress.
-# They are hardcoded and generic by design: no SQL, no table/column names,
-# and no raw model reasoning is ever included. This prevents leakage of
-# internal implementation details or schema to the client.
-
-# Friendly label shown when the agent decides to call a specific tool.
-_TOOL_STEP_LABELS = {
-    "sql_db_list_tables": "Identifying available data sources",
-    "sql_db_schema": "Analysing data structure",
-    "sql_db_query_checker": "Validating the approach",
-    "sql_db_query": "Retrieving data",
-}
-
-# Generic fallback for any tool not explicitly mapped above.
-_DEFAULT_TOOL_STEP = "Working on your request"
-
-# Phase labels emitted at lifecycle points (not tied to a specific tool).
-_PHASE_UNDERSTANDING = "Understanding your question"
-_PHASE_REASONING = "Thinking through the best approach"
-_PHASE_FORMATTING = "Preparing your answer"
-
-
-def _safe_step_label(tool_name: str) -> str:
-    """Returns a hardcoded, leak-free progress label for a tool name.
-
-    Never derives text from tool arguments, SQL, or model output — only maps
-    a known tool name to a pre-approved phrase, falling back to a generic one.
-    """
-    return _TOOL_STEP_LABELS.get(tool_name, _DEFAULT_TOOL_STEP)
-
-
 async def stream_agent(request: AgentRequest, stream_mode: str = "standard") -> AsyncGenerator[str, None]:
     """Streams agent execution as Server-Sent Events using async generator."""
     start = time.time()
@@ -253,7 +222,7 @@ async def stream_agent(request: AgentRequest, stream_mode: str = "standard") -> 
         # emit each at most once (avoids repeating "Thinking…" every agent turn).
         reasoning_announced = False
         if stream_mode == "standard":
-            yield _sse_collect("step", {"message": _PHASE_UNDERSTANDING}, request.session_id, request.conversation_id, state)
+            yield _sse_collect("step", {"message": get_phase("understanding")}, request.session_id, request.conversation_id, state)
 
         async for chunk in _graph.astream(_build_input_state(request), config=config, stream_mode="updates"):
             for node_name, state_update in chunk.items():
@@ -280,13 +249,13 @@ async def stream_agent(request: AgentRequest, stream_mode: str = "standard") -> 
                             # Standard: emit a GENERIC reasoning step — never the raw
                             # thinking text, so no SQL/schema/internal details leak.
                             reasoning_announced = True
-                            yield _sse_collect("step", {"message": _PHASE_REASONING}, request.session_id, request.conversation_id, state)
+                            yield _sse_collect("step", {"message": get_phase("reasoning")}, request.session_id, request.conversation_id, state)
 
                         for tc in msg.tool_calls:
                             if stream_mode == "verbose":
                                 yield _sse_collect("tool_call", {"tool": tc["name"], "args": tc["args"]}, request.session_id, request.conversation_id, state)
                             else:
-                                yield _sse_collect("step", {"message": _safe_step_label(tc["name"])}, request.session_id, request.conversation_id, state)
+                                yield _sse_collect("step", {"message": get_safe_step_label(tc["name"], tc.get("args"))}, request.session_id, request.conversation_id, state)
 
                 elif node_name == "tools":
                     if stream_mode == "verbose":
@@ -296,7 +265,7 @@ async def stream_agent(request: AgentRequest, stream_mode: str = "standard") -> 
 
                 elif node_name == "response_formatter":
                     if stream_mode == "standard":
-                        yield _sse_collect("step", {"message": _PHASE_FORMATTING}, request.session_id, request.conversation_id, state)
+                        yield _sse_collect("step", {"message": get_phase("formatting")}, request.session_id, request.conversation_id, state)
                     if state["final_response"]:
                         yield _sse_collect("response", {"text": state["final_response"], "vega_spec": state["vega_spec"]}, request.session_id, request.conversation_id, state)
 

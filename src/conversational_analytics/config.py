@@ -74,6 +74,9 @@ class Settings(BaseSettings):
     log_level: str = "INFO"
     agent_max_iterations: int = 10
     semantic_layer_path: str = ""
+    # Optional JSON file that customises standard-mode progress narration
+    # (table->domain map, tool labels, phase labels). Empty = built-in defaults.
+    step_narration_path: str = ""
     log_prompt: bool = False
 
     # ── Embedding (pgvector semantic search) ─────────────────────────
