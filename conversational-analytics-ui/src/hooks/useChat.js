@@ -35,8 +35,11 @@ export function useChat({ userId, role, streamMode = 'standard' }) {
         streamMode,
       })) {
         if (event === 'step') {
-          // standard mode: lightweight live progress labels
+          // standard mode: sanitized progress labels.
+          // Push to both: `steps` for the live indicator during streaming,
+          // and `activity` so the timeline persists on the message after streaming ends.
           setSteps(prev => [...prev, data.message]);
+          addActivity({ type: 'step', message: data.message });
         } else if (event === 'thinking') {
           // verbose mode: model chain-of-thought
           addActivity({ type: 'thinking', reasoning: data.reasoning });
