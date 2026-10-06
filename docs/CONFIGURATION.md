@@ -40,15 +40,47 @@ Authenticates with Application Default Credentials (ADC).
 
 ### AWS Bedrock (`LLM_PROVIDER=bedrock`)
 
-Uses the Bedrock Converse API via `langchain-aws`. Authentication is handled by `langchain-aws` / `boto3`, which read the `AWS_BEARER_TOKEN_BEDROCK` environment variable (short-term Bedrock API key) automatically. Standard AWS credentials (`AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY`) also work.
+Uses the Bedrock Converse API via `langchain-aws`. Credential resolution is delegated to boto3's standard chain, so AWS SSO, API keys, and static credentials all work.
 
 | Variable | Default | Description |
 |---|---|---|
-| `BEDROCK_MODEL` | `anthropic.claude-3-haiku-20240307-v1:0` | Bedrock model ID or inference profile ID |
-| `BEDROCK_REGION` | `us-east-1` | AWS region hosting the model |
+| `BEDROCK_MODEL_ID` | `anthropic.claude-3-haiku-20240307-v1:0` | Bedrock model ID or inference profile ID |
 | `BEDROCK_MAX_TOKENS` | `2048` | Maximum tokens in LLM response |
+| `AWS_PROFILE` | *(unset)* | Named AWS profile to authenticate with (SSO or credentials file) |
+| `AWS_REGION` | *(unset)* | AWS region hosting the model |
 
-> `AWS_BEARER_TOKEN_BEDROCK` is read directly from the process environment, not from `.env`. On Windows, avoid `setx` for this value — it truncates strings longer than 1024 characters, which corrupts the token. Set it for the session with `$env:AWS_BEARER_TOKEN_BEDROCK = "..."`, or persist it via `[Environment]::SetEnvironmentVariable("AWS_BEARER_TOKEN_BEDROCK", "...", "User")`.
+#### Value resolution: `.env` → shell → boto3 default
+
+For `AWS_PROFILE`, `AWS_REGION`, and `BEDROCK_MODEL_ID`, each value is resolved in this order:
+
+1. The value in `.env`, if set.
+2. Otherwise the shell environment variable of the same name (e.g. `$env:AWS_PROFILE`).
+3. Otherwise it is omitted, and boto3 applies its own default resolution.
+
+This lets you keep `.env` free of machine-specific profile names and instead set them per session in the shell.
+
+#### Authenticating with AWS SSO (recommended)
+
+```powershell
+# 1. Log in once per session (opens a browser)
+aws sso login --profile my-profile
+
+# 2. Point the app at that profile + region (shell env; .env can stay unset)
+$env:AWS_PROFILE = "my-profile"
+$env:AWS_REGION  = "us-east-1"
+
+# 3. Select the Bedrock provider in .env
+# LLM_PROVIDER=bedrock
+```
+
+> Leave `AWS_PROFILE` / `AWS_REGION` **commented out** in `.env` to use the shell values. An empty assignment like `AWS_PROFILE=` in `.env` would overwrite the shell value with an empty string (because `.env` is loaded with `override=True`), breaking SSO fallback.
+
+#### Alternative auth methods
+
+These are read directly from the process environment by boto3 (not from `.env`):
+
+- **API key:** `AWS_BEARER_TOKEN_BEDROCK` (short-term Bedrock API key). **If set, it takes priority over `AWS_PROFILE`** — the app logs a warning when both are present. On Windows, avoid `setx` for this value: it truncates strings longer than 1024 characters, corrupting the token. Use `$env:AWS_BEARER_TOKEN_BEDROCK = "..."` or `[Environment]::SetEnvironmentVariable("AWS_BEARER_TOKEN_BEDROCK", "...", "User")`.
+- **Static credentials:** `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY`.
 
 > `THINKING_LEVEL`, `INCLUDE_THOUGHTS`, and Gemini safety settings do not apply to Bedrock models.
 
@@ -156,9 +188,11 @@ LLM_PROVIDER=vertexai
 GOOGLE_CLOUD_PROJECT=my-gcp-project
 
 # AWS Bedrock (used when LLM_PROVIDER=bedrock)
-# BEDROCK_MODEL=anthropic.claude-3-haiku-20240307-v1:0
-# BEDROCK_REGION=us-east-1
-# Auth: export AWS_BEARER_TOKEN_BEDROCK in your shell (not in .env)
+# BEDROCK_MODEL_ID=anthropic.claude-3-haiku-20240307-v1:0
+# Auth via SSO (recommended): run `aws sso login --profile my-profile`,
+# then set these in the shell (keep them commented out here):
+#   $env:AWS_PROFILE = "my-profile"
+#   $env:AWS_REGION  = "us-east-1"
 
 # Analytics DB
 ANALYTICS_DB_HOST=localhost

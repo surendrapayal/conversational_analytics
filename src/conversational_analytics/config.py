@@ -31,10 +31,15 @@ class Settings(BaseSettings):
     include_thoughts: bool = True
 
     # ── LLM: AWS Bedrock ─────────────────────────────────────────────
-    # Auth uses the AWS_BEARER_TOKEN_BEDROCK env var (short-term Bedrock API key),
-    # read automatically by langchain-aws / boto3. Standard AWS credentials also work.
-    bedrock_model: str = "anthropic.claude-3-haiku-20240307-v1:0"
-    bedrock_region: str = "us-east-1"
+    # Authentication (resolved in this order per value: .env -> shell env -> boto3 default chain):
+    #   - AWS SSO:  run `aws sso login --profile <name>`, then set AWS_PROFILE (+ AWS_REGION).
+    #   - API key:  set AWS_BEARER_TOKEN_BEDROCK (short-term Bedrock API key).
+    #   - Standard: AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY.
+    # Leave these empty in .env to fall back to the shell environment the user set
+    # (e.g. $env:AWS_PROFILE = "my-profile").
+    bedrock_model_id: str = "anthropic.claude-3-haiku-20240307-v1:0"
+    aws_profile: str = ""
+    aws_region: str = ""
     bedrock_max_tokens: int = 2048
 
     # ── Analytics Database ────────────────────────────────────────────
