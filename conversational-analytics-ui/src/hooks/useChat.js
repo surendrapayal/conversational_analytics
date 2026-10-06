@@ -2,7 +2,7 @@ import { useState, useRef, useCallback } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { streamQuery } from '../api/client';
 
-export function useChat({ userId, role }) {
+export function useChat({ userId, role, streamMode = 'standard' }) {
   const [messages, setMessages] = useState([]);
   const [streaming, setStreaming] = useState(false);
   const [steps, setSteps] = useState([]);
@@ -23,6 +23,7 @@ export function useChat({ userId, role }) {
         query,
         sessionId: sessionIdRef.current,
         role,
+        streamMode,
       })) {
         if (event === 'step') {
           setSteps(prev => [...prev, data.message]);
@@ -53,7 +54,7 @@ export function useChat({ userId, role }) {
       setStreaming(false);
       setSteps([]);
     }
-  }, [userId, role]);
+  }, [userId, role, streamMode]);
 
   const clearChat = useCallback(() => {
     setMessages([]);

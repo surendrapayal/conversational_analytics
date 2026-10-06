@@ -10,8 +10,8 @@ const SUGGESTIONS = [
   'Revenue trend over the last 30 days',
 ];
 
-export default function ChatPage({ userId, role }) {
-  const { messages, streaming, steps, sendMessage, clearChat } = useChat({ userId, role });
+export default function ChatPage({ userId, role, streamMode }) {
+  const { messages, streaming, steps, sendMessage, clearChat } = useChat({ userId, role, streamMode });
   const [input, setInput] = useState('');
   const [validationError, setValidationError] = useState('');
   const bottomRef = useRef(null);

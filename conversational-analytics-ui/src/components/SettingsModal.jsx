@@ -1,9 +1,15 @@
 import { useState } from 'react';
-import { ROLES } from '../api/client';
+import { ROLES, STREAM_MODES } from '../api/client';
 
-export default function SettingsModal({ userId, role, onSave, onClose }) {
+const STREAM_MODE_HELP = {
+  standard: 'Concise progress updates while the agent works.',
+  verbose: 'Detailed step-by-step reasoning and tool activity.',
+};
+
+export default function SettingsModal({ userId, role, streamMode, onSave, onClose }) {
   const [localUserId, setLocalUserId] = useState(userId);
   const [localRole, setLocalRole] = useState(role);
+  const [localStreamMode, setLocalStreamMode] = useState(streamMode || 'standard');
 
   return (
     <div className="modal-overlay" onClick={onClose}>
@@ -25,10 +31,21 @@ export default function SettingsModal({ userId, role, onSave, onClose }) {
             <option value="">No role</option>
             {ROLES.map(r => <option key={r} value={r}>{r}</option>)}
           </select>
+          <label className="form-label" style={{ marginTop: '1rem' }}>Stream Mode</label>
+          <select
+            className="form-input"
+            value={localStreamMode}
+            onChange={e => setLocalStreamMode(e.target.value)}
+          >
+            {STREAM_MODES.map(m => (
+              <option key={m} value={m}>{m.charAt(0).toUpperCase() + m.slice(1)}</option>
+            ))}
+          </select>
+          <p className="form-hint">{STREAM_MODE_HELP[localStreamMode]}</p>
         </div>
         <div className="modal-footer">
           <button className="btn btn-secondary" onClick={onClose}>Cancel</button>
-          <button className="btn btn-primary" onClick={() => { onSave(localUserId, localRole); onClose(); }}>
+          <button className="btn btn-primary" onClick={() => { onSave(localStreamMode); onClose(); }}>
             Save
           </button>
         </div>

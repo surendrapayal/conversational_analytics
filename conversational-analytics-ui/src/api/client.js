@@ -2,7 +2,9 @@ const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
 export const ROLES = ['admin', 'general_manager', 'location_manager', 'chef', 'waiter', 'cashier', 'analyst'];
 
-export async function* streamQuery({ userId, query, sessionId, role }) {
+export const STREAM_MODES = ['standard', 'verbose'];
+
+export async function* streamQuery({ userId, query, sessionId, role, streamMode = 'standard' }) {
   const res = await fetch(`${BASE_URL}/api/v1/stream`, {
     method: 'POST',
     headers: {
@@ -10,7 +12,7 @@ export async function* streamQuery({ userId, query, sessionId, role }) {
       ...(sessionId && { 'X-Session-Id': sessionId }),
       ...(role && { role }),
     },
-    body: JSON.stringify({ user_id: userId, query, stream_mode: 'standard' }),
+    body: JSON.stringify({ user_id: userId, query, stream_mode: streamMode }),
   });
 
   if (!res.ok) throw new Error(`HTTP ${res.status}`);

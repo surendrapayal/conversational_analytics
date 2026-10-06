@@ -12,7 +12,12 @@ export default function App() {
     return saved ? JSON.parse(saved) : null;
   });
   const [theme, setTheme] = useState(() => localStorage.getItem('ca_theme') || 'dark');
+  const [streamMode, setStreamMode] = useState(() => localStorage.getItem('ca_stream_mode') || 'standard');
   const [showSettings, setShowSettings] = useState(false);
+
+  useEffect(() => {
+    localStorage.setItem('ca_stream_mode', streamMode);
+  }, [streamMode]);
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
@@ -46,7 +51,7 @@ export default function App() {
         />
         <main className="app-main">
           <Routes>
-            <Route path="/"        element={<ChatPage userId={user.username} role={user.role} />} />
+            <Route path="/"        element={<ChatPage userId={user.username} role={user.role} streamMode={streamMode} />} />
             <Route path="/history" element={<HistoryPage userId={user.username} role={user.role} />} />
           </Routes>
         </main>
@@ -54,7 +59,8 @@ export default function App() {
           <SettingsModal
             userId={user.username}
             role={user.role}
-            onSave={() => {}}
+            streamMode={streamMode}
+            onSave={(nextStreamMode) => setStreamMode(nextStreamMode)}
             onClose={() => setShowSettings(false)}
           />
         )}
