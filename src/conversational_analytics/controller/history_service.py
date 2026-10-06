@@ -6,13 +6,29 @@ from conversational_analytics.config import get_settings
 logger = logging.getLogger(__name__)
 
 
-def _extract_activity(stream_events) -> list[dict]:
-    """Maps persisted stream_events into the frontend 'activity' timeline shape.
+def _extract_activity(stream_events, stream_mode: str = "standard") -> list[dict]:
+    """Maps persisted stream_events into the frontend 'activity' timeline shape,
+    filtered by the requested stream_mode so history matches the live UX.
 
-    Only the verbose intermediate events (thinking / tool_call / tool_result)
-    are surfaced; step/response/done/error are omitted (step is live-only and
-    the final response is already returned via agent_response).
-    Returns [] when no verbose events were recorded for the conversation.
+    Event types in the order they occurred:
+      - `step`         sanitized, hardcoded progress labels (standard-mode runs)
+      - `thinking`     raw model reasoning (verbose-mode runs only)
+      - `tool_call`    tool name + arguments (verbose-mode runs only)
+      - `tool_result`  tool output (verbose-mode runs only)
+
+    stream_mode controls exposure:
+      - "verbose":  returns everything recorded (thinking/tool_call/tool_result
+                    and step).
+      - "standard": returns ONLY the sanitized `step` entries and SUPPRESSES any
+                    thinking/tool_call/tool_result. This enforces the standard-mode
+                    safety contract even for conversations that were originally run
+                    in verbose mode — no SQL/schema/raw reasoning leaks when the UI
+                    is in standard mode.
+
+    `response`/`done`/`error` are always omitted. A conversation that ran in
+    standard mode has no verbose events stored, so requesting "verbose" simply
+    returns its `step` entries (we cannot fabricate detail that was never captured).
+    Returns [] when no relevant events were recorded.
     """
     if not stream_events:
         return []
@@ -25,12 +41,18 @@ def _extract_activity(stream_events) -> list[dict]:
     if not isinstance(stream_events, list):
         return []
 
+    verbose = stream_mode == "verbose"
     activity: list[dict] = []
     for ev in stream_events:
         if not isinstance(ev, dict):
             continue
         kind = ev.get("event")
-        if kind == "thinking":
+        if kind == "step":
+            activity.append({"type": "step", "message": ev.get("message", "")})
+        elif not verbose:
+            # Standard mode: never expose raw thinking / tool details.
+            continue
+        elif kind == "thinking":
             activity.append({"type": "thinking", "reasoning": ev.get("reasoning", "")})
         elif kind == "tool_call":
             activity.append({"type": "tool_call", "tool": ev.get("tool"), "args": ev.get("args")})
@@ -118,6 +140,7 @@ async def get_session_detail(
     session_id: str,
     page: int,
     page_size: int,
+    stream_mode: str = "standard",
 ) -> dict:
     """
     Returns paginated conversations within a session,
@@ -189,7 +212,7 @@ async def get_session_detail(
                 "agent_response":  r["agent_response"],
                 "has_vega":        r["has_vega"],
                 "vega_spec":       r["vega_spec"],
-                "activity":        _extract_activity(r.get("stream_events")),
+                "activity":        _extract_activity(r.get("stream_events"), stream_mode),
                 "execution_ms":    r["execution_ms"],
                 "created_at":      r["created_at"].isoformat() if r["created_at"] else None,
             }

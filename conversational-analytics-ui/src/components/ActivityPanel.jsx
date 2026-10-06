@@ -1,6 +1,7 @@
 import { useState } from 'react';
 
 const ACTIVITY_META = {
+  step: { icon: '➡️', label: 'Step' },
   thinking: { icon: '💭', label: 'Thinking' },
   tool_call: { icon: '🛠️', label: 'Tool call' },
   tool_result: { icon: '📦', label: 'Tool result' },
@@ -10,7 +11,9 @@ function ActivityItem({ entry }) {
   const meta = ACTIVITY_META[entry.type] || { icon: '•', label: entry.type };
 
   let detail = null;
-  if (entry.type === 'thinking') {
+  if (entry.type === 'step') {
+    detail = <div className="activity-text">{entry.message}</div>;
+  } else if (entry.type === 'thinking') {
     detail = <div className="activity-text">{entry.reasoning}</div>;
   } else if (entry.type === 'tool_call') {
     detail = (

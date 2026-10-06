@@ -197,12 +197,36 @@ def _sse_collect(event: str, payload: dict, session_id: str, conversation_id: st
     return f"event: {event}\ndata: {json.dumps(payload)}\n\n"
 
 
+# ── Standard-mode progress narration (SAFE) ──────────────────────────
+# These are the ONLY strings ever emitted as standard-mode progress.
+# They are hardcoded and generic by design: no SQL, no table/column names,
+# and no raw model reasoning is ever included. This prevents leakage of
+# internal implementation details or schema to the client.
+
+# Friendly label shown when the agent decides to call a specific tool.
 _TOOL_STEP_LABELS = {
     "sql_db_list_tables": "Identifying available data sources",
     "sql_db_schema": "Analysing data structure",
-    "sql_db_query_checker": "Validating query",
+    "sql_db_query_checker": "Validating the approach",
     "sql_db_query": "Retrieving data",
 }
+
+# Generic fallback for any tool not explicitly mapped above.
+_DEFAULT_TOOL_STEP = "Working on your request"
+
+# Phase labels emitted at lifecycle points (not tied to a specific tool).
+_PHASE_UNDERSTANDING = "Understanding your question"
+_PHASE_REASONING = "Thinking through the best approach"
+_PHASE_FORMATTING = "Preparing your answer"
+
+
+def _safe_step_label(tool_name: str) -> str:
+    """Returns a hardcoded, leak-free progress label for a tool name.
+
+    Never derives text from tool arguments, SQL, or model output — only maps
+    a known tool name to a pre-approved phrase, falling back to a generic one.
+    """
+    return _TOOL_STEP_LABELS.get(tool_name, _DEFAULT_TOOL_STEP)
 
 
 async def stream_agent(request: AgentRequest, stream_mode: str = "standard") -> AsyncGenerator[str, None]:
@@ -213,6 +237,12 @@ async def stream_agent(request: AgentRequest, stream_mode: str = "standard") -> 
         logger.info(f"stream_agent started — user={request.user_id} session={request.session_id} conversation={request.conversation_id} mode={stream_mode}")
         config = {"configurable": {"thread_id": request.session_id}}
 
+        # Standard mode only: track which generic phases we've announced so we
+        # emit each at most once (avoids repeating "Thinking…" every agent turn).
+        reasoning_announced = False
+        if stream_mode == "standard":
+            yield _sse_collect("step", {"message": _PHASE_UNDERSTANDING}, request.session_id, request.conversation_id, state)
+
         async for chunk in _graph.astream(_build_input_state(request), config=config, stream_mode="updates"):
             for node_name, state_update in chunk.items():
                 _process_chunk({node_name: state_update}, request, state)
@@ -221,16 +251,30 @@ async def stream_agent(request: AgentRequest, stream_mode: str = "standard") -> 
                     for msg in state_update.get("messages", []):
                         if not isinstance(msg, AIMessage):
                             continue
-                        if stream_mode == "verbose" and isinstance(msg.content, list):
-                            for part in msg.content:
-                                if isinstance(part, dict) and part.get("type") == "thinking" and part.get("thinking"):
-                                    yield _sse_collect("thinking", {"reasoning": part["thinking"].strip()}, request.session_id, request.conversation_id, state)
+
+                        # Detect that the model produced internal reasoning.
+                        has_thinking = isinstance(msg.content, list) and any(
+                            isinstance(p, dict) and p.get("type") == "thinking" and p.get("thinking")
+                            for p in msg.content
+                        )
+
+                        if stream_mode == "verbose":
+                            # Verbose: forward the raw reasoning (opt-in, detailed view).
+                            if isinstance(msg.content, list):
+                                for part in msg.content:
+                                    if isinstance(part, dict) and part.get("type") == "thinking" and part.get("thinking"):
+                                        yield _sse_collect("thinking", {"reasoning": part["thinking"].strip()}, request.session_id, request.conversation_id, state)
+                        elif has_thinking and not reasoning_announced:
+                            # Standard: emit a GENERIC reasoning step — never the raw
+                            # thinking text, so no SQL/schema/internal details leak.
+                            reasoning_announced = True
+                            yield _sse_collect("step", {"message": _PHASE_REASONING}, request.session_id, request.conversation_id, state)
+
                         for tc in msg.tool_calls:
                             if stream_mode == "verbose":
                                 yield _sse_collect("tool_call", {"tool": tc["name"], "args": tc["args"]}, request.session_id, request.conversation_id, state)
                             else:
-                                label = _TOOL_STEP_LABELS.get(tc["name"], "Processing")
-                                yield _sse_collect("step", {"message": label}, request.session_id, request.conversation_id, state)
+                                yield _sse_collect("step", {"message": _safe_step_label(tc["name"])}, request.session_id, request.conversation_id, state)
 
                 elif node_name == "tools":
                     if stream_mode == "verbose":
@@ -239,6 +283,8 @@ async def stream_agent(request: AgentRequest, stream_mode: str = "standard") -> 
                                 yield _sse_collect("tool_result", {"tool": msg.name, "output": msg.content}, request.session_id, request.conversation_id, state)
 
                 elif node_name == "response_formatter":
+                    if stream_mode == "standard":
+                        yield _sse_collect("step", {"message": _PHASE_FORMATTING}, request.session_id, request.conversation_id, state)
                     if state["final_response"]:
                         yield _sse_collect("response", {"text": state["final_response"], "vega_spec": state["vega_spec"]}, request.session_id, request.conversation_id, state)
 

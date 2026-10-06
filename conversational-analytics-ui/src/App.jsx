@@ -52,7 +52,7 @@ export default function App() {
         <main className="app-main">
           <Routes>
             <Route path="/"        element={<ChatPage userId={user.username} role={user.role} streamMode={streamMode} />} />
-            <Route path="/history" element={<HistoryPage userId={user.username} role={user.role} />} />
+            <Route path="/history" element={<HistoryPage userId={user.username} role={user.role} streamMode={streamMode} />} />
           </Routes>
         </main>
         {showSettings && (

@@ -111,22 +111,22 @@ function InlineChat({ sessionId, userId, role }) {
   );
 }
 
-function SessionDetail({ sessionId, userId, role }) {
+function SessionDetail({ sessionId, userId, role, streamMode }) {
   const [data, setData]       = useState(null);
   const [page, setPage]       = useState(1);
   const [loading, setLoading] = useState(false);
   const [expanded, setExpanded] = useState(null);
   const [input, setInput]     = useState('');
   const [error, setError]     = useState('');
-  const { messages, streaming, steps, sendMessage } = useChat({ userId, role });
+  const { messages, streaming, steps, sendMessage } = useChat({ userId, role, streamMode });
   const bottomRef = useRef(null);
 
   useEffect(() => {
     if (!sessionId) return;
     setLoading(true); setExpanded(null); setData(null);
-    fetchSessionDetail({ sessionId, page, pageSize: 10 })
+    fetchSessionDetail({ sessionId, page, pageSize: 10, streamMode })
       .then(setData).catch(console.error).finally(() => setLoading(false));
-  }, [sessionId, page]);
+  }, [sessionId, page, streamMode]);
 
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [messages]);
 
@@ -265,7 +265,7 @@ function SessionDetail({ sessionId, userId, role }) {
   );
 }
 
-export default function HistoryPage({ userId, role }) {
+export default function HistoryPage({ userId, role, streamMode }) {
   const [selectedSession, setSelectedSession] = useState(null);
   return (
     <div className="history-page">
@@ -274,7 +274,7 @@ export default function HistoryPage({ userId, role }) {
       </div>
       <div className="history-layout">
         <SessionList userId={userId} onSelect={setSelectedSession} selectedId={selectedSession} />
-        <SessionDetail sessionId={selectedSession} userId={userId} role={role} />
+        <SessionDetail sessionId={selectedSession} userId={userId} role={role} streamMode={streamMode} />
       </div>
     </div>
   );

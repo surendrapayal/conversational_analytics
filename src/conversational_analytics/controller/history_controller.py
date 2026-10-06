@@ -1,4 +1,5 @@
 import logging
+from typing import Literal
 from fastapi import APIRouter, HTTPException, Query
 from conversational_analytics.controller.history_service import get_session_list, get_session_detail
 
@@ -29,12 +30,24 @@ async def get_session(
     session_id: str,
     page: int = Query(1, ge=1, description="Page number"),
     page_size: int = Query(20, ge=1, le=100, description="Results per page"),
+    stream_mode: Literal["standard", "verbose"] = Query(
+        "standard",
+        description=(
+            "Controls the reasoning/steps returned per conversation. "
+            "'standard' returns only sanitized progress steps; 'verbose' also "
+            "returns detailed thinking/tool activity when it was recorded."
+        ),
+    ),
 ):
     """
     Returns paginated conversations within a session ordered by latest first.
+    The `stream_mode` param mirrors the chat UI setting and controls how much
+    reasoning detail each conversation's `activity` timeline exposes.
     """
     try:
-        result = await get_session_detail(session_id=session_id, page=page, page_size=page_size)
+        result = await get_session_detail(
+            session_id=session_id, page=page, page_size=page_size, stream_mode=stream_mode
+        )
         if result is None:
             raise HTTPException(status_code=404, detail=f"Session '{session_id}' not found")
         return result

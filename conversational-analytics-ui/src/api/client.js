@@ -48,8 +48,8 @@ export async function fetchSessions({ userId, page = 1, pageSize = 20 }) {
   return res.json();
 }
 
-export async function fetchSessionDetail({ sessionId, page = 1, pageSize = 20 }) {
-  const params = new URLSearchParams({ page, page_size: pageSize });
+export async function fetchSessionDetail({ sessionId, page = 1, pageSize = 20, streamMode = 'standard' }) {
+  const params = new URLSearchParams({ page, page_size: pageSize, stream_mode: streamMode });
   const res = await fetch(`${BASE_URL}/api/v1/sessions/${sessionId}?${params}`);
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   return res.json();
