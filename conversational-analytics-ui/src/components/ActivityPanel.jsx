@@ -40,19 +40,37 @@ function ActivityItem({ entry }) {
   );
 }
 
-export default function ActivityPanel({ activity }) {
-  const [open, setOpen] = useState(false);
+/**
+ * Collapsible activity timeline.
+ * @param {Object[]} activity - array of activity entries
+ * @param {boolean}  live     - true while the message is still streaming;
+ *                              auto-expands and shows a "working" indicator.
+ */
+export default function ActivityPanel({ activity, live = false }) {
+  // null = user hasn't toggled; fall back to auto behaviour (open while live).
+  const [userOpen, setUserOpen] = useState(null);
+  const open = userOpen === null ? live : userOpen;
+
   if (!activity || activity.length === 0) return null;
 
   return (
     <div className="activity-panel">
-      <button className="activity-toggle" onClick={() => setOpen(o => !o)}>
+      <button className="activity-toggle" onClick={() => setUserOpen(!open)}>
         <span className={`activity-caret ${open ? 'open' : ''}`}>▶</span>
         {open ? 'Hide' : 'Show'} reasoning &amp; steps ({activity.length})
+        {live && <span className="activity-live-dot" />}
       </button>
       {open && (
         <div className="activity-list">
           {activity.map((entry, i) => <ActivityItem key={entry.id ?? i} entry={entry} />)}
+          {live && (
+            <div className="activity-item activity-working">
+              <div className="activity-head">
+                <span className="activity-icon"><span className="step-spinner" /></span>
+                <span className="activity-label">Working…</span>
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>

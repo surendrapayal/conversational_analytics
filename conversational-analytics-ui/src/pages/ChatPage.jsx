@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
 import ChatMessage from '../components/ChatMessage';
-import StepIndicator from '../components/StepIndicator';
 import { useChat } from '../hooks/useChat';
 
 const SUGGESTIONS = [
@@ -11,14 +10,14 @@ const SUGGESTIONS = [
 ];
 
 export default function ChatPage({ userId, role, streamMode }) {
-  const { messages, streaming, steps, sendMessage, clearChat } = useChat({ userId, role, streamMode });
+  const { messages, streaming, sendMessage, clearChat } = useChat({ userId, role, streamMode });
   const [input, setInput] = useState('');
   const [validationError, setValidationError] = useState('');
   const bottomRef = useRef(null);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages, steps]);
+  }, [messages]);
 
   const handleSend = () => {
     const q = input.trim();
@@ -65,7 +64,6 @@ export default function ChatPage({ userId, role, streamMode }) {
         ) : (
           messages.map(msg => <ChatMessage key={msg.id} message={msg} />)
         )}
-        {streaming && <StepIndicator steps={steps} />}
         <div ref={bottomRef} />
       </div>
 

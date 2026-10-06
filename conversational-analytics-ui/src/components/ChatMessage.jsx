@@ -10,7 +10,7 @@ export default function ChatMessage({ message }) {
     <div className={`message ${isUser ? 'message-user' : 'message-assistant'} ${message.error ? 'message-error' : ''}`}>
       <div className="message-avatar">{isUser ? '👤' : '🤖'}</div>
       <div className="message-body">
-        {!isUser && <ActivityPanel activity={message.activity} />}
+        {!isUser && <ActivityPanel activity={message.activity} live={!!message.loading} />}
         {message.loading ? (
           <div className="message-loading">
             <span className="dot" /><span className="dot" /><span className="dot" />

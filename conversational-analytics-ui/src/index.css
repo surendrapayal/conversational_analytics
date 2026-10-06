@@ -222,6 +222,13 @@ body { overflow: hidden; height: 100vh; background: var(--bg-base); color: var(-
   border-radius: 4px; font-family: 'JetBrains Mono', monospace; font-size: 11px;
   overflow-x: auto; white-space: pre-wrap; color: var(--text-primary); max-height: 220px; overflow-y: auto;
 }
+.activity-live-dot {
+  display: inline-block; width: 6px; height: 6px; border-radius: 50%;
+  background: var(--accent); margin-left: 4px;
+  animation: activity-pulse 1s ease-in-out infinite;
+}
+@keyframes activity-pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
+.activity-working { opacity: 0.7; }
 
 /* ── Loading dots ─────────────────────────────────────────────────── */
 .message-loading { display: flex; gap: 5px; padding: 14px 16px; }
