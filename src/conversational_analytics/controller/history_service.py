@@ -1,8 +1,42 @@
+import json
 import logging
 import psycopg
 from conversational_analytics.config import get_settings
 
 logger = logging.getLogger(__name__)
+
+
+def _extract_activity(stream_events) -> list[dict]:
+    """Maps persisted stream_events into the frontend 'activity' timeline shape.
+
+    Only the verbose intermediate events (thinking / tool_call / tool_result)
+    are surfaced; step/response/done/error are omitted (step is live-only and
+    the final response is already returned via agent_response).
+    Returns [] when no verbose events were recorded for the conversation.
+    """
+    if not stream_events:
+        return []
+    # psycopg may return a JSONB column already decoded, or as a JSON string.
+    if isinstance(stream_events, str):
+        try:
+            stream_events = json.loads(stream_events)
+        except (ValueError, TypeError):
+            return []
+    if not isinstance(stream_events, list):
+        return []
+
+    activity: list[dict] = []
+    for ev in stream_events:
+        if not isinstance(ev, dict):
+            continue
+        kind = ev.get("event")
+        if kind == "thinking":
+            activity.append({"type": "thinking", "reasoning": ev.get("reasoning", "")})
+        elif kind == "tool_call":
+            activity.append({"type": "tool_call", "tool": ev.get("tool"), "args": ev.get("args")})
+        elif kind == "tool_result":
+            activity.append({"type": "tool_result", "tool": ev.get("tool"), "output": ev.get("output")})
+    return activity
 
 
 def _get_conn_str() -> str:
@@ -99,6 +133,7 @@ async def get_session_detail(
             agent_response,
             has_vega,
             vega_spec,
+            stream_events,
             execution_ms,
             created_at
         FROM query_log
@@ -154,6 +189,7 @@ async def get_session_detail(
                 "agent_response":  r["agent_response"],
                 "has_vega":        r["has_vega"],
                 "vega_spec":       r["vega_spec"],
+                "activity":        _extract_activity(r.get("stream_events")),
                 "execution_ms":    r["execution_ms"],
                 "created_at":      r["created_at"].isoformat() if r["created_at"] else None,
             }

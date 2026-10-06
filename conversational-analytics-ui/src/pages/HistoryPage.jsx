@@ -3,6 +3,7 @@ import { fetchSessions, fetchSessionDetail } from '../api/client';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import VegaChart from '../components/VegaChart';
+import ActivityPanel from '../components/ActivityPanel';
 import { useChat } from '../hooks/useChat';
 
 function Pagination({ page, totalPages, onChange }) {
@@ -198,6 +199,7 @@ function SessionDetail({ sessionId, userId, role }) {
 
               {expanded === i && (
                 <div className="conv-card-body">
+                  <ActivityPanel activity={c.activity} />
                   <div className="conv-response-text">
                     <ReactMarkdown remarkPlugins={[remarkGfm]}>{c.agent_response}</ReactMarkdown>
                   </div>
