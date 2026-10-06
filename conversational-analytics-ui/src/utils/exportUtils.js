@@ -250,10 +250,13 @@ export async function exportTablesAsExcel(tables, filename) {
   if (nonEmpty.length === 1) {
     return exportRowsAsExcel(nonEmpty[0].rows, filename);
   }
+  // Multi-sheet form: an array of Sheet objects, each { data, sheet }.
   const used = new Set();
-  const sheetsData = nonEmpty.map(t => toSheetData(t.rows));
-  const sheetOptions = nonEmpty.map((t, idx) => ({ sheet: sheetName(t.title, idx, used) }));
-  await writeXlsxFile(sheetsData, sheetOptions).toFile(`${filename}.xlsx`);
+  const sheets = nonEmpty.map((t, idx) => ({
+    data: toSheetData(t.rows),
+    sheet: sheetName(t.title, idx, used),
+  }));
+  await writeXlsxFile(sheets).toFile(`${filename}.xlsx`);
 }
 
 /**
