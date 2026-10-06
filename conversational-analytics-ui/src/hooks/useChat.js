@@ -15,7 +15,16 @@ export function useChat({ userId, role, streamMode = 'standard' }) {
     setSteps([]);
 
     const assistantId = uuidv4();
-    setMessages(prev => [...prev, { id: assistantId, role: 'assistant', content: '', vegaSpecs: null, loading: true }]);
+    setMessages(prev => [...prev, { id: assistantId, role: 'assistant', content: '', vegaSpecs: null, activity: [], loading: true }]);
+
+    // Append an entry to the current assistant message's activity timeline.
+    const addActivity = (entry) => {
+      setMessages(prev => prev.map(m =>
+        m.id === assistantId
+          ? { ...m, activity: [...(m.activity || []), { id: uuidv4(), ...entry }] }
+          : m
+      ));
+    };
 
     try {
       for await (const { event, data } of streamQuery({
@@ -26,7 +35,17 @@ export function useChat({ userId, role, streamMode = 'standard' }) {
         streamMode,
       })) {
         if (event === 'step') {
+          // standard mode: lightweight live progress labels
           setSteps(prev => [...prev, data.message]);
+        } else if (event === 'thinking') {
+          // verbose mode: model chain-of-thought
+          addActivity({ type: 'thinking', reasoning: data.reasoning });
+        } else if (event === 'tool_call') {
+          // verbose mode: a tool the agent decided to invoke
+          addActivity({ type: 'tool_call', tool: data.tool, args: data.args });
+        } else if (event === 'tool_result') {
+          // verbose mode: the output returned by a tool
+          addActivity({ type: 'tool_result', tool: data.tool, output: data.output });
         } else if (event === 'response') {
           // handle both vega_specs (array) and vega_spec (single object, backward compat)
           const vegaSpecs = data.vega_specs

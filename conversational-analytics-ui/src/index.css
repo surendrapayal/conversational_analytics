@@ -193,6 +193,36 @@ body { overflow: hidden; height: 100vh; background: var(--bg-base); color: var(-
 .message-content pre { background: var(--bg-hover); padding: 12px; border-radius: var(--radius-sm); overflow-x: auto; margin: 8px 0; }
 .message-content pre code { background: none; padding: 0; }
 
+/* ── Activity panel (verbose: thinking / tool_call / tool_result) ──── */
+.activity-panel { margin-bottom: 8px; }
+.activity-toggle {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: none; border: none; cursor: pointer;
+  color: var(--text-secondary); font-size: 12px; font-weight: 500;
+  padding: 2px 0; font-family: inherit;
+}
+.activity-toggle:hover { color: var(--text-primary); }
+.activity-caret { display: inline-block; transition: transform 0.15s; font-size: 9px; }
+.activity-caret.open { transform: rotate(90deg); }
+.activity-list {
+  margin-top: 6px; border: 1px solid var(--border);
+  border-radius: var(--radius-sm); background: var(--bg-elevated);
+  padding: 6px; display: flex; flex-direction: column; gap: 6px;
+}
+.activity-item {
+  border-left: 2px solid var(--border); padding: 4px 0 4px 10px;
+}
+.activity-head { display: flex; align-items: center; gap: 6px; font-size: 12px; }
+.activity-icon { font-size: 12px; }
+.activity-label { font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.4px; font-size: 10px; }
+.activity-tool { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--accent); }
+.activity-text { margin-top: 4px; font-size: 13px; color: var(--text-primary); white-space: pre-wrap; line-height: 1.5; }
+.activity-code {
+  margin-top: 4px; background: var(--bg-hover); padding: 8px 10px;
+  border-radius: 4px; font-family: 'JetBrains Mono', monospace; font-size: 11px;
+  overflow-x: auto; white-space: pre-wrap; color: var(--text-primary); max-height: 220px; overflow-y: auto;
+}
+
 /* ── Loading dots ─────────────────────────────────────────────────── */
 .message-loading { display: flex; gap: 5px; padding: 14px 16px; }
 .dot {
