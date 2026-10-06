@@ -83,6 +83,18 @@ def _process_chunk(chunk: dict, request: AgentRequest, state: dict) -> None:
                     duration_ms=int((time.time() - state["llm_call_start"]) * 1000),
                     prompt=state["prompt"],
                 )
+                # Log each individual tool call with its arguments.
+                for tc in msg.tool_calls:
+                    state["step_number"] += 1
+                    _fire_log_agent_step(
+                        conversation_id=request.conversation_id,
+                        session_id=request.session_id,
+                        user_id=request.user_id,
+                        step_number=state["step_number"],
+                        step_type="tool_call",
+                        tool_name=tc["name"],
+                        input=json.dumps(tc["args"])[:500],
+                    )
 
         elif node_name == "tools":
             for msg in state_update.get("messages", []):
