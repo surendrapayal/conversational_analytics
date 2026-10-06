@@ -20,7 +20,7 @@ export default function ChatMessage({ message }) {
             <div className="message-content">
               <ReactMarkdown remarkPlugins={[remarkGfm]}>{message.content}</ReactMarkdown>
             </div>
-            {message.vegaSpecs && <VegaChart vegaSpecs={message.vegaSpecs} />}
+            {message.vegaSpecs && <VegaChart vegaSpecs={message.vegaSpecs} responseText={message.content} />}
           </>
         )}
       </div>
