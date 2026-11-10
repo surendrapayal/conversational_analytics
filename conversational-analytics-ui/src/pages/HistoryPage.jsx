@@ -99,7 +99,7 @@ function InlineChat({ sessionId, userId, role }) {
                 : <ReactMarkdown remarkPlugins={[remarkGfm]}>{m.content}</ReactMarkdown>
               }
             </div>
-            {m.vegaSpecs && <VegaChart vegaSpecs={m.vegaSpecs} responseText={m.content} />}
+            {m.vegaSpecs && <VegaChart vegaSpecs={m.vegaSpecs} conversationId={m.conversationId} userId={userId} role={role} />}
           </div>
         ))}
         {streaming && steps.length > 0 && (
@@ -204,7 +204,12 @@ function SessionDetail({ sessionId, userId, role, streamMode }) {
                     <ReactMarkdown remarkPlugins={[remarkGfm]}>{c.agent_response}</ReactMarkdown>
                   </div>
                   {c.has_vega && c.vega_spec && (
-                    <VegaChart vegaSpecs={[{ chart_type: 'Chart', spec: c.vega_spec }]} responseText={c.agent_response} />
+                    <VegaChart
+                      vegaSpecs={[{ chart_type: 'Chart', spec: c.vega_spec }]}
+                      conversationId={c.conversation_id}
+                      userId={userId}
+                      role={role}
+                    />
                   )}
                 </div>
               )}
@@ -229,7 +234,7 @@ function SessionDetail({ sessionId, userId, role, streamMode }) {
                   : <ReactMarkdown remarkPlugins={[remarkGfm]}>{m.content}</ReactMarkdown>
                 }
               </div>
-              {m.vegaSpecs && <VegaChart vegaSpecs={m.vegaSpecs} responseText={m.content} />}
+              {m.vegaSpecs && <VegaChart vegaSpecs={m.vegaSpecs} conversationId={m.conversationId} userId={userId} role={role} />}
             </div>
           ))}
           {streaming && steps.length > 0 && (

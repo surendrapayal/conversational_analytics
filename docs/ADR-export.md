@@ -1,7 +1,7 @@
 # ADR: Export Feature Ownership (Frontend vs Backend)
 
-- **Status:** Proposed (awaiting architecture team decision)
-- **Date:** 2026-05-18
+- **Status:** Accepted — Option B implemented
+- **Date:** 2026-05-18 (implemented 2026-10-08)
 - **Deciders:** Architecture team
 - **Scope:** Exporting chart images (PNG/SVG) and table data (CSV/Excel) from the Conversational Analytics app, in both the live chat and history views.
 
@@ -208,12 +208,26 @@ findings in §4** all point the same way: chart image → frontend; table data �
 > _To be completed by the architecture team._
 
 - [ ] **Option A** — Frontend owns all export (accept derived-data + integrity limitations; still implement §4.1 sanitisation).
-- [ ] **Option B** — Backend owns table data export; frontend owns chart image export. *(Recommended for production/governed data.)*
+- [x] **Option B** — Backend owns table data export; frontend owns chart image export. *(Recommended for production/governed data.)*
 - [ ] Other: _______________________________________________
 
 **Rationale / notes:**
 
-_(record the decision reasoning here)_
+Implemented. Chart PNG/SVG remain frontend (`VegaChart` + `exportUtils.exportChartImage`).
+Table data (CSV / Excel / PDF) is now backend-owned:
+
+- Endpoint: `GET /api/v1/conversations/{conversation_id}/export?format=csv|xlsx|pdf`
+  (`controller/export_controller.py`).
+- Authoritative data: the endpoint **re-executes the conversation's persisted
+  `sql_generated`** against the analytics DB using the read-only `ca_agent_user`
+  (RBAC-safe), guaranteeing the complete, real result — not the chart/markdown
+  derivation (`controller/export_service.py`). This avoids persisting large result
+  sets and the column-name loss of the LangChain tool output.
+- Security: SELECT-only guard + `SET TRANSACTION READ ONLY`; CSV/Excel formula-injection
+  sanitisation (§4.1); row cap (`EXPORT_MAX_ROWS`); every export audited via the
+  existing audit writer (`step_type="export"`).
+- Frontend: `exportConversationData()` downloads the streamed file; the old
+  client-side CSV/Excel generation and the `write-excel-file` dependency were removed.
 
 ---
 

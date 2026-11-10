@@ -26,6 +26,15 @@ export function useChat({ userId, role, streamMode = 'standard' }) {
       ));
     };
 
+    let conversationId = null;
+    const setConversationId = (id) => {
+      if (!id || conversationId === id) return;
+      conversationId = id;
+      setMessages(prev => prev.map(m =>
+        m.id === assistantId ? { ...m, conversationId: id } : m
+      ));
+    };
+
     try {
       for await (const { event, data } of streamQuery({
         userId,
@@ -34,6 +43,8 @@ export function useChat({ userId, role, streamMode = 'standard' }) {
         role,
         streamMode,
       })) {
+        // Every SSE event carries the conversation_id; capture it for backend export.
+        if (data?.conversation_id) setConversationId(data.conversation_id);
         if (event === 'step') {
           // standard mode: sanitized progress labels.
           // Push to both: `steps` for the live indicator during streaming,

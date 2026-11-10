@@ -62,7 +62,7 @@ export default function ChatPage({ userId, role, streamMode }) {
             </div>
           </div>
         ) : (
-          messages.map(msg => <ChatMessage key={msg.id} message={msg} />)
+          messages.map(msg => <ChatMessage key={msg.id} message={msg} userId={userId} role={role} />)
         )}
         <div ref={bottomRef} />
       </div>

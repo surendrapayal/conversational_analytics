@@ -35,6 +35,8 @@ dependencies = [
     "langchain-google-vertexai>=3.2.2",
     "boto3>=1.43.107",
     "langchain-aws>=1.8.0",
+    "openpyxl>=3.1.5",
+    "reportlab>=5.0.1",
 ]
 
 [project.optional-dependencies]

@@ -54,3 +54,43 @@ export async function fetchSessionDetail({ sessionId, page = 1, pageSize = 20, s
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   return res.json();
 }
+
+// Backend-owned data export (CSV / Excel / PDF). The server re-runs the stored
+// query and streams an authoritative file; we just download it.
+export const DATA_EXPORT_FORMATS = ['csv', 'xlsx', 'pdf'];
+
+function parseFilename(contentDisposition, fallback) {
+  if (!contentDisposition) return fallback;
+  // Prefer RFC 5987 filename*=UTF-8''...
+  const star = /filename\*=UTF-8''([^;]+)/i.exec(contentDisposition);
+  if (star) { try { return decodeURIComponent(star[1]); } catch { /* ignore */ } }
+  const plain = /filename="?([^";]+)"?/i.exec(contentDisposition);
+  return plain ? plain[1] : fallback;
+}
+
+export async function exportConversationData({ conversationId, format, userId, role }) {
+  const params = new URLSearchParams({ format });
+  if (userId) params.set('user_id', userId);
+  const res = await fetch(
+    `${BASE_URL}/api/v1/conversations/${conversationId}/export?${params}`,
+    { headers: { ...(role && { role }) } },
+  );
+  if (!res.ok) {
+    let detail = `HTTP ${res.status}`;
+    try { detail = (await res.json()).detail || detail; } catch { /* ignore */ }
+    throw new Error(detail);
+  }
+  const blob = await res.blob();
+  const filename = parseFilename(
+    res.headers.get('Content-Disposition'),
+    `export.${format === 'xlsx' ? 'xlsx' : format}`,
+  );
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}

@@ -3,7 +3,7 @@ import remarkGfm from 'remark-gfm';
 import VegaChart from './VegaChart';
 import ActivityPanel from './ActivityPanel';
 
-export default function ChatMessage({ message }) {
+export default function ChatMessage({ message, userId, role }) {
   const isUser = message.role === 'user';
 
   return (
@@ -20,7 +20,14 @@ export default function ChatMessage({ message }) {
             <div className="message-content">
               <ReactMarkdown remarkPlugins={[remarkGfm]}>{message.content}</ReactMarkdown>
             </div>
-            {message.vegaSpecs && <VegaChart vegaSpecs={message.vegaSpecs} responseText={message.content} />}
+            {message.vegaSpecs && (
+              <VegaChart
+                vegaSpecs={message.vegaSpecs}
+                conversationId={message.conversationId}
+                userId={userId}
+                role={role}
+              />
+            )}
           </>
         )}
       </div>
